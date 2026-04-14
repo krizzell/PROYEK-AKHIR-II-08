@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	_ "github.com/lib/pq"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var DB *sql.DB
@@ -13,7 +13,7 @@ var DB *sql.DB
 // InitDB menginisialisasi koneksi database
 func InitDB(config *Config) error {
 	var err error
-	DB, err = sql.Open("postgres", config.GetDSN())
+	DB, err = sql.Open("mysql", config.GetDSN())
 	if err != nil {
 		return fmt.Errorf("gagal membuka database: %w", err)
 	}

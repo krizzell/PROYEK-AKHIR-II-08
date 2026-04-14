@@ -21,9 +21,9 @@ type Config struct {
 	ServerPort string
 
 	// JWT
-	JWTSecret      string
-	JWTExpiration  int
-	Environment    string
+	JWTSecret     string
+	JWTExpiration int
+	Environment   string
 }
 
 var AppConfig *Config
@@ -42,13 +42,11 @@ func LoadConfig() error {
 	AppConfig = &Config{
 		// Database
 		DBHost:     getEnv("DB_HOST", "localhost"),
-		DBPort:     getEnv("DB_PORT", "5432"),
-		DBUser:     getEnv("DB_USER", "postgres"),
+		DBPort:     getEnv("DB_PORT", "3306"),
+		DBUser:     getEnv("DB_USER", "root"),
 		DBPassword: getEnv("DB_PASSWORD", ""),
-		DBName:     getEnv("DB_NAME", "tk_mutiara"),
-		DBSSLMode:  getEnv("DB_SSL_MODE", "disable"),
-
-		// Server
+		DBName:     getEnv("DB_NAME", "dashboard_pa2"),
+		DBSSLMode:  getEnv("DB_SSL_MODE", "false"),
 		ServerPort: getEnv("SERVER_PORT", "8081"),
 
 		// JWT
@@ -63,8 +61,8 @@ func LoadConfig() error {
 // GetDSN mengembalikan string koneksi database
 func (c *Config) GetDSN() string {
 	return fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		c.DBHost, c.DBPort, c.DBUser, c.DBPassword, c.DBName, c.DBSSLMode,
+		"%s:%s@tcp(%s:%s)/%s?parseTime=true",
+		c.DBUser, c.DBPassword, c.DBHost, c.DBPort, c.DBName,
 	)
 }
 
