@@ -5,7 +5,7 @@ import '../models/pengumuman_model.dart';
 import '../models/perkembangan_model.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.90.220:8081';  // ini make ipv4 masing masing ya
+  static const String baseUrl = 'http://192.168.90.220:8081';  
 
   // Simpan token & user data setelah login
   static String? _token;

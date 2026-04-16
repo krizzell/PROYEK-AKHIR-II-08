@@ -14,6 +14,9 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> {
   List<PerkembanganModel> _data = [];
   bool _isLoading = true;
   String? _errorMsg;
+  Map<String, List<PerkembanganModel>> _groupedData = {};
+  List<String> _monthKeys = [];
+  String? _selectedMonthKey;
 
   @override
   void initState() {
@@ -27,6 +30,10 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> {
       final data = await ApiService.getPerkembangan();
       setState(() {
         _data = data;
+        _groupDataByMonth();
+        if (_monthKeys.isNotEmpty) {
+          _selectedMonthKey = _monthKeys.last; // Pilih bulan terakhir sebagai default
+        }
         _isLoading = false;
         print('Loaded ${_data.length} perkembangan records');
         for (var item in _data) {
@@ -40,6 +47,30 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> {
         _errorMsg = '$e';
       });
     }
+  }
+
+  void _groupDataByMonth() {
+    _groupedData.clear();
+    _monthKeys.clear();
+
+    for (var item in _data) {
+      final key = '${item.tahun}-${item.bulan.toString().padLeft(2, '0')}';
+      if (!_groupedData.containsKey(key)) {
+        _groupedData[key] = [];
+      }
+      _groupedData[key]!.add(item);
+    }
+
+    // Sort bulan dari tertua ke terbaru
+    _monthKeys = _groupedData.keys.toList();
+    _monthKeys.sort((a, b) => a.compareTo(b));
+  }
+
+  List<PerkembanganModel> get _filteredData {
+    if (_selectedMonthKey == null || !_groupedData.containsKey(_selectedMonthKey)) {
+      return [];
+    }
+    return _groupedData[_selectedMonthKey]!;
   }
 
   @override
@@ -135,15 +166,148 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> {
         child: Column(
           children: [
             _buildHeader(context),
+            _buildFilterSection(),
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.all(16),
-                itemCount: _data.length,
-                itemBuilder: (context, index) => _buildPerkembanganCard(_data[index]),
+                itemCount: _filteredData.length,
+                itemBuilder: (context, index) => _buildPerkembanganCard(_filteredData[index]),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  String _getMonthYearDisplay(String monthKey) {
+    // Format: "2026-04" -> "April 2026"
+    final parts = monthKey.split('-');
+    final tahun = int.parse(parts[0]);
+    final bulan = int.parse(parts[1]);
+    return '${_getMonthName(bulan)} $tahun';
+  }
+
+  Widget _buildFilterSection() {
+    if (_monthKeys.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final currentMonth = _selectedMonthKey != null ? _getMonthYearDisplay(_selectedMonthKey!) : '';
+    final parts = _selectedMonthKey!.split('-');
+    final selectedBulan = int.parse(parts[1]);
+    final selectedTahun = int.parse(parts[0]);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: AppTheme.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Periode Laporan',
+            style: TextStyle(
+              color: AppTheme.textMedium,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: const Color(0xFFE5E5E5)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: DropdownButton<int>(
+                    value: selectedBulan,
+                    isExpanded: true,
+                    underline: const SizedBox.shrink(),
+                    items: List.generate(12, (index) {
+                      final bulan = index + 1;
+                      final key = '$selectedTahun-${bulan.toString().padLeft(2, '0')}';
+                      final hasData = _monthKeys.contains(key);
+                      return DropdownMenuItem(
+                        value: bulan,
+                        enabled: hasData,
+                        child: Text(
+                          _getMonthName(bulan),
+                          style: TextStyle(
+                            color: hasData ? AppTheme.textDark : AppTheme.textLight,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      );
+                    }),
+                    onChanged: (bulan) {
+                      if (bulan != null) {
+                        final key = '$selectedTahun-${bulan.toString().padLeft(2, '0')}';
+                        if (_monthKeys.contains(key)) {
+                          setState(() {
+                            _selectedMonthKey = key;
+                          });
+                        }
+                      }
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: const Color(0xFFE5E5E5)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: DropdownButton<int>(
+                    value: selectedTahun,
+                    isExpanded: true,
+                    underline: const SizedBox.shrink(),
+                    items: _getAvailableYears().map((tahun) {
+                      return DropdownMenuItem(
+                        value: tahun,
+                        child: Text(
+                          '$tahun',
+                          style: const TextStyle(
+                            color: AppTheme.textDark,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (tahun) {
+                      if (tahun != null) {
+                        final key = '$tahun-${selectedBulan.toString().padLeft(2, '0')}';
+                        if (_monthKeys.contains(key)) {
+                          setState(() {
+                            _selectedMonthKey = key;
+                          });
+                        } else {
+                          // Jika kombinasi tidak ada, ambil bulan pertama dari tahun itu
+                          final firstMonthInYear = _monthKeys.firstWhere(
+                            (k) => k.startsWith('$tahun-'),
+                            orElse: () => '',
+                          );
+                          if (firstMonthInYear.isNotEmpty) {
+                            setState(() {
+                              _selectedMonthKey = firstMonthInYear;
+                            });
+                          }
+                        }
+                      }
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -590,5 +754,13 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> {
       return months[month];
     }
     return '';
+  }
+
+  List<int> _getAvailableYears() {
+    final years = _monthKeys.map((key) {
+      return int.parse(key.split('-')[0]);
+    }).toSet().toList();
+    years.sort((a, b) => a.compareTo(b));
+    return years;
   }
 }
