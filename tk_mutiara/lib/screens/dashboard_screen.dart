@@ -247,136 +247,128 @@ class _DashboardScreenState extends State<DashboardScreen>
   // CARD PERKEMBANGAN ANAK (menggantikan card SPP)
   // =============================================
   Widget _buildPerkembanganCard() {
-    return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        _pageRoute(const PerkembanganScreen()),
+  return GestureDetector(
+    onTap: () => Navigator.push(
+      context,
+      _pageRoute(const PerkembanganScreen()),
+    ),
+    child: Container(
+      margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFF7A2F), // 🔥 warna fix
+        borderRadius: BorderRadius.circular(24),
       ),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: AppTheme.softShadow,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Perkembangan Anak',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '$_namaAnak ⭐',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Kelas A · TK Mutiara',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'Lihat Perkembangan →',
-                      style: TextStyle(
-                        color: AppTheme.primary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: const Icon(
-                Icons.child_care_rounded,
-                color: Colors.white,
-                size: 36,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // =============================================
-  // HEADER
-  // =============================================
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Row(
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'TK Mutiara 🌟',
+                const Text(
+                  'Perkembangan Anak',
                   style: TextStyle(
-                    color: AppTheme.primary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
-                  'Halo, $_namaAnak! 👋',
+                  '$_namaAnak ⭐',
                   style: const TextStyle(
-                    color: AppTheme.textDark,
-                    fontSize: 22,
+                    color: Colors.white,
+                    fontSize: 20,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                Text(
-                  'Pantau perkembangan $_namaAnak hari ini',
-                  style: const TextStyle(
-                    color: AppTheme.textMedium,
+                const SizedBox(height: 4),
+                const Text(
+                  'Kelas A · TK Mutiara',
+                  style: TextStyle(
+                    color: Colors.white70,
                     fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // tombol putih
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    'Lihat Perkembangan →',
+                    style: TextStyle(
+                      color: Color(0xFFFF7A2F),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          _buildAvatar(),
+
+          const SizedBox(width: 10),
+
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const Icon(
+              Icons.child_care_rounded,
+              color: Colors.white,
+              size: 30,
+            ),
+          )
         ],
       ),
-    );
-  }
+    ),
+  );
+}
+
+  // =============================================
+  // HEADER
+  // =============================================
+  Widget _buildHeader() {
+  return Container(
+    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+    child: Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Halo, $_namaAnak! 👋',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.textDark,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Pantau perkembangan $_namaAnak hari ini',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.textMedium,
+                ),
+              ),
+            ],
+          ),
+        ),
+        _buildAvatar(),
+      ],
+    ),
+  );
+}
 
   // =============================================
   // AVATAR
