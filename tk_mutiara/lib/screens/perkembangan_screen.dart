@@ -4,7 +4,12 @@ import '../models/perkembangan_model.dart';
 import '../services/api_services.dart';
 
 class PerkembanganScreen extends StatefulWidget {
-  const PerkembanganScreen({super.key});
+  final VoidCallback? onBackPressed;
+  
+  const PerkembanganScreen({
+    super.key,
+    this.onBackPressed,
+  });
 
   @override
   State<PerkembanganScreen> createState() => _PerkembanganScreenState();
@@ -328,12 +333,12 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> {
       child: Row(
         children: [
           IconButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: widget.onBackPressed ?? () => Navigator.pop(context),
             icon: const Icon(
               Icons.arrow_back_ios_new_rounded,
-              color: AppTheme.textDark,
-              size: 20,
+              size: 18,
             ),
+            color: AppTheme.primary,
           ),
           const SizedBox(width: 4),
           Column(

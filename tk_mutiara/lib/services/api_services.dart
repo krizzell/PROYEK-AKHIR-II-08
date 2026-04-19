@@ -5,8 +5,8 @@ import '../models/pengumuman_model.dart';
 import '../models/perkembangan_model.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.90.220:8081';  // disesuaikan sama ipv4 masing-masing
-  static const String imageBaseUrl = 'http://192.168.90.220:8000';  // ini port untuk gambar, disesuaikan sama ipv4 masing-masing
+  static const String baseUrl = 'http://192.168.145.220:8081';  // disesuaikan sama ipv4 masing-masing
+  static const String imageBaseUrl = 'http://192.168.145.220:8000';  // ini port untuk gambar, disesuaikan sama ipv4 masing-masing
 
   // Simpan token & user data setelah login
   static String? _token;

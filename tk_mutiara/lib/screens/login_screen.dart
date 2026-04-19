@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/api_services.dart';
-import 'dashboard_screen.dart';
+import 'main_navigation_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -79,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen>
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const DashboardScreen(),
+            pageBuilder: (_, __, ___) => const MainNavigationScreen(),
             transitionsBuilder: (_, anim, __, child) =>
                 FadeTransition(opacity: anim, child: child),
             transitionDuration: const Duration(milliseconds: 500),

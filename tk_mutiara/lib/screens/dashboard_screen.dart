@@ -442,7 +442,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
-        _pageRoute(PengumumanScreen(idPengumuman: p.idPengumuman)),
+        _pageRoute(const PengumumanScreen()),
       ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),

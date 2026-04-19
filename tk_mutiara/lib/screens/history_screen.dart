@@ -4,7 +4,13 @@ import '../models/pembayaran_model.dart';
 
 class HistoryScreen extends StatefulWidget {
   final List<PembayaranModel> payments;
-  const HistoryScreen({super.key, required this.payments});
+  final VoidCallback? onBackPressed;
+  
+  const HistoryScreen({
+    super.key,
+    required this.payments,
+    this.onBackPressed,
+  });
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -61,12 +67,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
       child: Row(
         children: [
           IconButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: widget.onBackPressed ?? () => Navigator.pop(context),
             icon: const Icon(
               Icons.arrow_back_ios_new_rounded,
-              color: AppTheme.textDark,
-              size: 20,
+              size: 18,
             ),
+            color: AppTheme.primary,
           ),
           const SizedBox(width: 4),
           const Column(

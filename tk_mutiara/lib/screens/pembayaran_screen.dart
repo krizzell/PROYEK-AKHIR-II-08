@@ -5,7 +5,13 @@ import '../models/pembayaran_model.dart';
 
 class PembayaranScreen extends StatefulWidget {
   final PembayaranModel tagihan;
-  const PembayaranScreen({super.key, required this.tagihan});
+  final VoidCallback? onBackPressed;
+  
+  const PembayaranScreen({
+    super.key,
+    required this.tagihan,
+    this.onBackPressed,
+  });
 
   @override
   State<PembayaranScreen> createState() => _PembayaranScreenState();
@@ -115,12 +121,12 @@ class _PembayaranScreenState extends State<PembayaranScreen>
       child: Row(
         children: [
           IconButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: widget.onBackPressed ?? () => Navigator.pop(context),
             icon: const Icon(
               Icons.arrow_back_ios_new_rounded,
-              color: AppTheme.textDark,
-              size: 20,
+              size: 18,
             ),
+            color: AppTheme.primary,
           ),
           const SizedBox(width: 4),
           const Column(
@@ -491,7 +497,15 @@ class _PembayaranScreenState extends State<PembayaranScreen>
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  // Reset ke payment view
+                  setState(() {
+                    _isDone = false;
+                    _isProcessing = false;
+                    _selectedMethod = 0;
+                    _doneController.reset();
+                  });
+                },
                 child: const Text('Kembali ke Beranda'),
               ),
             ),

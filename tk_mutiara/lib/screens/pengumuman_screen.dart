@@ -5,10 +5,12 @@ import '../services/api_services.dart';
 
 class PengumumanScreen extends StatefulWidget {
   final int? idPengumuman; // ID untuk detail view
+  final VoidCallback? onBackPressed;
 
   const PengumumanScreen({
     super.key,
     this.idPengumuman,
+    this.onBackPressed,
   });
 
   @override
@@ -38,6 +40,20 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
     super.dispose();
   }
 
+  // Helper untuk set detail view
+  void _showDetail(PengumumanModel pengumuman) {
+    setState(() {
+      _selectedData = pengumuman;
+    });
+  }
+
+  // Helper untuk back ke list view
+  void _backToList() {
+    setState(() {
+      _selectedData = null;
+    });
+  }
+
   void _loadPengumuman() async {
     try {
       print('Loading pengumuman...');
@@ -45,19 +61,6 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
       setState(() {
         _data = data;
         _isLoading = false;
-        
-        // Jika ada ID, cari pengumuman dengan ID tersebut
-        if (widget.idPengumuman != null && _data.isNotEmpty) {
-          try {
-            _selectedData = _data.firstWhere(
-              (p) => p.idPengumuman == widget.idPengumuman,
-            );
-          } catch (e) {
-            // Jika tidak ketemu, gunakan yang pertama
-            _selectedData = _data.first;
-          }
-        }
-        
         print('Loaded ${_data.length} pengumuman records');
       });
       _fadeController.forward();
@@ -105,8 +108,8 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
 
   @override
   Widget build(BuildContext context) {
-    // Jika ada ID yang dipilih, tampilkan detail view
-    if (widget.idPengumuman != null && _selectedData != null) {
+    // Jika ada detail yang dipilih, tampilkan detail view
+    if (_selectedData != null) {
       return _buildDetailView(context);
     }
     
@@ -208,16 +211,7 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 itemCount: _data.length,
                 itemBuilder: (context, index) => GestureDetector(
-                  onTap: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => PengumumanScreen(
-                          idPengumuman: _data[index].idPengumuman,
-                        ),
-                      ),
-                    );
-                  },
+                  onTap: () => _showDetail(_data[index]),
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: _buildPengumumanCard(_data[index]),
@@ -232,7 +226,7 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
   }
 
   Widget _buildHeader(BuildContext context) {
-    final isDetailView = widget.idPengumuman != null;
+    final isDetailView = _selectedData != null;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 20, 16),
       decoration: BoxDecoration(
@@ -247,20 +241,13 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
       ),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0F3FF),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: AppTheme.primary,
-                size: 18,
-              ),
+          IconButton(
+            onPressed: isDetailView ? () => _backToList() : (widget.onBackPressed ?? () => Navigator.pop(context)),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              size: 18,
             ),
+            color: AppTheme.primary,
           ),
           const SizedBox(width: 12),
           Column(
