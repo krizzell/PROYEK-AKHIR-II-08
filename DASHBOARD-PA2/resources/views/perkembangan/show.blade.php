@@ -163,7 +163,7 @@
 
 <style>
     .card {
-        border: 1px solid #e9ecef;
+        border: 1px solid #9CA3AF;
         border-radius: 8px;
     }
     .border-danger { border-left: 4px solid #dc3545 !important; }

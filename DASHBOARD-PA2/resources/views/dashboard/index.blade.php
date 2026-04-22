@@ -123,7 +123,7 @@
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid #f0f0f0;
+        border: 1px solid #9CA3AF;
     }
 
     .stat-card-item:hover {
@@ -145,7 +145,7 @@
     .stat-card-title {
         font-size: 12px;
         font-weight: 600;
-        color: #95a5a6;
+        color: #9CA3AF;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         margin-bottom: 12px;
@@ -154,7 +154,7 @@
     .stat-card-value {
         font-size: 42px;
         font-weight: 700;
-        color: #2c3e50;
+        color: #1A1A2E;
         margin: 0;
         line-height: 1;
         margin-bottom: 12px;
@@ -162,7 +162,7 @@
 
     .stat-card-description {
         font-size: 12px;
-        color: #bdc3c7;
+        color: #6B7280;
         margin: 0;
         font-weight: 500;
     }
@@ -181,22 +181,22 @@
 
     .icon-blue {
         background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-        color: #0284c7;
+        color: #FF6B1A;
     }
 
     .icon-green {
         background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-        color: #16a34a;
+        color: #22C55E;
     }
 
     .icon-yellow {
         background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        color: #d97706;
+        color: #F59E0B;
     }
 
     .icon-purple {
         background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
-        color: #9333ea;
+        color: #FF6B1A;
     }
 
     /* Activities Section */
@@ -211,13 +211,13 @@
     .activities-title {
         font-size: 20px;
         font-weight: 700;
-        color: #2c3e50;
+        color: #1A1A2E;
         margin: 0 0 4px 0;
     }
 
     .activities-subtitle {
         font-size: 13px;
-        color: #95a5a6;
+        color: #9CA3AF;
         margin: 0;
         font-weight: 500;
     }
@@ -226,7 +226,7 @@
         background: white;
         border-radius: 16px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-        border: 1px solid #f0f0f0;
+        border: 1px solid #9CA3AF;
         overflow: hidden;
     }
 
@@ -237,13 +237,13 @@
 
     .empty-state-icon {
         font-size: 64px;
-        color: #e9ecef;
+        color: #9CA3AF;
         margin-bottom: 16px;
     }
 
     .empty-state-text {
         font-size: 14px;
-        color: #bdc3c7;
+        color: #6B7280;
         margin: 0;
         font-weight: 500;
     }
@@ -257,7 +257,7 @@
         align-items: center;
         gap: 16px;
         padding: 20px 28px;
-        border-bottom: 1px solid #f0f0f0;
+        border-bottom: 1px solid #9CA3AF;
         transition: all 0.3s ease;
     }
 
@@ -284,12 +284,12 @@
 
     .avatar-blue {
         background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-        color: #0284c7;
+        color: #FF6B1A;
     }
 
     .avatar-yellow {
         background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        color: #d97706;
+        color: #F59E0B;
     }
 
     .activity-middle {
@@ -305,13 +305,13 @@
     .activity-name {
         font-size: 14px;
         font-weight: 600;
-        color: #2c3e50;
+        color: #1A1A2E;
         margin: 0;
     }
 
     .activity-action {
         font-size: 13px;
-        color: #95a5a6;
+        color: #9CA3AF;
         margin: 0;
         font-weight: 500;
     }
@@ -327,8 +327,8 @@
     .activity-class-badge {
         display: inline-block;
         padding: 6px 12px;
-        background-color: #f0f0f0;
-        color: #2c3e50;
+        background-color: #FFF8F4;
+        color: #1A1A2E;
         border-radius: 6px;
         font-size: 12px;
         font-weight: 600;
@@ -336,7 +336,7 @@
 
     .activity-time {
         font-size: 12px;
-        color: #bdc3c7;
+        color: #6B7280;
         font-weight: 500;
     }
 

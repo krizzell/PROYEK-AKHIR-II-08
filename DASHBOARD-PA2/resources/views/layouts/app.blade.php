@@ -15,7 +15,7 @@
         }
 
         body {
-            background-color: #ffffff;
+            background-color: #FFFFFF;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
@@ -27,8 +27,8 @@
         /* ===== SIDEBAR STYLING ===== */
         .sidebar {
             width: 280px;
-            background-color: #f8f9fa;
-            border-right: 1px solid #e9ecef;
+            background-color: #FFF8F4;
+            border-right: 1px solid #9CA3AF;
             padding: 30px 0;
             position: fixed;
             height: 100vh;
@@ -39,20 +39,20 @@
         .sidebar-header {
             padding: 0 25px 40px;
             text-align: center;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid #9CA3AF;
             margin-bottom: 30px;
         }
 
         .sidebar-header .logo-title {
             font-size: 22px;
             font-weight: 700;
-            color: #2c3e50;
+            color: #1A1A2E;
             margin-bottom: 5px;
         }
 
         .sidebar-header .logo-subtitle {
             font-size: 12px;
-            color: #95a5a6;
+            color: #9CA3AF;
             font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -76,7 +76,7 @@
             align-items: center;
             gap: 12px;
             padding: 12px 18px;
-            color: #636e72;
+            color: #6B7280;
             text-decoration: none;
             border-radius: 10px;
             transition: all 0.3s ease;
@@ -91,14 +91,14 @@
         }
 
         .nav-menu .nav-link:hover {
-            background-color: #e8f4f8;
-            color: #2c3e50;
+            background-color: #FFF8F4;
+            color: #1A1A2E;
             padding-left: 22px;
         }
 
         .nav-menu .nav-link.active {
-            background: linear-gradient(135deg, #ffd89b 0%, #ffe8c0 100%);
-            color: #d97706;
+            background: linear-gradient(135deg, #FF8C42 0%, #FFD166 100%);
+            color: #E85000;
             font-weight: 600;
             position: relative;
         }
@@ -111,7 +111,7 @@
             transform: translateY(-50%);
             width: 4px;
             height: 24px;
-            background: #fbb92f;
+            background: #FF6B1A;
             border-radius: 0 4px 4px 0;
         }
 
@@ -119,7 +119,7 @@
             padding: 15px 25px 10px;
             font-size: 11px;
             font-weight: 700;
-            color: #95a5a6;
+            color: #9CA3AF;
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-top: 10px;
@@ -127,7 +127,7 @@
 
         .admin-divider {
             height: 1px;
-            background: linear-gradient(to right, transparent, #e9ecef, transparent);
+            background: linear-gradient(to right, transparent, #9CA3AF, transparent);
             margin: 15px 0;
         }
 
@@ -146,8 +146,8 @@
             justify-content: center;
             gap: 10px;
             padding: 12px;
-            background-color: #ffe8e8;
-            color: #e74c3c;
+            background-color: #FFEBEE;
+            color: #EF4444;
             border: none;
             border-radius: 10px;
             font-weight: 600;
@@ -157,8 +157,8 @@
         }
 
         .logout-btn:hover {
-            background-color: #ffcccc;
-            color: #c0392b;
+            background-color: #FFCDD2;
+            color: #DC2626;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(231, 76, 60, 0.2);
         }
@@ -167,7 +167,7 @@
         .main-content {
             flex: 1;
             margin-left: 280px;
-            background-color: #ffffff;
+            background-color: #FFFFFF;
         }
 
         .top-navbar {
@@ -176,7 +176,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid #9CA3AF;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
 
@@ -202,12 +202,12 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #ffd89b 0%, #ffe8c0 100%);
+            background: linear-gradient(135deg, #FF8C42 0%, #FFD166 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            color: #d97706;
+            color: #E85000;
             font-size: 16px;
             box-shadow: 0 2px 8px rgba(251, 185, 47, 0.2);
         }
@@ -220,13 +220,13 @@
 
         .user-info-text .user-name {
             font-weight: 600;
-            color: #2c3e50;
+            color: #1A1A2E;
             font-size: 13px;
         }
 
         .user-info-text .user-role {
             font-size: 11px;
-            color: #95a5a6;
+            color: #9CA3AF;
             font-weight: 500;
         }
 
@@ -251,7 +251,7 @@
         }
 
         .dropdown-item-link:hover {
-            background-color: #f8f9fa !important;
+            background-color: #FFF8F4 !important;
             padding-left: 20px;
         }
 
@@ -271,13 +271,13 @@
         .page-title {
             font-size: 32px;
             font-weight: 700;
-            color: #2c3e50;
+            color: #1A1A2E;
             margin-bottom: 8px;
         }
 
         .page-subtitle {
             font-size: 14px;
-            color: #95a5a6;
+            color: #9CA3AF;
             font-weight: 500;
         }
 
@@ -291,15 +291,15 @@
         }
 
         .alert-success {
-            background-color: #ecfdf5;
-            border-left-color: #10b981;
-            color: #065f46;
+            background-color: #F0FDF4;
+            border-left-color: #22C55E;
+            color: #15803D;
         }
 
         .alert-danger {
-            background-color: #fef2f2;
-            border-left-color: #ef4444;
-            color: #7f1d1d;
+            background-color: #FEF2F2;
+            border-left-color: #EF4444;
+            color: #7C2D12;
         }
 
         @keyframes slideIn {
@@ -323,12 +323,12 @@
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #dfe6e9;
+            background: #9CA3AF;
             border-radius: 4px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: #bdc3c7;
+            background: #6B7280;
         }
 
         @media (max-width: 768px) {
@@ -435,14 +435,14 @@
                         </div>
 
                         <!-- Dropdown Menu -->
-                        <div id="userDropdown" class="user-dropdown-menu" style="position: absolute; top: 100%; right: 0; background: white; border: 1px solid #e9ecef; border-radius: 8px; min-width: 220px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; display: none; margin-top: 5px;">
-                            <a href="{{ route('profile.edit-password') }}" class="dropdown-item-link" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; color: #636e72; text-decoration: none; border-bottom: 1px solid #e9ecef; transition: all 0.3s ease;">
+                        <div id="userDropdown" class="user-dropdown-menu" style="position: absolute; top: 100%; right: 0; background: white; border: 1px solid #9CA3AF; border-radius: 8px; min-width: 220px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; display: none; margin-top: 5px;">
+                            <a href="{{ route('profile.edit-password') }}" class="dropdown-item-link" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; color: #6B7280; text-decoration: none; border-bottom: 1px solid #9CA3AF; transition: all 0.3s ease;">
                                 <i class="bi bi-key" style="color: #2196F3;"></i> Ubah Password
                             </a>
                             
                             <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
                                 @csrf
-                                <button type="submit" class="dropdown-item-link" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; color: #e74c3c; text-decoration: none; width: 100%; border: none; background: none; cursor: pointer; transition: all 0.3s ease;">
+                                <button type="submit" class="dropdown-item-link" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; color: #EF4444; text-decoration: none; width: 100%; border: none; background: none; cursor: pointer; transition: all 0.3s ease;">
                                     <i class="bi bi-box-arrow-right"></i> Logout
                                 </button>
                             </form>
@@ -497,7 +497,7 @@
             const dropdownItems = document.querySelectorAll('.dropdown-item-link');
             dropdownItems.forEach(item => {
                 item.addEventListener('mouseover', function() {
-                    this.style.backgroundColor = '#f8f9fa';
+                    this.style.backgroundColor = '#FFF8F4';
                 });
                 item.addEventListener('mouseout', function() {
                     this.style.backgroundColor = 'transparent';
@@ -519,8 +519,8 @@
                         text: 'Data yang dihapus tidak dapat dipulihkan',
                         icon: 'warning',
                         showCancelButton: true,
-                        confirmButtonColor: '#dc3545',
-                        cancelButtonColor: '#6c757d',
+                        confirmButtonColor: '#EF4444',
+                        cancelButtonColor: '#9CA3AF',
                         confirmButtonText: 'Ya, Hapus',
                         cancelButtonText: 'Batal',
                         backdrop: true,

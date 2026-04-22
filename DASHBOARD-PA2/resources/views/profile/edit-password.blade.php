@@ -163,7 +163,7 @@ function checkPasswordMatch() {
     }
 
     .input-group .btn:hover {
-        background-color: #f8f9fa;
+        background-color: #FFF8F4;
     }
 
     .form-text {

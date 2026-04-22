@@ -14,7 +14,7 @@
         <!-- Foto/Media -->
         @if($pengumuman->media)
             <div class="mb-4">
-                <div class="media-display rounded overflow-hidden" style="background-color: #f8f9fa;">
+                <div class="media-display rounded overflow-hidden" style="background-color: #FFF8F4;">
                     <img src="{{ asset('storage/' . $pengumuman->media) }}" alt="Foto Pengumuman" 
                          class="img-fluid" style="max-height: 500px; object-fit: contain; display: block; margin: 0 auto;">
                 </div>

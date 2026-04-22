@@ -135,7 +135,7 @@
                     @endphp
                     @foreach($categories as $category)
                         <div class="col-md-6 mb-3">
-                            <div class="card p-3" style="background-color: #f8f9fa;">
+                            <div class="card p-3" style="background-color: #FFF8F4;">
                                 <div class="row align-items-center">
                                     <div class="col-md-4">
                                         <div class="form-check">

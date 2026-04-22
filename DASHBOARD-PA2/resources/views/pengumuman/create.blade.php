@@ -83,7 +83,7 @@
     }
 
     .media-upload-area:hover {
-        border-color: #fbb92f;
+        border-color: #FF6B1A;
         background-color: #fffbf5;
     }
 
@@ -100,7 +100,7 @@
     .media-upload-area::before {
         content: '📸 Drag & drop foto di sini atau klik untuk memilih';
         display: block;
-        color: #95a5a6;
+        color: #9CA3AF;
         font-weight: 500;
     }
 </style>
