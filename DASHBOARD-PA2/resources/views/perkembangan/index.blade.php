@@ -81,11 +81,11 @@
                             @endif
                         </td>
                         <td>
-                            <div class="btn-group btn-group-sm" role="group">
-                                <a href="{{ route('perkembangan.show', $item->id_perkembangan) }}" class="btn btn-info" title="Lihat">
+                            <div class="action-buttons">
+                                <a href="{{ route('perkembangan.show', $item->id_perkembangan) }}" class="btn btn-info btn-sm" title="Lihat">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <a href="{{ route('perkembangan.edit', $item->id_perkembangan) }}" class="btn btn-warning" title="Edit">
+                                <a href="{{ route('perkembangan.edit', $item->id_perkembangan) }}" class="btn btn-warning btn-sm" title="Edit">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 <form action="{{ route('perkembangan.destroy', $item->id_perkembangan) }}" method="POST" style="display: inline;">
@@ -106,6 +106,18 @@
 @endif
 
 <style>
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .action-buttons form {
+        margin: 0;
+        display: flex;
+    }
+
     .badge {
         font-size: 11px;
         padding: 4px 8px;

@@ -195,10 +195,10 @@
     .card:hover {
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    .border-danger { border-left: 4px solid #dc3545 !important; }
-    .border-warning { border-left: 4px solid #ffc107 !important; }
-    .border-info { border-left: 4px solid #0dcaf0 !important; }
-    .border-success { border-left: 4px solid #198754 !important; }
+    .border-danger { }
+    .border-warning { }
+    .border-info { }
+    .border-success { }
 </style>
 
 <script>

@@ -34,14 +34,12 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
             overflow: hidden;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
         }
 
         .login-header {
             background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
             padding: 50px 40px 40px;
             text-align: center;
-            border-bottom: 1px solid #e9ecef;
         }
 
         .logo-icon {
@@ -90,7 +88,7 @@
         }
 
         .form-control {
-            border: 2px solid #e9ecef;
+            border: none;
             border-radius: 10px;
             padding: 12px 16px;
             font-size: 14px;
@@ -144,7 +142,7 @@
         .alert {
             border-radius: 10px;
             margin-bottom: 24px;
-            border: 1px solid;
+            border: none;
             padding: 14px 16px;
             font-size: 13px;
         }
@@ -173,7 +171,6 @@
         .login-footer {
             margin-top: 24px;
             padding-top: 24px;
-            border-top: 1px solid #e9ecef;
             text-align: center;
             color: #95a5a6;
             font-size: 13px;

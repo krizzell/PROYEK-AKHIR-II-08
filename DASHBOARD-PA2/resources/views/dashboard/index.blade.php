@@ -123,7 +123,6 @@
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid #9CA3AF;
     }
 
     .stat-card-item:hover {
@@ -226,7 +225,6 @@
         background: white;
         border-radius: 16px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-        border: 1px solid #9CA3AF;
         overflow: hidden;
     }
 

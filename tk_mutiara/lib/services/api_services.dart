@@ -5,8 +5,8 @@ import '../models/pengumuman_model.dart';
 import '../models/perkembangan_model.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://172.30.41.235:8081';  // disesuaikan sama ipv4 masing-masing
-  static const String imageBaseUrl = 'http://172.30.41.235:8000';  // ini port untuk gambar, disesuaikan sama ipv4 masing-masing
+  static const String baseUrl = 'http://192.168.98.220:8000';  // IP lokal dengan port 8000
+  static const String imageBaseUrl = 'http://192.168.98.220:8000';  // port 8000 untuk Laravel
 
   // Simpan token & user data setelah login
   static String? _token;
@@ -21,7 +21,7 @@ class ApiService {
         if (_token != null) 'Authorization': 'Bearer $_token',
       };
 
-  // LOGIN
+  // LOGIN~
   static Future<Map<String, dynamic>> login(String email, String password) async {
     try {
       print('=== LOGIN REQUEST ===');

@@ -73,7 +73,7 @@
 <style>
     .media-upload-area {
         position: relative;
-        border: 2px dashed #e0e0e0;
+        border: none;
         border-radius: 8px;
         padding: 20px;
         text-align: center;
@@ -83,7 +83,6 @@
     }
 
     .media-upload-area:hover {
-        border-color: #FF6B1A;
         background-color: #fffbf5;
     }
 

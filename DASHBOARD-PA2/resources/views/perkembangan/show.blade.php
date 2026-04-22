@@ -166,9 +166,9 @@
         border: 1px solid #9CA3AF;
         border-radius: 8px;
     }
-    .border-danger { border-left: 4px solid #dc3545 !important; }
-    .border-warning { border-left: 4px solid #ffc107 !important; }
-    .border-info { border-left: 4px solid #0dcaf0 !important; }
-    .border-success { border-left: 4px solid #198754 !important; }
+    .border-danger { }
+    .border-warning { }
+    .border-info { }
+    .border-success { }
 </style>
 @endsection

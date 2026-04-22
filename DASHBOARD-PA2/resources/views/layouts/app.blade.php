@@ -28,7 +28,6 @@
         .sidebar {
             width: 280px;
             background-color: #FFF8F4;
-            border-right: 1px solid #9CA3AF;
             padding: 30px 0;
             position: fixed;
             height: 100vh;
@@ -39,7 +38,6 @@
         .sidebar-header {
             padding: 0 25px 40px;
             text-align: center;
-            border-bottom: 1px solid #9CA3AF;
             margin-bottom: 30px;
         }
 
@@ -97,8 +95,8 @@
         }
 
         .nav-menu .nav-link.active {
-            background: linear-gradient(135deg, #FF8C42 0%, #FFD166 100%);
-            color: #E85000;
+            background: linear-gradient(135deg, #FF8C42 0%, #FF8C42 100%);
+            color: #FFF8F4;
             font-weight: 600;
             position: relative;
         }
@@ -176,7 +174,6 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid #9CA3AF;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
 
@@ -435,8 +432,8 @@
                         </div>
 
                         <!-- Dropdown Menu -->
-                        <div id="userDropdown" class="user-dropdown-menu" style="position: absolute; top: 100%; right: 0; background: white; border: 1px solid #9CA3AF; border-radius: 8px; min-width: 220px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; display: none; margin-top: 5px;">
-                            <a href="{{ route('profile.edit-password') }}" class="dropdown-item-link" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; color: #6B7280; text-decoration: none; border-bottom: 1px solid #9CA3AF; transition: all 0.3s ease;">
+                        <div id="userDropdown" class="user-dropdown-menu" style="position: absolute; top: 100%; right: 0; background: white; border-radius: 8px; min-width: 220px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; display: none; margin-top: 5px;">
+                            <a href="{{ route('profile.edit-password') }}" class="dropdown-item-link" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; color: #6B7280; text-decoration: none; transition: all 0.3s ease;">
                                 <i class="bi bi-key" style="color: #2196F3;"></i> Ubah Password
                             </a>
                             
