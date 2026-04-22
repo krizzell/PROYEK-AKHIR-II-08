@@ -5,8 +5,8 @@ import '../models/pengumuman_model.dart';
 import '../models/perkembangan_model.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.145.220:8081';  // disesuaikan sama ipv4 masing-masing
-  static const String imageBaseUrl = 'http://192.168.145.220:8000';  // ini port untuk gambar, disesuaikan sama ipv4 masing-masing
+  static const String baseUrl = 'http://10.153.188.204:8081';  // disesuaikan sama ipv4 masing-masing
+  static const String imageBaseUrl = 'http://10.153.188.204:8000';  // ini port untuk gambar, disesuaikan sama ipv4 masing-masing
 
   // Simpan token & user data setelah login
   static String? _token;
@@ -202,6 +202,124 @@ class ApiService {
       }
     } catch (e) {
       return {'success': false, 'message': 'Gagal terhubung ke server'};
+    }
+  }
+
+  // PROFILE
+  static Future<Map<String, dynamic>> getProfile() async {
+    try {
+      print('=== GET PROFILE ===');
+      print('Token: $_token');
+      print('URL: $baseUrl/api/profile');
+
+      final res = await http.get(
+        Uri.parse('$baseUrl/api/profile'),
+        headers: _headers,
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => throw Exception('Request timeout'),
+      );
+
+      print('Status: ${res.statusCode}');
+      print('Body: ${res.body}');
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true) {
+          print('✓ Profile loaded successfully');
+          return {'success': true, 'data': data['data']};
+        } else {
+          throw Exception(data['error'] ?? 'Error loading profile');
+        }
+      } else if (res.statusCode == 401) {
+        throw Exception('Sesi habis, silakan login ulang');
+      } else {
+        throw Exception('Server error: ${res.statusCode}');
+      }
+    } catch (e) {
+      print('✗ Exception: $e');
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  // UPDATE PASSWORD
+  static Future<Map<String, dynamic>> updatePassword(
+    String oldPassword,
+    String newPassword,
+  ) async {
+    try {
+      print('=== UPDATE PASSWORD ===');
+      print('URL: $baseUrl/api/profile/password');
+
+      final res = await http.put(
+        Uri.parse('$baseUrl/api/profile/password'),
+        headers: _headers,
+        body: jsonEncode({
+          'old_password': oldPassword,
+          'new_password': newPassword,
+        }),
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => throw Exception('Request timeout'),
+      );
+
+      print('Status: ${res.statusCode}');
+      print('Body: ${res.body}');
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true) {
+          print('✓ Password updated successfully');
+          return {'success': true, 'message': data['message']};
+        } else {
+          return {'success': false, 'message': data['error'] ?? 'Error updating password'};
+        }
+      } else if (res.statusCode == 401) {
+        return {'success': false, 'message': 'Password lama tidak sesuai'};
+      } else {
+        return {'success': false, 'message': 'Server error: ${res.statusCode}'};
+      }
+    } catch (e) {
+      print('✗ Exception: $e');
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  // UPDATE PROFILE
+  static Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> data) async {
+    try {
+      print('=== UPDATE PROFILE ===');
+      print('URL: $baseUrl/api/profile');
+      print('Data: $data');
+
+      final res = await http.put(
+        Uri.parse('$baseUrl/api/profile'),
+        headers: _headers,
+        body: jsonEncode(data),
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => throw Exception('Request timeout'),
+      );
+
+      print('Status: ${res.statusCode}');
+      print('Body: ${res.body}');
+
+      if (res.statusCode == 200) {
+        final responseData = jsonDecode(res.body);
+        if (responseData['success'] == true) {
+          print('✓ Profile updated successfully');
+          return {'success': true, 'message': responseData['message']};
+        } else {
+          return {'success': false, 'message': responseData['error'] ?? 'Error updating profile'};
+        }
+      } else if (res.statusCode == 401) {
+        return {'success': false, 'message': 'Sesi habis, silakan login ulang'};
+      } else {
+        return {'success': false, 'message': 'Server error: ${res.statusCode}'};
+      }
+    } catch (e) {
+      print('✗ Exception: $e');
+      return {'success': false, 'message': 'Error: $e'};
     }
   }
 }

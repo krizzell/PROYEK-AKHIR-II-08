@@ -11,7 +11,7 @@
 
 <div class="card mt-4">
     <div class="card-body">
-        <form action="{{ route('siswa.update', $siswa->nomor_induk_siswa) }}" method="POST">
+        <form action="{{ route('siswa.update', ['nomor_induk_siswa' => $siswa->nomor_induk_siswa]) }}" method="POST">
             @csrf
             @method('PUT')
 

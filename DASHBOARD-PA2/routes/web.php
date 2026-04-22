@@ -49,8 +49,14 @@ Route::middleware('check.guru')->group(function () {
     Route::put('/kelas/{id_kelas}', [KelasController::class, 'update'])->name('kelas.update');
     Route::delete('/kelas/{id_kelas}', [KelasController::class, 'destroy'])->name('kelas.destroy');
     
-    // Routes untuk Siswa
-    Route::resource('siswa', SiswaController::class);
+    // Routes untuk Siswa - IMPORTANT: Static routes MUST come before dynamic parameter routes
+    Route::get('/siswa', [SiswaController::class, 'index'])->name('siswa.index');
+    Route::get('/siswa/create', [SiswaController::class, 'create'])->name('siswa.create');
+    Route::post('/siswa', [SiswaController::class, 'store'])->name('siswa.store');
+    Route::get('/siswa/{nomor_induk_siswa}', [SiswaController::class, 'show'])->name('siswa.show')->where('nomor_induk_siswa', '[0-9]+');
+    Route::get('/siswa/{nomor_induk_siswa}/edit', [SiswaController::class, 'edit'])->name('siswa.edit')->where('nomor_induk_siswa', '[0-9]+');
+    Route::put('/siswa/{nomor_induk_siswa}', [SiswaController::class, 'update'])->name('siswa.update')->where('nomor_induk_siswa', '[0-9]+');
+    Route::delete('/siswa/{nomor_induk_siswa}', [SiswaController::class, 'destroy'])->name('siswa.destroy')->where('nomor_induk_siswa', '[0-9]+');
     
     // Routes untuk Pengumuman
     Route::resource('pengumuman', PengumumanController::class);

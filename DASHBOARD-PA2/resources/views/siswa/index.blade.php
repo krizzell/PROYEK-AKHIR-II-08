@@ -105,7 +105,14 @@
                     @foreach ($siswa as $item)
                     <tr>
                         <td>{{ $loop->iteration }}</td>
-                        <td><strong>{{ $item->nomor_induk_siswa }}</strong></td>
+                        <td>
+                            <strong>
+                                {{ $item->nomor_induk_siswa }}
+                                @if(empty($item->nomor_induk_siswa))
+                                    <span class="badge bg-danger">NULL/EMPTY</span>
+                                @endif
+                            </strong>
+                        </td>
                         <td>{{ $item->nama_siswa }}</td>
                         <td>{{ $item->nama_orgtua }}</td>
                         <td>{{ $item->kelas->nama_kelas ?? '-' }}</td>
@@ -113,13 +120,13 @@
                         <td>{{ $item->jenis_kelamin == 'L' ? 'Laki-laki' : 'Perempuan' }}</td>
                         <td>{{ $item->tgl_lahir->format('d-m-Y') }}</td>
                         <td>
-                            <a href="{{ route('siswa.show', $item->nomor_induk_siswa) }}" class="btn btn-sm btn-info">
+                            <a href="{{ route('siswa.show', ['nomor_induk_siswa' => $item->nomor_induk_siswa]) }}" class="btn btn-sm btn-info">
                                 <i class="bi bi-eye"></i> Lihat
                             </a>
-                            <a href="{{ route('siswa.edit', $item->nomor_induk_siswa) }}" class="btn btn-sm btn-warning">
+                            <a href="{{ route('siswa.edit', ['nomor_induk_siswa' => $item->nomor_induk_siswa]) }}" class="btn btn-sm btn-warning">
                                 <i class="bi bi-pencil"></i> Edit
                             </a>
-                            <form action="{{ route('siswa.destroy', $item->nomor_induk_siswa) }}" method="POST" style="display: inline;">
+                            <form action="{{ route('siswa.destroy', ['nomor_induk_siswa' => $item->nomor_induk_siswa]) }}" method="POST" style="display: inline;">
                                 @csrf
                                 @method('DELETE')
                                 <button type="button" class="btn btn-sm btn-danger" data-delete-btn data-item-name="siswa ini">

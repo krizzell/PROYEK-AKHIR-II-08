@@ -1,6 +1,8 @@
 ### Environment Variables
 @baseUrl = http://localhost:8081/api/admin
+@apiUrl = http://localhost:8081
 @contentType = application/json
+@token = 
 
 ### =====================
 ### DASHBOARD ENDPOINTS
@@ -167,4 +169,60 @@ Content-Type: {{contentType}}
 
 {
   "status_bayar": "menunggu"
+}
+
+---
+
+### =====================
+### PROFILE ENDPOINTS (NEW)
+### =====================
+
+### STEP 1: LOGIN (Get Token)
+### Change username to: andikapurba / orangtua1 / admin_guru / etc
+POST {{apiUrl}}/login
+Content-Type: {{contentType}}
+
+{
+  "email": "andikapurba",
+  "password": "password123"
+}
+
+### STEP 2: GET PROFILE
+### Paste token from login response above as: Bearer YOUR_TOKEN
+GET {{apiUrl}}/api/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+### STEP 3: UPDATE PROFILE (Orangtua)
+### For Orangtua: nama_ortu, no_hp, alamat
+PUT {{apiUrl}}/api/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Content-Type: {{contentType}}
+
+{
+  "nama_ortu": "Bapak Purba Updated",
+  "no_hp": "08987654321",
+  "alamat": "Jl. Baru No. 10"
+}
+
+### STEP 3B: UPDATE PROFILE (Guru)
+### For Guru: nama_guru, no_hp, email
+PUT {{apiUrl}}/api/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Content-Type: {{contentType}}
+
+{
+  "nama_guru": "Ibu Ani Updated",
+  "no_hp": "08111111111",
+  "email": "ibu.ani.updated@sekolah.com"
+}
+
+### STEP 4: UPDATE PASSWORD
+### Old password: password123 (default)
+PUT {{apiUrl}}/api/profile/password
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Content-Type: {{contentType}}
+
+{
+  "old_password": "password123",
+  "new_password": "newpassword456"
 }

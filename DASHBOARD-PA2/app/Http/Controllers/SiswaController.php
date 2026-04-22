@@ -61,20 +61,24 @@ class SiswaController extends Controller
         return redirect()->route('siswa.index')->with('success', 'Siswa berhasil ditambahkan');
     }
 
-    public function show(Siswa $siswa)
+    public function show($nomor_induk_siswa)
     {
+        $siswa = Siswa::where('nomor_induk_siswa', $nomor_induk_siswa)->firstOrFail();
         return view('siswa.show', compact('siswa'));
     }
 
-    public function edit(Siswa $siswa)
+    public function edit($nomor_induk_siswa)
     {
+        $siswa = Siswa::where('nomor_induk_siswa', $nomor_induk_siswa)->firstOrFail();
         // Tampilkan SEMUA kelas yang tersedia
         $kelas = Kelas::all();
         return view('siswa.edit', compact('siswa', 'kelas'));
     }
 
-    public function update(Request $request, Siswa $siswa)
+    public function update(Request $request, $nomor_induk_siswa)
     {
+        $siswa = Siswa::where('nomor_induk_siswa', $nomor_induk_siswa)->firstOrFail();
+        
         $validated = $request->validate([
             'nomor_induk_siswa' => 'required|numeric|unique:siswa,nomor_induk_siswa,' . $siswa->nomor_induk_siswa . ',nomor_induk_siswa',
             'id_kelas' => 'required|exists:kelas,id_kelas',
@@ -89,8 +93,9 @@ class SiswaController extends Controller
         return redirect()->route('siswa.index')->with('success', 'Siswa berhasil diperbarui');
     }
 
-    public function destroy(Siswa $siswa)
+    public function destroy($nomor_induk_siswa)
     {
+        $siswa = Siswa::where('nomor_induk_siswa', $nomor_induk_siswa)->firstOrFail();
         $siswa->delete();
         return redirect()->route('siswa.index')->with('success', 'Siswa berhasil dihapus');
     }

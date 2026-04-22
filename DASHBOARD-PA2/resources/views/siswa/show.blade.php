@@ -84,7 +84,7 @@
         </div>
 
         <div class="d-flex gap-2">
-            <a href="{{ route('siswa.edit', $siswa->nomor_induk_siswa) }}" class="btn btn-warning">
+            <a href="{{ route('siswa.edit', ['nomor_induk_siswa' => $siswa->nomor_induk_siswa]) }}" class="btn btn-warning">
                 <i class="bi bi-pencil"></i> Edit
             </a>
             <a href="{{ route('siswa.index') }}" class="btn btn-secondary">

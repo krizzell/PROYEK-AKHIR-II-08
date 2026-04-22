@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
+import '../services/api_services.dart';
 
 class ProfilScreen extends StatefulWidget {
   final Function(String nama, String email)? onProfilUpdated;
@@ -77,23 +78,54 @@ class _ProfilScreenState extends State<ProfilScreen>
   }
 
   void _simpanProfil() async {
-    // ... validasi tetap sama ...
+    if (_namaController.text.isEmpty || _hpController.text.isEmpty) {
+      _showSnackbar('Nama dan No. HP tidak boleh kosong', isError: true);
+      return;
+    }
 
     setState(() => _isLoadingSave = true);
-    await Future.delayed(const Duration(seconds: 1));
+    
+    // Prepare data berdasarkan role
+    Map<String, dynamic> updateData = {};
+    final userInfo = ApiService.userInfo;
+    
+    if (userInfo?['role'] == 'orangtua') {
+      updateData = {
+        'nama_ortu': _namaController.text.trim(),
+        'no_hp': _hpController.text.trim(),
+        'alamat': _emailController.text.trim(), // Untuk orangtua, email controller digunakan untuk alamat
+      };
+    } else if (userInfo?['role'] == 'guru') {
+      updateData = {
+        'nama_guru': _namaController.text.trim(),
+        'no_hp': _hpController.text.trim(),
+        'email': _emailController.text.trim(),
+      };
+    }
 
-    // ← Tambahkan baris ini
-    widget.onProfilUpdated?.call(
-      _namaController.text.trim(),
-      _emailController.text.trim(),
-    );
+    // Call API untuk update profile
+    final result = await ApiService.updateProfile(updateData);
 
-    setState(() {
-      _isLoadingSave = false;
-      _isEditingProfil = false;
-    });
-
-    _showSnackbar('Profil berhasil diperbarui! ✓');
+    if (result['success']) {
+      setState(() {
+        _isLoadingSave = false;
+        _isEditingProfil = false;
+      });
+      
+      // Update callback
+      widget.onProfilUpdated?.call(
+        _namaController.text.trim(),
+        _emailController.text.trim(),
+      );
+      
+      _showSnackbar(result['message'] ?? 'Profil berhasil diperbarui!');
+    } else {
+      setState(() => _isLoadingSave = false);
+      _showSnackbar(
+        result['message'] ?? 'Gagal mengupdate profil',
+        isError: true,
+      );
+    }
   }
 
   void _simpanPassword() async {
@@ -124,16 +156,33 @@ class _ProfilScreenState extends State<ProfilScreen>
     setState(() => _isLoadingPassword = true);
     HapticFeedback.mediumImpact();
 
-    // Simulasi API call (nanti ganti dengan ApiService.updatePassword())
-    await Future.delayed(const Duration(seconds: 1));
+    // Call API untuk update password
+    final result = await ApiService.updatePassword(
+      _passwordLamaController.text,
+      _passwordBaruController.text,
+    );
 
-    setState(() {
-      _isLoadingPassword = false;
-      _successPassword = 'Password berhasil diubah!';
-      _passwordLamaController.clear();
-      _passwordBaruController.clear();
-      _passwordKonfirmasiController.clear();
-    });
+    if (result['success']) {
+      setState(() {
+        _isLoadingPassword = false;
+        _successPassword = result['message'] ?? 'Password berhasil diubah!';
+        _errorPassword = null;
+        _passwordLamaController.clear();
+        _passwordBaruController.clear();
+        _passwordKonfirmasiController.clear();
+      });
+      _showSnackbar(_successPassword ?? 'Password berhasil diubah!');
+    } else {
+      setState(() {
+        _isLoadingPassword = false;
+        _errorPassword = result['message'] ?? 'Gagal mengubah password';
+        _successPassword = null;
+      });
+      _showSnackbar(
+        _errorPassword ?? 'Gagal mengubah password',
+        isError: true,
+      );
+    }
   }
 
   void _showSnackbar(String msg, {bool isError = false}) {

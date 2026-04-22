@@ -63,6 +63,11 @@ func main() {
 		// Perkembangan routes
 		protected.GET("/perkembangan", handlers.GetPerkembanganHandler)
 		protected.GET("/perkembangan/:id", handlers.GetPerkembanganByIDHandler)
+
+		// Profile routes
+		protected.GET("/profile", handlers.GetProfileHandler)
+		protected.PUT("/profile", handlers.UpdateProfileHandler)
+		protected.PUT("/profile/password", handlers.UpdatePasswordHandler)
 	}
 
 	// Start server
