@@ -107,8 +107,9 @@
                         <td>{{ $loop->iteration }}</td>
                         <td>
                             <strong>
-                                {{ $item->nomor_induk_siswa }}
-                                @if(empty($item->nomor_induk_siswa))
+                                @if($item->nomor_induk_siswa)
+                                    {{ $item->nomor_induk_siswa }}
+                                @else
                                     <span class="badge bg-danger">NULL/EMPTY</span>
                                 @endif
                             </strong>
@@ -120,19 +121,23 @@
                         <td>{{ $item->jenis_kelamin == 'L' ? 'Laki-laki' : 'Perempuan' }}</td>
                         <td>{{ $item->tgl_lahir->format('d-m-Y') }}</td>
                         <td>
-                            <a href="{{ route('siswa.show', ['nomor_induk_siswa' => $item->nomor_induk_siswa]) }}" class="btn btn-sm btn-info">
-                                <i class="bi bi-eye"></i> Lihat
-                            </a>
-                            <a href="{{ route('siswa.edit', ['nomor_induk_siswa' => $item->nomor_induk_siswa]) }}" class="btn btn-sm btn-warning">
-                                <i class="bi bi-pencil"></i> Edit
-                            </a>
-                            <form action="{{ route('siswa.destroy', ['nomor_induk_siswa' => $item->nomor_induk_siswa]) }}" method="POST" style="display: inline;">
-                                @csrf
-                                @method('DELETE')
-                                <button type="button" class="btn btn-sm btn-danger" data-delete-btn data-item-name="siswa ini">
-                                    <i class="bi bi-trash"></i> Hapus
-                                </button>
-                            </form>
+                            @if($item->nomor_induk_siswa)
+                                <a href="{{ route('siswa.show', ['nomor_induk_siswa' => $item->nomor_induk_siswa]) }}" class="btn btn-sm btn-info">
+                                    <i class="bi bi-eye"></i> Lihat
+                                </a>
+                                <a href="{{ route('siswa.edit', ['nomor_induk_siswa' => $item->nomor_induk_siswa]) }}" class="btn btn-sm btn-warning">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                                <form action="{{ route('siswa.destroy', ['nomor_induk_siswa' => $item->nomor_induk_siswa]) }}" method="POST" style="display: inline;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="button" class="btn btn-sm btn-danger" data-delete-btn data-item-name="siswa ini">
+                                        <i class="bi bi-trash"></i> Hapus
+                                    </button>
+                                </form>
+                            @else
+                                <span class="text-muted">Data tidak lengkap</span>
+                            @endif
                         </td>
                     </tr>
                     @endforeach
