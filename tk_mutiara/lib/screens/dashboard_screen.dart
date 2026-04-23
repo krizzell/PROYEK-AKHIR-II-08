@@ -27,11 +27,16 @@ class _DashboardScreenState extends State<DashboardScreen>
   late List<Animation<Offset>> _slideAnims;
   late Animation<double> _fadeAnim;
 
-  final List<PembayaranModel> _payments = PembayaranModel.dummyHistory();
+  List<PembayaranModel> _payments = [];
   List<PengumumanModel> _pengumuman = [];
 
-  PembayaranModel? get _tagihan =>
-      _payments.firstWhere((p) => p.isBelum, orElse: () => _payments.first);
+  PembayaranModel? get _tagihan {
+    if (_payments.isEmpty) return null;
+    for (final payment in _payments) {
+      if (payment.isBelum) return payment;
+    }
+    return null;
+  }
 
   @override
   void initState() {
@@ -49,6 +54,8 @@ class _DashboardScreenState extends State<DashboardScreen>
     
     // Load pengumuman dari API
     _loadPengumuman();
+    _loadPembayaran();
+    ApiService.paymentRefreshNotifier.addListener(_onPaymentUpdated);
     
     _animController = AnimationController(
       vsync: this,
@@ -88,8 +95,25 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
   }
 
+  void _loadPembayaran() async {
+    try {
+      final data = await ApiService.getPembayaran();
+      if (!mounted) return;
+      setState(() {
+        _payments = data;
+      });
+    } catch (e) {
+      print('Error loading pembayaran: $e');
+    }
+  }
+
+  void _onPaymentUpdated() {
+    _loadPembayaran();
+  }
+
   @override
   void dispose() {
+    ApiService.paymentRefreshNotifier.removeListener(_onPaymentUpdated);
     _animController.dispose();
     super.dispose();
   }
@@ -166,7 +190,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         iconBg: const Color(0xFFDCFCE7),
                         onTap: () => Navigator.push(
                           context,
-                          _pageRoute(PembayaranScreen(tagihan: _tagihan!)),
+                          _pageRoute(PembayaranScreen(tagihan: _tagihan)),
                         ),
                         badge: _tagihan?.isBelum == true ? 'Belum' : null,
                       ),
@@ -185,7 +209,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         iconBg: const Color(0xFFFEF3C7),
                         onTap: () => Navigator.push(
                           context,
-                          _pageRoute(HistoryScreen(payments: _payments)),
+                          _pageRoute(const HistoryScreen()),
                         ),
                       ),
                     ),

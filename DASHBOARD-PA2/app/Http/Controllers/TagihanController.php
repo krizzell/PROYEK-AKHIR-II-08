@@ -247,7 +247,8 @@ class TagihanController extends Controller
                     'nomor_induk_siswa' => $siswa->nomor_induk_siswa,
                     'jumlah_tagihan' => $validated['jumlah_tagihan'],
                     'periode' => $validated['periode'],
-                    'status' => 'belum_bayar'
+                    'status' => 'belum_bayar',
+                    'payment_status' => 'belum_bayar'
                 ]);
                 $countCreated++;
             }
@@ -324,7 +325,10 @@ class TagihanController extends Controller
         }
 
         // Execute update
-        $count = $query->update(['status' => $validated['new_status']]);
+        $count = $query->update([
+            'status' => $validated['new_status'],
+            'payment_status' => $validated['new_status'],
+        ]);
 
         $statusLabels = ['belum_bayar' => 'Belum Bayar', 'lunas' => 'Lunas'];
         $newStatusLabel = $statusLabels[$validated['new_status']];

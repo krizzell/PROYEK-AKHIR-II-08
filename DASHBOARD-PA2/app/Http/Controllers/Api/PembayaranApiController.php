@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Akun;
 use App\Models\Tagihan;
 use Illuminate\Http\Request;
 use Midtrans\Config;
@@ -28,14 +29,42 @@ class PembayaranApiController extends Controller
     public function create(Request $request)
     {
         try {
-            $request->validate([
-                'id_tagihan' => 'required|exists:tagihan,id_tagihan',
-            ]);
+            $idTagihan = $request->input('invoice_id')
+                ?? $request->input('id_tagihan')
+                ?? $request->input('id');
+            $userId = $request->input('user_id');
 
-            $tagihan = Tagihan::with('siswa')->findOrFail($request->id_tagihan);
+            if (!$idTagihan) {
+                $raw = json_decode($request->getContent(), true);
+                if (is_array($raw)) {
+                    $idTagihan = $raw['invoice_id'] ?? $raw['id_tagihan'] ?? $raw['id'] ?? null;
+                    $userId = $raw['user_id'] ?? $userId;
+                }
+            }
+
+            if (!$idTagihan || !Tagihan::where('id_tagihan', $idTagihan)->exists()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'invoice_id tidak valid',
+                ], 422);
+            }
+
+            $tagihan = Tagihan::with('siswa')->findOrFail($idTagihan);
+
+            // Optional security check: user_id harus cocok dengan pemilik tagihan
+            if ($userId) {
+                $akun = Akun::find($userId);
+                if (!$akun || $akun->nomor_induk_siswa !== $tagihan->nomor_induk_siswa) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'User tidak berhak membayar tagihan ini',
+                    ], 403);
+                }
+            }
 
             // Check if already paid
-            if ($tagihan->payment_status === 'lunas') {
+            $currentStatus = $tagihan->payment_status ?: $tagihan->status;
+            if ($currentStatus === 'lunas') {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Tagihan sudah lunas',
@@ -43,7 +72,7 @@ class PembayaranApiController extends Controller
             }
 
             // Generate transaction ID (unique)
-            $transactionId = 'TAG-' . $tagihan->id_tagihan . '-' . time();
+            $transactionId = 'INV-' . $tagihan->id_tagihan . '-' . time();
 
             // Prepare payment details
             $transaction_details = array(
@@ -70,22 +99,50 @@ class PembayaranApiController extends Controller
                 ],
             );
 
-            // Get Snap Token
-            $snapToken = Snap::getSnapToken($payload);
+            // Create transaction and get token + redirect_url
+            $midtransTransaction = Snap::createTransaction($payload);
+            $snapToken = $midtransTransaction->token ?? null;
+            $redirectUrl = $midtransTransaction->redirect_url ?? null;
+
+            if (!$snapToken || !$redirectUrl) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Gagal membuat transaksi Midtrans',
+                ], 500);
+            }
 
             // Store transaction_id temporarily in tagihan
             $tagihan->update([
                 'transaction_id' => $transactionId,
-                'payment_method' => $request->input('payment_method', 'unknown'),
+                'payment_method' => $request->input('payment_method', 'snap'),
+                'status' => 'belum_bayar',
+                'payment_status' => 'belum_bayar',
             ]);
+
+            // Sandbox automation: allow backend-only payment flow for mobile testing/demo.
+            // This will mark payment as paid immediately without opening Midtrans page.
+            $isProduction = (bool) config('services.midtrans.is_production', false);
+            $autoSuccess = !$isProduction && $request->boolean('auto_success', true);
+
+            if ($autoSuccess) {
+                $tagihan->update([
+                    'status' => 'lunas',
+                    'payment_status' => 'lunas',
+                    'payment_date' => now(),
+                ]);
+            }
 
             return response()->json([
                 'status' => 'success',
                 'data' => [
+                    'invoice_id' => $tagihan->id_tagihan,
                     'snap_token' => $snapToken,
+                    'redirect_url' => $redirectUrl,
                     'transaction_id' => $transactionId,
                     'order_id' => $transactionId,
                     'gross_amount' => $tagihan->jumlah_tagihan,
+                    'payment_status' => $autoSuccess ? 'lunas' : 'belum_bayar',
+                    'auto_success' => $autoSuccess,
                 ],
             ], 200);
         } catch (\Exception $e) {
@@ -130,6 +187,7 @@ class PembayaranApiController extends Controller
                 if ($tagihan->payment_status !== $paymentStatus) {
                     $tagihan->update([
                         'payment_status' => $paymentStatus,
+                        'status' => $paymentStatus,
                         'payment_method' => $status->payment_type ?? null,
                     ]);
 
@@ -184,9 +242,24 @@ class PembayaranApiController extends Controller
         try {
             $notif = json_decode($request->getContent());
             $transactionId = $notif->order_id ?? null;
+            $statusCode = $notif->status_code ?? null;
+            $grossAmount = $notif->gross_amount ?? null;
+            $signatureKey = $notif->signature_key ?? null;
 
             if (!$transactionId) {
                 return response()->json(['status' => 'error'], 400);
+            }
+
+            // Verify Midtrans signature for security
+            if ($statusCode && $grossAmount && $signatureKey) {
+                $serverKey = config('services.midtrans.server_key');
+                $expectedSignature = hash('sha512', $transactionId . $statusCode . $grossAmount . $serverKey);
+                if (!hash_equals($expectedSignature, $signatureKey)) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Invalid signature',
+                    ], 403);
+                }
             }
 
             // Get status from Midtrans
@@ -204,6 +277,7 @@ class PembayaranApiController extends Controller
             // Update tagihan dengan status terbaru
             $updateData = [
                 'payment_status' => $paymentStatus,
+                'status' => $paymentStatus,
                 'payment_method' => $status->payment_type ?? null,
             ];
 

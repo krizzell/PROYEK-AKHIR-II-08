@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../models/pembayaran_model.dart';
+import '../services/api_services.dart';
 
 class PembayaranScreen extends StatefulWidget {
-  final PembayaranModel tagihan;
+  final PembayaranModel? tagihan;
   final VoidCallback? onBackPressed;
   
   const PembayaranScreen({
     super.key,
-    required this.tagihan,
+    this.tagihan,
     this.onBackPressed,
   });
 
@@ -20,8 +21,13 @@ class PembayaranScreen extends StatefulWidget {
 class _PembayaranScreenState extends State<PembayaranScreen>
     with SingleTickerProviderStateMixin {
   int _selectedMethod = 0;
+  bool _isLoading = true;
   bool _isProcessing = false;
   bool _isDone = false;
+  String? _error;
+  String _paidTransactionId = '-';
+  String _paymentStateLabel = 'Belum Dibayar';
+  List<PembayaranModel> _allTagihan = [];
 
   late AnimationController _doneController;
   late Animation<double> _doneScale;
@@ -47,6 +53,14 @@ class _PembayaranScreenState extends State<PembayaranScreen>
     },
   ];
 
+  PembayaranModel? get _activeTagihan {
+    if (widget.tagihan != null) return widget.tagihan;
+    for (final t in _allTagihan) {
+      if (t.isBelum) return t;
+    }
+    return _allTagihan.isNotEmpty ? _allTagihan.first : null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -58,6 +72,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
       parent: _doneController,
       curve: Curves.elasticOut,
     );
+    _loadTagihan();
   }
 
   @override
@@ -66,20 +81,167 @@ class _PembayaranScreenState extends State<PembayaranScreen>
     super.dispose();
   }
 
+  Future<void> _loadTagihan() async {
+    try {
+      final data = await ApiService.getPembayaran();
+      if (!mounted) return;
+      setState(() {
+        _allTagihan = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = '$e';
+        _isLoading = false;
+      });
+    }
+  }
+
   void _processBayar() async {
+    final tagihan = _activeTagihan;
+    if (tagihan == null) return;
+
     setState(() => _isProcessing = true);
     HapticFeedback.mediumImpact();
-    await Future.delayed(const Duration(seconds: 2));
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Membuat transaksi pembayaran...')),
+      );
+    }
+
+    final method = (_methods[_selectedMethod]['label'] as String).toLowerCase();
+    final result = await ApiService.bayarSPP(tagihan.id, method);
+
+    if (!mounted) return;
+
+    if (result['success'] == true) {
+      _paidTransactionId = (result['transaction_id'] ?? '-').toString();
+      final paymentStatus = (result['payment_status'] ?? '').toString().toLowerCase();
+
+      if (paymentStatus == 'lunas') {
+        setState(() {
+          _isDone = true;
+          _paymentStateLabel = 'Lunas';
+        });
+        _doneController.forward();
+        HapticFeedback.heavyImpact();
+        ApiService.notifyPaymentUpdated();
+        await _loadTagihan();
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Transaksi berhasil dibuat. Sistem sedang menunggu callback Midtrans.'),
+        ),
+      );
+
+      setState(() {
+        _paymentStateLabel = 'Menunggu Pembayaran';
+      });
+
+      await _pollStatusInBackground();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? 'Gagal membuat transaksi pembayaran')),
+      );
+    }
+
     setState(() {
       _isProcessing = false;
-      _isDone = true;
     });
-    _doneController.forward();
-    HapticFeedback.heavyImpact();
+  }
+
+  Future<void> _pollStatusInBackground() async {
+    // Poll for a short period to capture immediate settlement in sandbox.
+    for (int i = 0; i < 10; i++) {
+      await Future.delayed(const Duration(seconds: 3));
+      if (!mounted) return;
+
+      final result = await ApiService.cekStatusPembayaran(_paidTransactionId);
+      if (result['success'] == true) {
+        final data = result['data'] as Map<String, dynamic>? ?? {};
+        final paymentStatus = (data['payment_status'] ?? '').toString().toLowerCase();
+        if (paymentStatus == 'lunas') {
+          setState(() {
+            _isDone = true;
+            _paymentStateLabel = 'Lunas';
+          });
+          _doneController.forward();
+          HapticFeedback.heavyImpact();
+          ApiService.notifyPaymentUpdated();
+          _loadTagihan();
+          return;
+        }
+      }
+    }
+  }
+
+  Future<void> _cekStatusPembayaran() async {
+    if (_paidTransactionId == '-' || _paidTransactionId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Belum ada transaksi yang dibuat.')),
+      );
+      return;
+    }
+
+    setState(() => _isProcessing = true);
+    final result = await ApiService.cekStatusPembayaran(_paidTransactionId);
+    if (!mounted) return;
+
+    if (result['success'] == true) {
+      final data = result['data'] as Map<String, dynamic>? ?? {};
+      final paymentStatus = (data['payment_status'] ?? '').toString().toLowerCase();
+
+      if (paymentStatus == 'lunas') {
+        setState(() {
+          _isDone = true;
+          _paymentStateLabel = 'Lunas';
+          _isProcessing = false;
+        });
+        _doneController.forward();
+        HapticFeedback.heavyImpact();
+        ApiService.notifyPaymentUpdated();
+        _loadTagihan();
+      } else {
+        setState(() {
+          _paymentStateLabel = 'Menunggu Pembayaran';
+          _isProcessing = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Status masih belum_bayar/pending. Selesaikan pembayaran di Midtrans dulu.')),
+        );
+      }
+    } else {
+      setState(() => _isProcessing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? 'Gagal cek status pembayaran')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppTheme.background,
+        body: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(context),
+              const Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(color: AppTheme.primary),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
@@ -91,6 +253,32 @@ class _PembayaranScreenState extends State<PembayaranScreen>
   }
 
   Widget _buildPaymentView(BuildContext context) {
+    final tagihan = _activeTagihan;
+
+    if (tagihan == null) {
+      return Column(
+        children: [
+          _buildHeader(context),
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  _error ?? 'Tidak ada tagihan untuk akun ini.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppTheme.textMedium,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     return Column(
       children: [
         _buildHeader(context),
@@ -100,9 +288,9 @@ class _PembayaranScreenState extends State<PembayaranScreen>
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                _buildTagihanCard(),
+                _buildTagihanCard(tagihan),
                 const SizedBox(height: 24),
-                _buildMethodSection(),
+                if (tagihan.isLunas) _buildLunasNotice() else _buildMethodSection(),
                 const SizedBox(height: 24),
                 _buildInfoBox(),
                 const SizedBox(height: 100),
@@ -155,7 +343,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
     );
   }
 
-  Widget _buildTagihanCard() {
+  Widget _buildTagihanCard(PembayaranModel tagihan) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -185,9 +373,9 @@ class _PembayaranScreenState extends State<PembayaranScreen>
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  'Belum Lunas',
-                  style: TextStyle(
+                child: Text(
+                  tagihan.isLunas ? 'Lunas' : 'Belum Lunas',
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -197,12 +385,9 @@ class _PembayaranScreenState extends State<PembayaranScreen>
             ],
           ),
           const SizedBox(height: 16),
-          _tagihanRow('Nama Siswa', 'Bintang Mutiara'),
-          _tagihanRow('Kelas', 'Kelas A'),
-          _tagihanRow(
-            'Bulan',
-            '${widget.tagihan.bulan} ${widget.tagihan.tahun}',
-          ),
+          _tagihanRow('Nama Siswa', tagihan.namaSiswa.isEmpty ? '-' : tagihan.namaSiswa),
+          _tagihanRow('Kelas', tagihan.kelas.isEmpty ? '-' : tagihan.kelas),
+          _tagihanRow('Periode', tagihan.periode),
           const Divider(color: Colors.white24, height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -216,7 +401,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
                 ),
               ),
               Text(
-                widget.tagihan.nominalFormatted,
+                tagihan.nominalFormatted,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 20,
@@ -254,6 +439,8 @@ class _PembayaranScreenState extends State<PembayaranScreen>
   }
 
   Widget _buildMethodSection() {
+    final tagihan = _activeTagihan;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -362,7 +549,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
           width: double.infinity,
           height: 56,
           child: ElevatedButton(
-            onPressed: _isProcessing ? null : _processBayar,
+            onPressed: (_isProcessing || tagihan == null || tagihan.isLunas) ? null : _processBayar,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
               disabledBackgroundColor: AppTheme.primary.withOpacity(0.6),
@@ -380,7 +567,9 @@ class _PembayaranScreenState extends State<PembayaranScreen>
                     ),
                   )
                 : Text(
-                    'Bayar ${widget.tagihan.nominalFormatted}',
+                    tagihan?.isLunas == true
+                        ? 'Pembayaran Sudah Lunas'
+                        : 'Bayar ${tagihan?.nominalFormatted ?? 'Rp 0'}',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -389,7 +578,61 @@ class _PembayaranScreenState extends State<PembayaranScreen>
                   ),
           ),
         ),
+        if (_paidTransactionId != '-') ...[
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: OutlinedButton(
+              onPressed: _isProcessing ? null : _cekStatusPembayaran,
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppTheme.primary, width: 1.5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: Text(
+                _isProcessing ? 'Mengecek...' : 'Cek Status Pembayaran',
+                style: const TextStyle(
+                  color: AppTheme.primary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
+    );
+  }
+
+  Widget _buildLunasNotice() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F8EE),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF16A34A).withOpacity(0.35)),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 24),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Pembayaran sudah lunas. Tidak ada tagihan aktif untuk dibayar saat ini.',
+              style: TextStyle(
+                color: Color(0xFF166534),
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -426,6 +669,8 @@ class _PembayaranScreenState extends State<PembayaranScreen>
   }
 
   Widget _buildSuccessView(BuildContext context) {
+    final tagihan = _activeTagihan;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -460,7 +705,9 @@ class _PembayaranScreenState extends State<PembayaranScreen>
             ),
             const SizedBox(height: 12),
             Text(
-              'SPP ${widget.tagihan.bulan} ${widget.tagihan.tahun} telah berhasil dibayar. Terima kasih!',
+              _paymentStateLabel.toLowerCase() == 'lunas'
+                  ? 'Pembayaran tagihan ${tagihan?.periode ?? '-'} sudah lunas.'
+                  : 'Transaksi tagihan ${tagihan?.periode ?? '-'} berhasil dibuat. Sistem sedang memproses pembayaran.',
               style: const TextStyle(
                 color: AppTheme.textMedium,
                 fontSize: 14,
@@ -479,16 +726,13 @@ class _PembayaranScreenState extends State<PembayaranScreen>
               ),
               child: Column(
                 children: [
-                  _successRow(
-                    'Nomor Bukti',
-                    'TRX-${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}',
-                  ),
+                  _successRow('Transaction ID', _paidTransactionId),
                   _successRow(
                     'Metode',
                     _methods[_selectedMethod]['label'] as String,
                   ),
-                  _successRow('Jumlah', widget.tagihan.nominalFormatted),
-                  _successRow('Status', '✓ Lunas'),
+                  _successRow('Jumlah', tagihan?.nominalFormatted ?? 'Rp 0'),
+                  _successRow('Status', _paymentStateLabel),
                 ],
               ),
             ),
@@ -498,13 +742,11 @@ class _PembayaranScreenState extends State<PembayaranScreen>
               height: 52,
               child: ElevatedButton(
                 onPressed: () {
-                  // Reset ke payment view
-                  setState(() {
-                    _isDone = false;
-                    _isProcessing = false;
-                    _selectedMethod = 0;
-                    _doneController.reset();
-                  });
+                  if (widget.onBackPressed != null) {
+                    widget.onBackPressed!();
+                    return;
+                  }
+                  Navigator.pop(context);
                 },
                 child: const Text('Kembali ke Beranda'),
               ),

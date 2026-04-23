@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import '../models/pembayaran_model.dart';
 import 'dashboard_screen.dart';
 import 'perkembangan_screen.dart';
 import 'pembayaran_screen.dart';
@@ -17,13 +16,6 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
   int _previousIndex = 0; // Track previous tab for back button
-  late final List<PembayaranModel> _payments;
-
-  @override
-  void initState() {
-    super.initState();
-    _payments = PembayaranModel.dummyHistory();
-  }
 
   // Fungsi untuk back ke tab sebelumnya atau Home
   void _goBack() {
@@ -39,11 +31,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   late final List<Widget> _screens = [
     const DashboardScreen(),
     PerkembanganScreen(onBackPressed: _goBack),
-    PembayaranScreen(
-      tagihan: _payments.firstWhere((p) => p.isBelum, orElse: () => _payments.first),
-      onBackPressed: _goBack,
-    ),
-    HistoryScreen(payments: _payments, onBackPressed: _goBack),
+    PembayaranScreen(onBackPressed: _goBack),
+    HistoryScreen(onBackPressed: _goBack),
     PengumumanScreen(onBackPressed: _goBack),
   ];
 

@@ -25,9 +25,11 @@ Route::middleware('api')->group(function () {
     Route::get('/tagihan/{id}', [TagihanApiController::class, 'show']);
     
     // Pembayaran APIs
+    Route::post('/create-payment', [PembayaranApiController::class, 'create']);
     Route::post('/pembayaran/create', [PembayaranApiController::class, 'create']);
     Route::get('/pembayaran/{transaction_id}/status', [PembayaranApiController::class, 'status']);
     
-    // Public webhook endpoint (no auth required)
+    // Midtrans callback endpoints
+    Route::post('/payment-notification', [PembayaranApiController::class, 'webhook']);
     Route::post('/webhook/midtrans', [PembayaranApiController::class, 'webhook']);
 });

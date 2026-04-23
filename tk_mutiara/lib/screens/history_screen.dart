@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../models/pembayaran_model.dart';
+import '../services/api_services.dart';
 
 class HistoryScreen extends StatefulWidget {
-  final List<PembayaranModel> payments;
+  final List<PembayaranModel>? payments;
   final VoidCallback? onBackPressed;
   
   const HistoryScreen({
     super.key,
-    required this.payments,
+    this.payments,
     this.onBackPressed,
   });
 
@@ -18,26 +19,82 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   String _filter = 'semua';
+  bool _isLoading = true;
+  String? _error;
+  List<PembayaranModel> _payments = [];
 
-  List<PembayaranModel> get _filtered {
-    if (_filter == 'semua') return widget.payments;
-    return widget.payments.where((p) => p.status == _filter).toList();
+  @override
+  void initState() {
+    super.initState();
+    _loadPayments();
   }
 
-  int get _totalLunas => widget.payments
+  Future<void> _loadPayments() async {
+    try {
+      if (widget.payments != null) {
+        _payments = widget.payments!;
+      } else {
+        _payments = await ApiService.getPembayaran();
+      }
+    } catch (e) {
+      _error = '$e';
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  List<PembayaranModel> get _filtered {
+    if (_filter == 'semua') return _payments;
+    return _payments.where((p) => p.status == _filter).toList();
+  }
+
+  int get _totalLunas => _payments
       .where((p) => p.isLunas)
       .fold(0, (sum, p) => sum + p.nominal);
 
-  int get _jumlahLunas => widget.payments.where((p) => p.isLunas).length;
+  int get _jumlahLunas => _payments.where((p) => p.isLunas).length;
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppTheme.background,
+        body: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(context),
+              const Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(color: AppTheme.primary),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
         child: Column(
           children: [
             _buildHeader(context),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                child: Text(
+                  'Gagal memuat histori: $_error',
+                  style: const TextStyle(
+                    color: AppTheme.danger,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),

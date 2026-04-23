@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/pembayaran_model.dart';
 import '../models/pengumuman_model.dart';
@@ -12,11 +13,16 @@ class ApiService {
   static String? _token;
   static Map<String, dynamic>? _user;
   static String? _nomorIndukSiswa;
+  static final ValueNotifier<int> paymentRefreshNotifier = ValueNotifier<int>(0);
 
   // Getter untuk user data
   static Map<String, dynamic>? get userInfo => _user;
   static String? get token => _token;
   static String? get nomorIndukSiswa => _nomorIndukSiswa;
+
+  static void notifyPaymentUpdated() {
+    paymentRefreshNotifier.value = paymentRefreshNotifier.value + 1;
+  }
 
   static Map<String, String> get _headers => {
         'Content-Type': 'application/json',
@@ -219,21 +225,72 @@ class ApiService {
   // BAYAR SPP
   static Future<Map<String, dynamic>> bayarSPP(String id, String metode) async {
     try {
+      print('=== CREATE PEMBAYARAN ===');
+      print('URL: $baseUrl/api/create-payment');
+      print('invoice_id: $id');
+      print('payment_method: $metode');
+
       final res = await http.post(
-        Uri.parse('$baseUrl/pembayaran/bayar'),
+        Uri.parse('$baseUrl/api/create-payment'),
         headers: _headers,
-        body: jsonEncode({'id': id, 'metode': metode}),
+        body: jsonEncode({
+          'invoice_id': int.tryParse(id) ?? 0,
+          'user_id': _user?['id_akun'],
+          'payment_method': metode,
+          'auto_success': true,
+        }),
+      ).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () => throw Exception('Request timeout'),
+      );
+
+      print('Status: ${res.statusCode}');
+      print('Body: ${res.body}');
+      final data = jsonDecode(res.body);
+
+      if (res.statusCode == 200 && data['status'] == 'success') {
+        final payload = data['data'] ?? {};
+        return {
+          'success': true,
+          'snap_token': payload['snap_token'],
+          'redirect_url': payload['redirect_url'],
+          'transaction_id': payload['transaction_id'],
+          'order_id': payload['order_id'],
+          'payment_status': payload['payment_status'],
+          'auto_success': payload['auto_success'] ?? false,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Gagal membuat transaksi pembayaran',
+        };
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Gagal terhubung ke server: $e'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> cekStatusPembayaran(String transactionId) async {
+    try {
+      final res = await http.get(
+        Uri.parse('$baseUrl/api/pembayaran/$transactionId/status'),
+        headers: _headers,
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => throw Exception('Request timeout'),
       );
 
       final data = jsonDecode(res.body);
-
-      if (res.statusCode == 200) {
-        return {'success': true, 'kode_transaksi': data['kode_transaksi']};
-      } else {
-        return {'success': false, 'message': data['error']};
+      if (res.statusCode == 200 && data['status'] == 'success') {
+        return {'success': true, 'data': data['data']};
       }
+
+      return {
+        'success': false,
+        'message': data['message'] ?? 'Gagal cek status pembayaran',
+      };
     } catch (e) {
-      return {'success': false, 'message': 'Gagal terhubung ke server'};
+      return {'success': false, 'message': 'Gagal cek status: $e'};
     }
   }
 

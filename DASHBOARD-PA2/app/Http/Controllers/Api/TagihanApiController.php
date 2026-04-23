@@ -30,16 +30,20 @@ class TagihanApiController extends Controller
                 ->orderBy('id_tagihan', 'desc')
                 ->get()
                 ->map(function ($item) {
+                    $normalizedStatus = $item->payment_status ?: ($item->status ?: 'belum_bayar');
+
                     return [
                         'id_tagihan' => $item->id_tagihan,
                         'nomor_induk_siswa' => $item->nomor_induk_siswa,
-                        'nama_siswa' => $item->siswa->nama_siswa,
-                        'kelas' => $item->siswa->kelas->nama_kelas,
+                        'nama_siswa' => $item->siswa?->nama_siswa ?? '-',
+                        'kelas' => $item->siswa?->kelas?->nama_kelas ?? '-',
                         'jumlah_tagihan' => $item->jumlah_tagihan,
                         'periode' => $item->periode,
-                        'payment_status' => $item->payment_status,
+                        'status' => $normalizedStatus,
+                        'payment_status' => $normalizedStatus,
                         'transaction_id' => $item->transaction_id,
-                        'payment_date' => $item->payment_date,
+                        'payment_method' => $item->payment_method,
+                        'payment_date' => optional($item->payment_date)->format('Y-m-d H:i:s'),
                         'created_at' => $item->created_at->format('Y-m-d H:i:s'),
                     ];
                 });
@@ -69,14 +73,14 @@ class TagihanApiController extends Controller
                 'data' => [
                     'id_tagihan' => $tagihan->id_tagihan,
                     'nomor_induk_siswa' => $tagihan->nomor_induk_siswa,
-                    'nama_siswa' => $tagihan->siswa->nama_siswa,
-                    'kelas' => $tagihan->siswa->kelas->nama_kelas,
+                    'nama_siswa' => $tagihan->siswa?->nama_siswa ?? '-',
+                    'kelas' => $tagihan->siswa?->kelas?->nama_kelas ?? '-',
                     'jumlah_tagihan' => $tagihan->jumlah_tagihan,
                     'periode' => $tagihan->periode,
-                    'payment_status' => $tagihan->payment_status,
+                    'payment_status' => $tagihan->payment_status ?: ($tagihan->status ?: 'belum_bayar'),
                     'transaction_id' => $tagihan->transaction_id,
                     'payment_method' => $tagihan->payment_method,
-                    'payment_date' => $tagihan->payment_date,
+                    'payment_date' => optional($tagihan->payment_date)->format('Y-m-d H:i:s'),
                 ],
             ], 200);
         } catch (\Exception $e) {
