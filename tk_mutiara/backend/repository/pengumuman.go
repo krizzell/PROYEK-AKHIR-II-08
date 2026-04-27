@@ -2,7 +2,6 @@ package repository
 
 import (
 	"database/sql"
-	"log"
 	"tk_mutiara_backend/models"
 )
 
@@ -26,7 +25,6 @@ func GetAllPengumuman(db *sql.DB) ([]models.Pengumuman, error) {
 
 	rows, err := db.Query(query)
 	if err != nil {
-		log.Printf("Error querying pengumuman: %v", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -47,14 +45,12 @@ func GetAllPengumuman(db *sql.DB) ([]models.Pengumuman, error) {
 			&p.UpdatedAt,
 		)
 		if err != nil {
-			log.Printf("Error scanning pengumuman row: %v", err)
 			return nil, err
 		}
 		pengumuman = append(pengumuman, p)
 	}
 
 	if err = rows.Err(); err != nil {
-		log.Printf("Error iterating pengumuman rows: %v", err)
 		return nil, err
 	}
 
@@ -94,10 +90,8 @@ func GetPengumumanByID(db *sql.DB, id int64) (models.Pengumuman, error) {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Printf("Pengumuman not found: %d", id)
 			return p, err
 		}
-		log.Printf("Error querying pengumuman by ID: %v", err)
 		return p, err
 	}
 

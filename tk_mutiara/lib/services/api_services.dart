@@ -37,6 +37,58 @@ class ApiService {
         if (_token != null) 'Authorization': 'Bearer $_token',
       };
 
+  static Map<String, dynamic>? _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return null;
+  }
+
+  static List<dynamic> _asList(dynamic value) {
+    if (value is List) return value;
+    return const [];
+  }
+
+  static Map<String, dynamic> _extractEnvelope(dynamic decoded) {
+    final map = _asMap(decoded);
+    if (map == null) return {};
+
+    final data = map['data'];
+    final wrapped = _asMap(data);
+    if (wrapped != null && (wrapped.containsKey('success') || wrapped.containsKey('status'))) {
+      return wrapped;
+    }
+
+    return map;
+  }
+
+  static List<dynamic> _extractList(dynamic decoded) {
+    final envelope = _extractEnvelope(decoded);
+    final data = envelope['data'];
+    if (data is List) return data;
+    return _asList(decoded);
+  }
+
+  static Map<String, dynamic> _extractMap(dynamic decoded) {
+    final envelope = _extractEnvelope(decoded);
+    final data = envelope['data'];
+    final dataMap = _asMap(data);
+    if (dataMap != null) return dataMap;
+    return envelope;
+  }
+
+  static bool _isSuccess(dynamic decoded) {
+    final envelope = _extractEnvelope(decoded);
+    final success = envelope['success'];
+    if (success is bool) return success;
+    final status = envelope['status']?.toString().toLowerCase();
+    return status == 'success';
+  }
+
+  static String _extractMessage(dynamic decoded, {String fallback = 'Terjadi kesalahan'}) {
+    final envelope = _extractEnvelope(decoded);
+    return (envelope['message'] ?? envelope['error'] ?? fallback).toString();
+  }
+
   // LOGIN~
   static Future<Map<String, dynamic>> login(String email, String password) async {
     try {
@@ -62,21 +114,24 @@ class ApiService {
       final data = jsonDecode(res.body);
       print('Parsed Data: $data');
 
-      if (res.statusCode == 200 && data['success'] == true) {
-        _token = data['token'];
-        _user = data['user'];  // SAVE USER DATA
-        _nomorIndukSiswa = data['user']['nomor_induk_siswa'];  // SAVE NOMOR INDUK SISWA
+      final envelope = _extractEnvelope(data);
+      final userData = _asMap(envelope['user'] ?? envelope['data']?['user'] ?? data['user']) ?? {};
+
+      if (res.statusCode == 200 && _isSuccess(data)) {
+        _token = (envelope['token'] ?? data['token'])?.toString();
+        _user = userData;  // SAVE USER DATA
+        _nomorIndukSiswa = (userData['nomor_induk_siswa'] ?? envelope['nomor_induk_siswa'] ?? data['nomor_induk_siswa'])?.toString();  // SAVE NOMOR INDUK SISWA
         print('✓ Token saved: $_token');
         print('✓ User saved: $_user');
         print('✓ Nomor Induk Siswa saved: $_nomorIndukSiswa');
         return {
           'success': true,
-          'token': data['token'],
-          'user': data['user'] ?? {},
-          'message': 'Login berhasil'
+          'token': _token,
+          'user': _user ?? {},
+          'message': _extractMessage(data, fallback: 'Login berhasil')
         };
       } else {
-        final errorMsg = data['error'] ?? data['message'] ?? 'Login gagal';
+        final errorMsg = _extractMessage(data, fallback: 'Login gagal');
         print('✗ Login Error: $errorMsg');
         return {
           'success': false,
@@ -118,10 +173,13 @@ class ApiService {
       print('Body: ${res.body}');
 
       if (res.statusCode == 200) {
-        final List data = jsonDecode(res.body);
+        final decoded = jsonDecode(res.body);
+        final List data = _extractList(decoded);
         print('Data count: ${data.length}');
-        
-        final result = data.map((e) => PengumumanModel.fromJson(e)).toList();
+
+        final result = data
+            .map((e) => PengumumanModel.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
         print('✓ Loaded ${result.length} pengumuman records');
         return result;
       } else if (res.statusCode == 401) {
@@ -161,19 +219,23 @@ class ApiService {
       print('Body: ${res.body}');
 
       if (res.statusCode == 200) {
-        final Map<String, dynamic> decoded = jsonDecode(res.body);
+        final decoded = jsonDecode(res.body);
+        final envelope = _extractEnvelope(decoded);
         print('Decoded: $decoded');
-        
-        if (decoded['success'] == true) {
-          final List data = decoded['data'] ?? [];
+
+        if (_isSuccess(decoded)) {
+          final List data = _extractList(decoded);
           print('Data count: ${data.length}');
-          
-          final result = data.map((e) => PerkembanganModel.fromJson(e)).toList();
+
+          final result = data
+              .map((e) => PerkembanganModel.fromJson(Map<String, dynamic>.from(e as Map)))
+              .toList();
           print('✓ Loaded ${result.length} perkembangan records');
           return result;
         } else {
-          print('API error: ${decoded['message']}');
-          throw Exception('API error: ${decoded['message']}');
+          final message = _extractMessage(envelope, fallback: 'Error loading perkembangan');
+          print('API error: $message');
+          throw Exception('API error: $message');
         }
       } else if (res.statusCode == 401) {
         print('✗ Unauthorized - Token expired');
@@ -211,14 +273,14 @@ class ApiService {
       print('Body: ${res.body}');
 
       if (res.statusCode == 200) {
-        final Map<String, dynamic> decoded = jsonDecode(res.body);
-        
-        if (decoded['status'] == 'success') {
-          final List data = decoded['data'] ?? [];
+        final decoded = jsonDecode(res.body);
+
+        if (_isSuccess(decoded)) {
+          final List data = _extractList(decoded);
           print('✓ Loaded ${data.length} tagihan records');
-          return data.map((e) => PembayaranModel.fromJson(e)).toList();
+          return data.map((e) => PembayaranModel.fromJson(Map<String, dynamic>.from(e as Map))).toList();
         } else {
-          throw Exception(decoded['message'] ?? 'Error loading tagihan');
+          throw Exception(_extractMessage(decoded, fallback: 'Error loading tagihan'));
         }
       } else if (res.statusCode == 401) {
         throw Exception('Sesi habis, silakan login ulang');
@@ -256,8 +318,8 @@ class ApiService {
       print('Body: ${res.body}');
       final data = jsonDecode(res.body);
 
-      if (res.statusCode == 200 && data['status'] == 'success') {
-        final payload = data['data'] ?? {};
+      if (res.statusCode == 200 && _isSuccess(data)) {
+        final payload = _extractMap(data);
         return {
           'success': true,
           'snap_token': payload['snap_token'],
@@ -322,11 +384,11 @@ class ApiService {
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
-        if (data['success'] == true) {
+        if (_isSuccess(data)) {
           print('✓ Profile loaded successfully');
-          return {'success': true, 'data': data['data']};
+          return {'success': true, 'data': _extractMap(data)};
         } else {
-          throw Exception(data['error'] ?? 'Error loading profile');
+          throw Exception(_extractMessage(data, fallback: 'Error loading profile'));
         }
       } else if (res.statusCode == 401) {
         throw Exception('Sesi habis, silakan login ulang');
@@ -365,11 +427,11 @@ class ApiService {
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
-        if (data['success'] == true) {
+        if (_isSuccess(data)) {
           print('✓ Password updated successfully');
-          return {'success': true, 'message': data['message']};
+          return {'success': true, 'message': _extractMessage(data, fallback: 'Password berhasil diubah')};
         } else {
-          return {'success': false, 'message': data['error'] ?? 'Error updating password'};
+          return {'success': false, 'message': _extractMessage(data, fallback: 'Error updating password')};
         }
       } else if (res.statusCode == 401) {
         return {'success': false, 'message': 'Password lama tidak sesuai'};
@@ -403,11 +465,11 @@ class ApiService {
 
       if (res.statusCode == 200) {
         final responseData = jsonDecode(res.body);
-        if (responseData['success'] == true) {
+        if (_isSuccess(responseData)) {
           print('✓ Profile updated successfully');
-          return {'success': true, 'message': responseData['message']};
+          return {'success': true, 'message': _extractMessage(responseData, fallback: 'Profil berhasil diubah')};
         } else {
-          return {'success': false, 'message': responseData['error'] ?? 'Error updating profile'};
+          return {'success': false, 'message': _extractMessage(responseData, fallback: 'Error updating profile')};
         }
       } else if (res.statusCode == 401) {
         return {'success': false, 'message': 'Sesi habis, silakan login ulang'};

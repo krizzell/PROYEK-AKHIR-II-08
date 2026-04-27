@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -14,6 +13,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+func writeAuthError(c *gin.Context, statusCode int, message string, err error) {
+	response := models.ApiResponse{Success: false, Message: message}
+	if err != nil {
+		response.Errors = gin.H{"detail": err.Error()}
+	}
+	c.JSON(statusCode, response)
+}
+
 // LoginHandler handles user login
 func LoginHandler(c *gin.Context) {
 	var req struct {
@@ -24,7 +31,8 @@ func LoginHandler(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, models.ApiResponse{
 			Success: false,
-			Error:   "Email dan password harus diisi",
+			Message: "Email dan password harus diisi",
+			Errors:  gin.H{"email": "required", "password": "required"},
 		})
 		return
 	}
@@ -46,26 +54,17 @@ func LoginHandler(c *gin.Context) {
 	err := config.DB.QueryRow(query, req.Email).Scan(&userID, &userName, &userRole, &password, &nomorIndukSiswa, &idGuru)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			c.JSON(http.StatusUnauthorized, models.ApiResponse{
-				Success: false,
-				Error:   "Email atau password salah",
-			})
+			writeAuthError(c, http.StatusUnauthorized, "Email atau password salah", nil)
 			return
 		}
-		c.JSON(http.StatusInternalServerError, models.ApiResponse{
-			Success: false,
-			Error:   "Terjadi kesalahan server",
-		})
+		writeAuthError(c, http.StatusInternalServerError, "Terjadi kesalahan server", err)
 		return
 	}
 
 	// Verify password menggunakan bcrypt
 	err = bcrypt.CompareHashAndPassword([]byte(password), []byte(req.Password))
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, models.ApiResponse{
-			Success: false,
-			Error:   "Email atau password salah",
-		})
+		writeAuthError(c, http.StatusUnauthorized, "Email atau password salah", nil)
 		return
 	}
 
@@ -81,10 +80,7 @@ func LoginHandler(c *gin.Context) {
 
 	tokenString, err := token.SignedString([]byte(config.AppConfig.JWTSecret))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.ApiResponse{
-			Success: false,
-			Error:   "Gagal membuat token",
-		})
+		writeAuthError(c, http.StatusInternalServerError, "Gagal membuat token", err)
 		return
 	}
 
@@ -102,7 +98,7 @@ func LoginHandler(c *gin.Context) {
 			&userData.NomorIndukSiswa, &userData.NamaSiswa, &userData.NamaOrtu, &userData.Kelas,
 		)
 		if err != nil {
-			fmt.Println("Error fetching child data:", err)
+			// Optional profile enrichment failure should not block login.
 		}
 
 	} else if userRole == "guru" {
@@ -117,23 +113,31 @@ func LoginHandler(c *gin.Context) {
 			&userData.IDGuru, &userData.NamaGuru, &email,
 		)
 		if err != nil {
-			fmt.Println("Error fetching guru data:", err)
+			// Optional profile enrichment failure should not block login.
 		}
+	}
+
+	userPayload := gin.H{
+		"id":                userID,
+		"username":          userName,
+		"role":              userRole,
+		"nomor_induk_siswa": nomorIndukSiswa.String,
+		"nama_siswa":        userData.NamaSiswa,
+		"nama_ortu":         userData.NamaOrtu,
+		"kelas":             userData.Kelas,
+		"id_guru":           idGuru.Int64,
+		"nama_guru":         userData.NamaGuru,
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"token":   tokenString,
-		"user": gin.H{
-			"id":                userID,
-			"username":          userName,
-			"role":              userRole,
-			"nomor_induk_siswa": nomorIndukSiswa.String,
-			"nama_siswa":        userData.NamaSiswa,
-			"nama_ortu":         userData.NamaOrtu,
-			"kelas":             userData.Kelas,
-			"id_guru":           idGuru.Int64,
-			"nama_guru":         userData.NamaGuru,
+		"message": "Login berhasil",
+		"data": gin.H{
+			"token": tokenString,
+			"user":  userPayload,
 		},
+		// Backward compatibility for existing Flutter parser.
+		"token": tokenString,
+		"user":  userPayload,
 	})
 }

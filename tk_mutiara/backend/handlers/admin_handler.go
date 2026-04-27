@@ -3,12 +3,22 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
-	"github.com/gin-gonic/gin"
 	"tk_mutiara_backend/config"
 	"tk_mutiara_backend/models"
 	"tk_mutiara_backend/services"
+
+	"github.com/gin-gonic/gin"
 )
+
+func writeAdminError(c *gin.Context, statusCode int, message string, err error) {
+	response := models.ApiResponse{Success: false, Message: message}
+	if err != nil {
+		response.Errors = gin.H{"detail": err.Error()}
+	}
+	c.JSON(statusCode, response)
+}
 
 // ==============================
 // DASHBOARD HANDLERS
@@ -20,7 +30,8 @@ func GetDashboardMetrics(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ApiResponse{
 			Success: false,
-			Error:   err.Error(),
+			Message: "Gagal mengambil dashboard metrics",
+			Errors:  gin.H{"detail": err.Error()},
 		})
 		return
 	}
@@ -44,7 +55,8 @@ func GetDashboardStatistics(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ApiResponse{
 			Success: false,
-			Error:   err.Error(),
+			Message: "Gagal mengambil dashboard statistics",
+			Errors:  gin.H{"detail": err.Error()},
 		})
 		return
 	}
@@ -66,7 +78,8 @@ func GetAllGuru(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ApiResponse{
 			Success: false,
-			Error:   err.Error(),
+			Message: "Gagal mengambil data guru",
+			Errors:  gin.H{"detail": err.Error()},
 		})
 		return
 	}
@@ -83,18 +96,20 @@ func GetGuruByID(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   "ID guru tidak valid",
-		})
+		writeAdminError(c, http.StatusBadRequest, "ID guru tidak valid", err)
 		return
 	}
 
 	guru, err := services.GetGuruDetail(config.DB, id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, models.ApiResponse{
+		statusCode := http.StatusInternalServerError
+		if strings.Contains(strings.ToLower(err.Error()), "tidak ditemukan") {
+			statusCode = http.StatusNotFound
+		}
+		c.JSON(statusCode, models.ApiResponse{
 			Success: false,
-			Error:   "Guru tidak ditemukan",
+			Message: "Guru tidak ditemukan",
+			Errors:  gin.H{"detail": err.Error()},
 		})
 		return
 	}
@@ -110,18 +125,16 @@ func GetGuruByID(c *gin.Context) {
 func CreateGuru(c *gin.Context) {
 	var req models.CreateGuruRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   err.Error(),
-		})
+		writeAdminError(c, http.StatusBadRequest, "Data guru tidak valid", err)
 		return
 	}
 
 	id, err := services.CreateNewGuru(config.DB, &req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
+		c.JSON(http.StatusInternalServerError, models.ApiResponse{
 			Success: false,
-			Error:   err.Error(),
+			Message: "Gagal membuat guru",
+			Errors:  gin.H{"detail": err.Error()},
 		})
 		return
 	}
@@ -140,10 +153,7 @@ func UpdateGuru(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   "ID guru tidak valid",
-		})
+		writeAdminError(c, http.StatusBadRequest, "ID guru tidak valid", err)
 		return
 	}
 
@@ -151,16 +161,22 @@ func UpdateGuru(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, models.ApiResponse{
 			Success: false,
-			Error:   err.Error(),
+			Message: "Data guru tidak valid",
+			Errors:  gin.H{"detail": err.Error()},
 		})
 		return
 	}
 
 	err = services.UpdateGuruData(config.DB, id, &req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
+		statusCode := http.StatusInternalServerError
+		if strings.Contains(strings.ToLower(err.Error()), "tidak ditemukan") {
+			statusCode = http.StatusNotFound
+		}
+		c.JSON(statusCode, models.ApiResponse{
 			Success: false,
-			Error:   err.Error(),
+			Message: "Gagal mengupdate guru",
+			Errors:  gin.H{"detail": err.Error()},
 		})
 		return
 	}
@@ -176,18 +192,20 @@ func DeleteGuru(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   "ID guru tidak valid",
-		})
+		writeAdminError(c, http.StatusBadRequest, "ID guru tidak valid", err)
 		return
 	}
 
 	err = services.RemoveGuru(config.DB, id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
+		statusCode := http.StatusInternalServerError
+		if strings.Contains(strings.ToLower(err.Error()), "tidak ditemukan") {
+			statusCode = http.StatusNotFound
+		}
+		c.JSON(statusCode, models.ApiResponse{
 			Success: false,
-			Error:   err.Error(),
+			Message: "Gagal menghapus guru",
+			Errors:  gin.H{"detail": err.Error()},
 		})
 		return
 	}
@@ -208,7 +226,8 @@ func GetAllKelas(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ApiResponse{
 			Success: false,
-			Error:   err.Error(),
+			Message: "Gagal mengambil data kelas",
+			Errors:  gin.H{"detail": err.Error()},
 		})
 		return
 	}
@@ -225,18 +244,20 @@ func GetKelasByID(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   "ID kelas tidak valid",
-		})
+		writeAdminError(c, http.StatusBadRequest, "ID kelas tidak valid", err)
 		return
 	}
 
 	kelas, err := services.GetKelasDetail(config.DB, id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, models.ApiResponse{
+		statusCode := http.StatusInternalServerError
+		if strings.Contains(strings.ToLower(err.Error()), "tidak ditemukan") {
+			statusCode = http.StatusNotFound
+		}
+		c.JSON(statusCode, models.ApiResponse{
 			Success: false,
-			Error:   "Kelas tidak ditemukan",
+			Message: "Kelas tidak ditemukan",
+			Errors:  gin.H{"detail": err.Error()},
 		})
 		return
 	}
@@ -252,18 +273,16 @@ func GetKelasByID(c *gin.Context) {
 func CreateKelas(c *gin.Context) {
 	var req models.CreateKelasRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   err.Error(),
-		})
+		writeAdminError(c, http.StatusBadRequest, "Data kelas tidak valid", err)
 		return
 	}
 
 	id, err := services.CreateNewKelas(config.DB, &req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
+		c.JSON(http.StatusInternalServerError, models.ApiResponse{
 			Success: false,
-			Error:   err.Error(),
+			Message: "Gagal membuat kelas",
+			Errors:  gin.H{"detail": err.Error()},
 		})
 		return
 	}
@@ -282,18 +301,20 @@ func DeleteKelas(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   "ID kelas tidak valid",
-		})
+		writeAdminError(c, http.StatusBadRequest, "ID kelas tidak valid", err)
 		return
 	}
 
 	err = services.RemoveKelas(config.DB, id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
+		statusCode := http.StatusInternalServerError
+		if strings.Contains(strings.ToLower(err.Error()), "tidak ditemukan") {
+			statusCode = http.StatusNotFound
+		}
+		c.JSON(statusCode, models.ApiResponse{
 			Success: false,
-			Error:   err.Error(),
+			Message: "Gagal menghapus kelas",
+			Errors:  gin.H{"detail": err.Error()},
 		})
 		return
 	}

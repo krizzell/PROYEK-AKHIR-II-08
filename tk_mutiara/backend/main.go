@@ -9,6 +9,7 @@ import (
 	"tk_mutiara_backend/middleware"
 	"tk_mutiara_backend/migrations"
 	"tk_mutiara_backend/models"
+	"tk_mutiara_backend/routes"
 
 	"github.com/gin-gonic/gin"
 )
@@ -69,6 +70,9 @@ func main() {
 		protected.PUT("/profile", handlers.UpdateProfileHandler)
 		protected.PUT("/profile/password", handlers.UpdatePasswordHandler)
 	}
+
+	// Admin routes (already implemented in handlers/services/repository)
+	routes.SetupAdminRoutes(r)
 
 	// Start server
 	port := ":" + config.AppConfig.ServerPort

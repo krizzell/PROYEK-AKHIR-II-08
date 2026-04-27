@@ -1,14 +1,18 @@
 package routes
 
 import (
-	"github.com/gin-gonic/gin"
 	"tk_mutiara_backend/handlers"
+	"tk_mutiara_backend/middleware"
+
+	"github.com/gin-gonic/gin"
 )
 
 // SetupAdminRoutes mengatur routes untuk Dashboard Admin API
 func SetupAdminRoutes(r *gin.Engine) {
 	// Group routes dengan prefix /api/admin
 	admin := r.Group("/api/admin")
+	admin.Use(middleware.AuthMiddleware())
+	admin.Use(middleware.AdminRoleMiddleware())
 	{
 		// ==============================
 		// DASHBOARD ROUTES
@@ -24,11 +28,11 @@ func SetupAdminRoutes(r *gin.Engine) {
 		// ==============================
 		guru := admin.Group("/guru")
 		{
-			guru.GET("", handlers.GetAllGuru)                  // GET /api/admin/guru
-			guru.POST("", handlers.CreateGuru)                 // POST /api/admin/guru
-			guru.GET("/:id", handlers.GetGuruByID)             // GET /api/admin/guru/:id
-			guru.PUT("/:id", handlers.UpdateGuru)              // PUT /api/admin/guru/:id
-			guru.DELETE("/:id", handlers.DeleteGuru)           // DELETE /api/admin/guru/:id
+			guru.GET("", handlers.GetAllGuru)        // GET /api/admin/guru
+			guru.POST("", handlers.CreateGuru)       // POST /api/admin/guru
+			guru.GET("/:id", handlers.GetGuruByID)   // GET /api/admin/guru/:id
+			guru.PUT("/:id", handlers.UpdateGuru)    // PUT /api/admin/guru/:id
+			guru.DELETE("/:id", handlers.DeleteGuru) // DELETE /api/admin/guru/:id
 		}
 
 		// ==============================
@@ -36,11 +40,11 @@ func SetupAdminRoutes(r *gin.Engine) {
 		// ==============================
 		kelas := admin.Group("/kelas")
 		{
-			kelas.GET("", handlers.GetAllKelas)                // GET /api/admin/kelas
-			kelas.POST("", handlers.CreateKelas)               // POST /api/admin/kelas
-			kelas.GET("/:id", handlers.GetKelasByID)           // GET /api/admin/kelas/:id
-			kelas.DELETE("/:id", handlers.DeleteKelas)         // DELETE /api/admin/kelas/:id
-			kelas.GET("/:id/siswa", handlers.GetSiswaByKelas)  // GET /api/admin/kelas/:id/siswa
+			kelas.GET("", handlers.GetAllKelas)               // GET /api/admin/kelas
+			kelas.POST("", handlers.CreateKelas)              // POST /api/admin/kelas
+			kelas.GET("/:id", handlers.GetKelasByID)          // GET /api/admin/kelas/:id
+			kelas.DELETE("/:id", handlers.DeleteKelas)        // DELETE /api/admin/kelas/:id
+			kelas.GET("/:id/siswa", handlers.GetSiswaByKelas) // GET /api/admin/kelas/:id/siswa
 		}
 
 		// ==============================
@@ -48,11 +52,11 @@ func SetupAdminRoutes(r *gin.Engine) {
 		// ==============================
 		siswa := admin.Group("/siswa")
 		{
-			siswa.GET("", handlers.GetAllSiswa)                // GET /api/admin/siswa
-			siswa.POST("", handlers.CreateSiswa)               // POST /api/admin/siswa
-			siswa.GET("/:id", handlers.GetSiswaByID)           // GET /api/admin/siswa/:id
-			siswa.DELETE("/:id", handlers.DeleteSiswa)         // DELETE /api/admin/siswa/:id
-			siswa.GET("/:id/tagihan", handlers.GetTagihanBySiswa)      // GET /api/admin/siswa/:id/tagihan
+			siswa.GET("", handlers.GetAllSiswa)                   // GET /api/admin/siswa
+			siswa.POST("", handlers.CreateSiswa)                  // POST /api/admin/siswa
+			siswa.GET("/:id", handlers.GetSiswaByID)              // GET /api/admin/siswa/:id
+			siswa.DELETE("/:id", handlers.DeleteSiswa)            // DELETE /api/admin/siswa/:id
+			siswa.GET("/:id/tagihan", handlers.GetTagihanBySiswa) // GET /api/admin/siswa/:id/tagihan
 		}
 
 		// ==============================
@@ -60,10 +64,10 @@ func SetupAdminRoutes(r *gin.Engine) {
 		// ==============================
 		tagihan := admin.Group("/tagihan")
 		{
-			tagihan.GET("", handlers.GetAllTagihan)            // GET /api/admin/tagihan
-			tagihan.POST("", handlers.CreateTagihan)           // POST /api/admin/tagihan
-			tagihan.GET("/:id", handlers.GetTagihanByID)       // GET /api/admin/tagihan/:id
-			tagihan.DELETE("/:id", handlers.DeleteTagihan)     // DELETE /api/admin/tagihan/:id
+			tagihan.GET("", handlers.GetAllTagihan)                         // GET /api/admin/tagihan
+			tagihan.POST("", handlers.CreateTagihan)                        // POST /api/admin/tagihan
+			tagihan.GET("/:id", handlers.GetTagihanByID)                    // GET /api/admin/tagihan/:id
+			tagihan.DELETE("/:id", handlers.DeleteTagihan)                  // DELETE /api/admin/tagihan/:id
 			tagihan.GET("/:id/pembayaran", handlers.GetPembayaranByTagihan) // GET /api/admin/tagihan/:id/pembayaran
 		}
 
@@ -72,8 +76,8 @@ func SetupAdminRoutes(r *gin.Engine) {
 		// ==============================
 		pembayaran := admin.Group("/pembayaran")
 		{
-			pembayaran.GET("", handlers.GetAllPembayaran)      // GET /api/admin/pembayaran
-			pembayaran.GET("/:id", handlers.GetPembayaranByID) // GET /api/admin/pembayaran/:id
+			pembayaran.GET("", handlers.GetAllPembayaran)                  // GET /api/admin/pembayaran
+			pembayaran.GET("/:id", handlers.GetPembayaranByID)             // GET /api/admin/pembayaran/:id
 			pembayaran.PUT("/:id/status", handlers.UpdatePembayaranStatus) // PUT /api/admin/pembayaran/:id/status
 		}
 	}

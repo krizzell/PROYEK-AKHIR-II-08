@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"tk_mutiara_backend/config"
 	"tk_mutiara_backend/models"
@@ -12,21 +14,59 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+func toInt(value interface{}) (int, error) {
+	switch v := value.(type) {
+	case int:
+		return v, nil
+	case int32:
+		return int(v), nil
+	case int64:
+		return int(v), nil
+	case float64:
+		return int(v), nil
+	case string:
+		i, err := strconv.Atoi(strings.TrimSpace(v))
+		if err != nil {
+			return 0, err
+		}
+		return i, nil
+	default:
+		return 0, fmt.Errorf("unsupported numeric type")
+	}
+}
+
+func toString(value interface{}) string {
+	if value == nil {
+		return ""
+	}
+	return strings.TrimSpace(fmt.Sprintf("%v", value))
+}
+
+func writeProfileError(c *gin.Context, statusCode int, message string, err error) {
+	response := models.ApiResponse{Success: false, Message: message}
+	if err != nil {
+		response.Errors = gin.H{"detail": err.Error()}
+	}
+	c.JSON(statusCode, response)
+}
+
 // GetProfileHandler handles GET /api/profile
 func GetProfileHandler(c *gin.Context) {
 	// Get user info dari JWT token (set by middleware)
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, models.ApiResponse{
-			Success: false,
-			Error:   "User tidak ditemukan",
-		})
+		writeProfileError(c, http.StatusUnauthorized, "User tidak ditemukan", nil)
 		return
 	}
 
-	userIDInt := userID.(int)
+	userIDInt, err := toInt(userID)
+	if err != nil || userIDInt <= 0 {
+		writeProfileError(c, http.StatusUnauthorized, "User tidak valid", nil)
+		return
+	}
+
 	role, _ := c.Get("role")
-	userRole := role.(string)
+	userRole := toString(role)
 
 	// Query user data dari akun table
 	var username, akunRole string
@@ -39,19 +79,13 @@ func GetProfileHandler(c *gin.Context) {
 		WHERE a.id_akun = ?
 	`
 
-	err := config.DB.QueryRow(query, userIDInt).Scan(&username, &akunRole, &nomorIndukSiswa, &idGuru)
+	err = config.DB.QueryRow(query, userIDInt).Scan(&username, &akunRole, &nomorIndukSiswa, &idGuru)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			c.JSON(http.StatusNotFound, models.ApiResponse{
-				Success: false,
-				Error:   "User tidak ditemukan",
-			})
+			writeProfileError(c, http.StatusNotFound, "User tidak ditemukan", nil)
 			return
 		}
-		c.JSON(http.StatusInternalServerError, models.ApiResponse{
-			Success: false,
-			Error:   "Terjadi kesalahan server",
-		})
+		writeProfileError(c, http.StatusInternalServerError, "Terjadi kesalahan server", err)
 		return
 	}
 
@@ -76,7 +110,8 @@ func GetProfileHandler(c *gin.Context) {
 		)
 
 		if err != nil && err != sql.ErrNoRows {
-			fmt.Println("Error fetching siswa data:", err)
+			writeProfileError(c, http.StatusInternalServerError, "Gagal mengambil data siswa", err)
+			return
 		}
 
 		profileData = gin.H{
@@ -104,7 +139,8 @@ func GetProfileHandler(c *gin.Context) {
 
 		err := config.DB.QueryRow(queryGuru, idGuru.Int64).Scan(&namaGuru, &noHp, &email)
 		if err != nil && err != sql.ErrNoRows {
-			fmt.Println("Error fetching guru data:", err)
+			writeProfileError(c, http.StatusInternalServerError, "Gagal mengambil data guru", err)
+			return
 		}
 
 		profileData = gin.H{
@@ -118,9 +154,10 @@ func GetProfileHandler(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    profileData,
+	c.JSON(http.StatusOK, models.ApiResponse{
+		Success: true,
+		Message: "Profil berhasil diambil",
+		Data:    profileData,
 	})
 }
 
@@ -128,10 +165,7 @@ func GetProfileHandler(c *gin.Context) {
 func UpdatePasswordHandler(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, models.ApiResponse{
-			Success: false,
-			Error:   "User tidak ditemukan",
-		})
+		writeProfileError(c, http.StatusUnauthorized, "User tidak ditemukan", nil)
 		return
 	}
 
@@ -141,59 +175,45 @@ func UpdatePasswordHandler(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   "Old password dan new password harus diisi",
-		})
+		writeProfileError(c, http.StatusBadRequest, "Old password dan new password harus diisi", err)
 		return
 	}
 
 	if len(req.NewPassword) < 6 {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   "Password baru minimal 6 karakter",
-		})
+		writeProfileError(c, http.StatusBadRequest, "Password baru minimal 6 karakter", nil)
 		return
 	}
 
-	userIDInt := userID.(int)
+	userIDInt, err := toInt(userID)
+	if err != nil || userIDInt <= 0 {
+		writeProfileError(c, http.StatusUnauthorized, "User tidak valid", nil)
+		return
+	}
 
 	// Get current password hash
 	var currentPasswordHash string
 	query := `SELECT password FROM akun WHERE id_akun = ?`
-	err := config.DB.QueryRow(query, userIDInt).Scan(&currentPasswordHash)
+	err = config.DB.QueryRow(query, userIDInt).Scan(&currentPasswordHash)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			c.JSON(http.StatusNotFound, models.ApiResponse{
-				Success: false,
-				Error:   "User tidak ditemukan",
-			})
+			writeProfileError(c, http.StatusNotFound, "User tidak ditemukan", nil)
 			return
 		}
-		c.JSON(http.StatusInternalServerError, models.ApiResponse{
-			Success: false,
-			Error:   "Terjadi kesalahan server",
-		})
+		writeProfileError(c, http.StatusInternalServerError, "Terjadi kesalahan server", err)
 		return
 	}
 
 	// Verify old password
 	err = bcrypt.CompareHashAndPassword([]byte(currentPasswordHash), []byte(req.OldPassword))
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, models.ApiResponse{
-			Success: false,
-			Error:   "Password lama tidak sesuai",
-		})
+		writeProfileError(c, http.StatusUnauthorized, "Password lama tidak sesuai", nil)
 		return
 	}
 
 	// Hash new password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.ApiResponse{
-			Success: false,
-			Error:   "Gagal mengenkripsi password",
-		})
+		writeProfileError(c, http.StatusInternalServerError, "Gagal mengenkripsi password", err)
 		return
 	}
 
@@ -201,10 +221,7 @@ func UpdatePasswordHandler(c *gin.Context) {
 	updateQuery := `UPDATE akun SET password = ? WHERE id_akun = ?`
 	_, err = config.DB.Exec(updateQuery, string(hashedPassword), userIDInt)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.ApiResponse{
-			Success: false,
-			Error:   "Gagal mengupdate password",
-		})
+		writeProfileError(c, http.StatusInternalServerError, "Gagal mengupdate password", err)
 		return
 	}
 
@@ -218,18 +235,17 @@ func UpdatePasswordHandler(c *gin.Context) {
 func UpdateProfileHandler(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, models.ApiResponse{
-			Success: false,
-			Error:   "User tidak ditemukan",
-		})
+		writeProfileError(c, http.StatusUnauthorized, "User tidak ditemukan", nil)
 		return
 	}
 
 	role, _ := c.Get("role")
-	userRole := role.(string)
-	userIDInt := userID.(int)
-
-	var err error
+	userRole := toString(role)
+	userIDInt, err := toInt(userID)
+	if err != nil || userIDInt <= 0 {
+		writeProfileError(c, http.StatusUnauthorized, "User tidak valid", nil)
+		return
+	}
 
 	if userRole == "orangtua" {
 		var req struct {
@@ -239,10 +255,7 @@ func UpdateProfileHandler(c *gin.Context) {
 		}
 
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, models.ApiResponse{
-				Success: false,
-				Error:   "Data tidak valid",
-			})
+			writeProfileError(c, http.StatusBadRequest, "Data tidak valid", err)
 			return
 		}
 
@@ -251,10 +264,7 @@ func UpdateProfileHandler(c *gin.Context) {
 		query := `SELECT nomor_induk_siswa FROM akun WHERE id_akun = ?`
 		err = config.DB.QueryRow(query, userIDInt).Scan(&nomorIndukSiswa)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, models.ApiResponse{
-				Success: false,
-				Error:   "Gagal mengambil data siswa",
-			})
+			writeProfileError(c, http.StatusInternalServerError, "Gagal mengambil data siswa", err)
 			return
 		}
 
@@ -262,10 +272,7 @@ func UpdateProfileHandler(c *gin.Context) {
 		updateQuery := `UPDATE siswa SET nama_orgtua = ?, alamat = ? WHERE nomor_induk_siswa = ?`
 		_, err = config.DB.Exec(updateQuery, req.NamaOrtu, req.Alamat, nomorIndukSiswa)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, models.ApiResponse{
-				Success: false,
-				Error:   "Gagal mengupdate profil",
-			})
+			writeProfileError(c, http.StatusInternalServerError, "Gagal mengupdate profil", err)
 			return
 		}
 
@@ -277,10 +284,7 @@ func UpdateProfileHandler(c *gin.Context) {
 		}
 
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, models.ApiResponse{
-				Success: false,
-				Error:   "Data tidak valid",
-			})
+			writeProfileError(c, http.StatusBadRequest, "Data tidak valid", err)
 			return
 		}
 
@@ -289,10 +293,7 @@ func UpdateProfileHandler(c *gin.Context) {
 		query := `SELECT id_guru FROM akun WHERE id_akun = ?`
 		err = config.DB.QueryRow(query, userIDInt).Scan(&idGuru)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, models.ApiResponse{
-				Success: false,
-				Error:   "Gagal mengambil data guru",
-			})
+			writeProfileError(c, http.StatusInternalServerError, "Gagal mengambil data guru", err)
 			return
 		}
 
@@ -300,10 +301,7 @@ func UpdateProfileHandler(c *gin.Context) {
 		updateQuery := `UPDATE guru SET nama_guru = ?, no_hp = ?, email = ? WHERE id_guru = ?`
 		_, err = config.DB.Exec(updateQuery, req.NamaGuru, req.NoHP, req.Email, idGuru)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, models.ApiResponse{
-				Success: false,
-				Error:   "Gagal mengupdate profil",
-			})
+			writeProfileError(c, http.StatusInternalServerError, "Gagal mengupdate profil", err)
 			return
 		}
 	}

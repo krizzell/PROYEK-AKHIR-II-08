@@ -3,12 +3,33 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
-	"github.com/gin-gonic/gin"
 	"tk_mutiara_backend/config"
 	"tk_mutiara_backend/models"
 	"tk_mutiara_backend/services"
+
+	"github.com/gin-gonic/gin"
 )
+
+func writeHandlerError(c *gin.Context, statusCode int, message string, err error) {
+	response := models.ApiResponse{
+		Success: false,
+		Message: message,
+	}
+	if err != nil {
+		response.Errors = gin.H{"detail": err.Error()}
+	}
+	c.JSON(statusCode, response)
+}
+
+func isNotFoundError(err error) bool {
+	if err == nil {
+		return false
+	}
+	message := strings.ToLower(err.Error())
+	return strings.Contains(message, "tidak ditemukan") || strings.Contains(message, "not found")
+}
 
 // ==============================
 // SISWA HANDLERS
@@ -18,10 +39,7 @@ import (
 func GetAllSiswa(c *gin.Context) {
 	siswa, err := services.GetAllSiswa(config.DB)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.ApiResponse{
-			Success: false,
-			Error:   err.Error(),
-		})
+		writeHandlerError(c, http.StatusInternalServerError, "Gagal mengambil data siswa", err)
 		return
 	}
 
@@ -36,19 +54,19 @@ func GetAllSiswa(c *gin.Context) {
 func GetSiswaByID(c *gin.Context) {
 	nomorIndukSiswa := c.Param("id")
 	if nomorIndukSiswa == "" {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   "Nomor induk siswa tidak valid",
-		})
+		writeHandlerError(c, http.StatusBadRequest, "Nomor induk siswa tidak valid", nil)
 		return
 	}
 
 	siswa, err := services.GetSiswaDetail(config.DB, nomorIndukSiswa)
 	if err != nil {
-		c.JSON(http.StatusNotFound, models.ApiResponse{
-			Success: false,
-			Error:   "Siswa tidak ditemukan",
-		})
+		statusCode := http.StatusInternalServerError
+		message := "Gagal mengambil data siswa"
+		if isNotFoundError(err) {
+			statusCode = http.StatusNotFound
+			message = "Siswa tidak ditemukan"
+		}
+		writeHandlerError(c, statusCode, message, err)
 		return
 	}
 
@@ -64,19 +82,13 @@ func GetSiswaByKelas(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   "ID kelas tidak valid",
-		})
+		writeHandlerError(c, http.StatusBadRequest, "ID kelas tidak valid", err)
 		return
 	}
 
 	siswa, err := services.GetSiswaByKelas(config.DB, id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.ApiResponse{
-			Success: false,
-			Error:   err.Error(),
-		})
+		writeHandlerError(c, http.StatusInternalServerError, "Gagal mengambil data siswa per kelas", err)
 		return
 	}
 
@@ -91,19 +103,19 @@ func GetSiswaByKelas(c *gin.Context) {
 func CreateSiswa(c *gin.Context) {
 	var req models.CreateSiswaRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   err.Error(),
-		})
+		writeHandlerError(c, http.StatusBadRequest, "Data siswa tidak valid", err)
 		return
 	}
 
 	id, err := services.CreateNewSiswa(config.DB, &req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   err.Error(),
-		})
+		statusCode := http.StatusBadRequest
+		message := "Gagal membuat siswa"
+		if isNotFoundError(err) {
+			statusCode = http.StatusNotFound
+			message = "Data referensi tidak ditemukan"
+		}
+		writeHandlerError(c, statusCode, message, err)
 		return
 	}
 
@@ -120,19 +132,19 @@ func CreateSiswa(c *gin.Context) {
 func DeleteSiswa(c *gin.Context) {
 	nomorIndukSiswa := c.Param("id")
 	if nomorIndukSiswa == "" {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   "Nomor induk siswa tidak valid",
-		})
+		writeHandlerError(c, http.StatusBadRequest, "Nomor induk siswa tidak valid", nil)
 		return
 	}
 
 	err := services.RemoveSiswa(config.DB, nomorIndukSiswa)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   err.Error(),
-		})
+		statusCode := http.StatusInternalServerError
+		message := "Gagal menghapus siswa"
+		if isNotFoundError(err) {
+			statusCode = http.StatusNotFound
+			message = "Siswa tidak ditemukan"
+		}
+		writeHandlerError(c, statusCode, message, err)
 		return
 	}
 
@@ -150,10 +162,7 @@ func DeleteSiswa(c *gin.Context) {
 func GetAllTagihan(c *gin.Context) {
 	tagihan, err := services.GetAllTagihan(config.DB)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.ApiResponse{
-			Success: false,
-			Error:   err.Error(),
-		})
+		writeHandlerError(c, http.StatusInternalServerError, "Gagal mengambil data tagihan", err)
 		return
 	}
 
@@ -169,19 +178,19 @@ func GetTagihanByID(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   "ID tagihan tidak valid",
-		})
+		writeHandlerError(c, http.StatusBadRequest, "ID tagihan tidak valid", err)
 		return
 	}
 
 	tagihan, err := services.GetTagihanDetail(config.DB, id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, models.ApiResponse{
-			Success: false,
-			Error:   "Tagihan tidak ditemukan",
-		})
+		statusCode := http.StatusInternalServerError
+		message := "Gagal mengambil data tagihan"
+		if isNotFoundError(err) {
+			statusCode = http.StatusNotFound
+			message = "Tagihan tidak ditemukan"
+		}
+		writeHandlerError(c, statusCode, message, err)
 		return
 	}
 
@@ -196,19 +205,13 @@ func GetTagihanByID(c *gin.Context) {
 func GetTagihanBySiswa(c *gin.Context) {
 	nomorIndukSiswa := c.Param("id")
 	if nomorIndukSiswa == "" {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   "Nomor induk siswa tidak valid",
-		})
+		writeHandlerError(c, http.StatusBadRequest, "Nomor induk siswa tidak valid", nil)
 		return
 	}
 
 	tagihan, err := services.GetTagihanBySiswa(config.DB, nomorIndukSiswa)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.ApiResponse{
-			Success: false,
-			Error:   err.Error(),
-		})
+		writeHandlerError(c, http.StatusInternalServerError, "Gagal mengambil data tagihan siswa", err)
 		return
 	}
 
@@ -223,19 +226,19 @@ func GetTagihanBySiswa(c *gin.Context) {
 func CreateTagihan(c *gin.Context) {
 	var req models.CreateTagihanRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   err.Error(),
-		})
+		writeHandlerError(c, http.StatusBadRequest, "Data tagihan tidak valid", err)
 		return
 	}
 
 	id, err := services.CreateNewTagihan(config.DB, &req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   err.Error(),
-		})
+		statusCode := http.StatusBadRequest
+		message := "Gagal membuat tagihan"
+		if isNotFoundError(err) {
+			statusCode = http.StatusNotFound
+			message = "Siswa tidak ditemukan"
+		}
+		writeHandlerError(c, statusCode, message, err)
 		return
 	}
 
@@ -253,19 +256,19 @@ func DeleteTagihan(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   "ID tagihan tidak valid",
-		})
+		writeHandlerError(c, http.StatusBadRequest, "ID tagihan tidak valid", err)
 		return
 	}
 
 	err = services.RemoveTagihan(config.DB, id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   err.Error(),
-		})
+		statusCode := http.StatusInternalServerError
+		message := "Gagal menghapus tagihan"
+		if isNotFoundError(err) {
+			statusCode = http.StatusNotFound
+			message = "Tagihan tidak ditemukan"
+		}
+		writeHandlerError(c, statusCode, message, err)
 		return
 	}
 
@@ -283,10 +286,7 @@ func DeleteTagihan(c *gin.Context) {
 func GetAllPembayaran(c *gin.Context) {
 	pembayaran, err := services.GetAllPembayaran(config.DB)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.ApiResponse{
-			Success: false,
-			Error:   err.Error(),
-		})
+		writeHandlerError(c, http.StatusInternalServerError, "Gagal mengambil data pembayaran", err)
 		return
 	}
 
@@ -302,19 +302,19 @@ func GetPembayaranByID(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   "ID pembayaran tidak valid",
-		})
+		writeHandlerError(c, http.StatusBadRequest, "ID pembayaran tidak valid", err)
 		return
 	}
 
 	pembayaran, err := services.GetPembayaranDetail(config.DB, id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, models.ApiResponse{
-			Success: false,
-			Error:   "Pembayaran tidak ditemukan",
-		})
+		statusCode := http.StatusInternalServerError
+		message := "Gagal mengambil data pembayaran"
+		if isNotFoundError(err) {
+			statusCode = http.StatusNotFound
+			message = "Pembayaran tidak ditemukan"
+		}
+		writeHandlerError(c, statusCode, message, err)
 		return
 	}
 
@@ -330,19 +330,13 @@ func GetPembayaranByTagihan(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   "ID tagihan tidak valid",
-		})
+		writeHandlerError(c, http.StatusBadRequest, "ID tagihan tidak valid", err)
 		return
 	}
 
 	pembayaran, err := services.GetPembayaranByTagihan(config.DB, id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.ApiResponse{
-			Success: false,
-			Error:   err.Error(),
-		})
+		writeHandlerError(c, http.StatusInternalServerError, "Gagal mengambil pembayaran berdasarkan tagihan", err)
 		return
 	}
 
@@ -358,10 +352,7 @@ func UpdatePembayaranStatus(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   "ID pembayaran tidak valid",
-		})
+		writeHandlerError(c, http.StatusBadRequest, "ID pembayaran tidak valid", err)
 		return
 	}
 
@@ -369,19 +360,19 @@ func UpdatePembayaranStatus(c *gin.Context) {
 	req.IDPembayaran = id
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   err.Error(),
-		})
+		writeHandlerError(c, http.StatusBadRequest, "Data pembayaran tidak valid", err)
 		return
 	}
 
 	err = services.UpdatePembayaranStatusService(config.DB, &req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.ApiResponse{
-			Success: false,
-			Error:   err.Error(),
-		})
+		statusCode := http.StatusBadRequest
+		message := "Gagal mengupdate status pembayaran"
+		if isNotFoundError(err) {
+			statusCode = http.StatusNotFound
+			message = "Pembayaran tidak ditemukan"
+		}
+		writeHandlerError(c, statusCode, message, err)
 		return
 	}
 

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -19,7 +20,8 @@ func AuthMiddleware() gin.HandlerFunc {
 		if tokenString == "" {
 			c.JSON(http.StatusUnauthorized, models.ApiResponse{
 				Success: false,
-				Error:   "Token tidak ditemukan",
+				Message: "Token tidak ditemukan",
+				Errors:  gin.H{"detail": "Token tidak ditemukan"},
 			})
 			c.Abort()
 			return
@@ -35,18 +37,60 @@ func AuthMiddleware() gin.HandlerFunc {
 		if err != nil || !token.Valid {
 			c.JSON(http.StatusUnauthorized, models.ApiResponse{
 				Success: false,
-				Error:   "Token tidak valid",
+				Message: "Token tidak valid",
+				Errors:  gin.H{"detail": "Token tidak valid"},
 			})
 			c.Abort()
 			return
 		}
 
-		claims := token.Claims.(jwt.MapClaims)
-		c.Set("user_id", claims["user_id"])
-		c.Set("username", claims["username"])
-		c.Set("role", claims["role"])
-		c.Set("nomor_induk_siswa", claims["nomor_induk_siswa"])
-		c.Set("id_guru", claims["id_guru"])
+		if claims, ok := token.Claims.(jwt.MapClaims); ok {
+			c.Set("user_id", claims["user_id"])
+			c.Set("username", claims["username"])
+			c.Set("role", claims["role"])
+			c.Set("nomor_induk_siswa", claims["nomor_induk_siswa"])
+			c.Set("id_guru", claims["id_guru"])
+			c.Next()
+			return
+		}
+
+		c.JSON(http.StatusUnauthorized, models.ApiResponse{
+			Success: false,
+			Message: "Token claims tidak valid",
+		})
+		c.Abort()
+		return
+	}
+}
+
+// AdminRoleMiddleware memastikan endpoint admin hanya bisa diakses role backend-admin.
+func AdminRoleMiddleware() gin.HandlerFunc {
+	allowedRoles := map[string]bool{
+		"admin":      true,
+		"superadmin": true,
+		"guru":       true,
+	}
+
+	return func(c *gin.Context) {
+		roleRaw, exists := c.Get("role")
+		if !exists {
+			c.JSON(http.StatusForbidden, models.ApiResponse{
+				Success: false,
+				Message: "Akses ditolak",
+			})
+			c.Abort()
+			return
+		}
+
+		role := fmt.Sprintf("%v", roleRaw)
+		if !allowedRoles[strings.ToLower(strings.TrimSpace(role))] {
+			c.JSON(http.StatusForbidden, models.ApiResponse{
+				Success: false,
+				Message: "Role tidak memiliki akses admin",
+			})
+			c.Abort()
+			return
+		}
 
 		c.Next()
 	}

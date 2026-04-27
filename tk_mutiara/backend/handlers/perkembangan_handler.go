@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"tk_mutiara_backend/config"
 	"tk_mutiara_backend/models"
@@ -18,14 +19,12 @@ func GetPerkembanganHandler(c *gin.Context) {
 	if !exists {
 		c.JSON(http.StatusUnauthorized, models.ApiResponse{
 			Success: false,
-			Error:   "Unauthorized - nomor_induk_siswa not found in token",
+			Message: "Unauthorized - nomor_induk_siswa not found in token",
 		})
 		return
 	}
 
-	fmt.Println("=== GET PERKEMBANGAN ===")
 	nomorIndukStr := fmt.Sprintf("%v", nomorIndukSiswa)
-	fmt.Printf("nomor_induk_siswa: '%s'\n", nomorIndukStr)
 
 	// Query perkembangan dengan SEMUA field dari database
 	query := `
@@ -54,10 +53,10 @@ func GetPerkembanganHandler(c *gin.Context) {
 
 	rows, err := config.DB.Query(query, nomorIndukStr)
 	if err != nil {
-		fmt.Printf("Query error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, models.ApiResponse{
 			Success: false,
-			Error:   fmt.Sprintf("Query error: %v", err),
+			Message: "Gagal mengambil data perkembangan",
+			Errors:  gin.H{"detail": err.Error()},
 		})
 		return
 	}
@@ -73,7 +72,6 @@ func GetPerkembanganHandler(c *gin.Context) {
 			&p.Bulan, &p.Tahun, &p.Kategori, &p.Deskripsi, &p.TemplateDeskripsi, &p.StatusUtama, &p.CreatedAt, &p.UpdatedAt,
 		)
 		if err != nil {
-			fmt.Printf("Scan error: %v\n", err)
 			continue
 		}
 
@@ -95,7 +93,6 @@ func GetPerkembanganHandler(c *gin.Context) {
 
 		kategoriRows, err := config.DB.Query(kategoriQuery, p.IDPerkembangan)
 		if err != nil {
-			fmt.Printf("Kategori query error for ID %d: %v\n", p.IDPerkembangan, err)
 			continue
 		}
 
@@ -103,7 +100,6 @@ func GetPerkembanganHandler(c *gin.Context) {
 		for kategoriRows.Next() {
 			var pk models.PerkembanganKategori
 			if err := kategoriRows.Scan(&pk.IDCategori, &pk.IDPerkembangan, &pk.NamaKategori, &pk.Nilai, &pk.StatusUtama, &pk.Deskripsi, &pk.CreatedAt, &pk.UpdatedAt); err != nil {
-				fmt.Printf("Kategori scan error: %v\n", err)
 				continue
 			}
 			kategoriDetails = append(kategoriDetails, pk)
@@ -111,19 +107,22 @@ func GetPerkembanganHandler(c *gin.Context) {
 		kategoriRows.Close()
 
 		p.KategoriDetails = kategoriDetails
-		fmt.Printf("✓ ID=%d, Nama=%s, Kategori=%d items\n", p.IDPerkembangan, p.NamaAnak, len(kategoriDetails))
 
 		perkembanganList = append(perkembanganList, p)
 	}
 
 	if err := rows.Err(); err != nil {
-		fmt.Printf("Rows error: %v\n", err)
+		c.JSON(http.StatusInternalServerError, models.ApiResponse{
+			Success: false,
+			Message: "Terjadi kesalahan saat membaca data perkembangan",
+			Errors:  gin.H{"detail": err.Error()},
+		})
+		return
 	}
-
-	fmt.Printf("Total records: %d\n", len(perkembanganList))
 
 	c.JSON(http.StatusOK, models.ApiResponse{
 		Success: true,
+		Message: "Data perkembangan berhasil diambil",
 		Data:    perkembanganList,
 	})
 }
@@ -135,12 +134,11 @@ func GetPerkembanganByIDHandler(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, models.ApiResponse{
 			Success: false,
-			Error:   "ID tidak valid",
+			Message: "ID tidak valid",
+			Errors:  gin.H{"id": err.Error()},
 		})
 		return
 	}
-
-	fmt.Printf("=== GET PERKEMBANGAN BY ID: %d ===\n", id)
 
 	query := `
 		SELECT 
@@ -169,10 +167,16 @@ func GetPerkembanganByIDHandler(c *gin.Context) {
 		&p.Bulan, &p.Tahun, &p.Kategori, &p.Deskripsi, &p.TemplateDeskripsi, &p.StatusUtama, &p.CreatedAt, &p.UpdatedAt,
 	)
 	if err != nil {
-		fmt.Printf("Query error: %v\n", err)
-		c.JSON(http.StatusNotFound, models.ApiResponse{
+		statusCode := http.StatusInternalServerError
+		message := "Gagal mengambil perkembangan"
+		if strings.Contains(strings.ToLower(err.Error()), "no rows") {
+			statusCode = http.StatusNotFound
+			message = "Perkembangan tidak ditemukan"
+		}
+		c.JSON(statusCode, models.ApiResponse{
 			Success: false,
-			Error:   "Perkembangan tidak ditemukan",
+			Message: message,
+			Errors:  gin.H{"detail": err.Error()},
 		})
 		return
 	}
@@ -195,10 +199,10 @@ func GetPerkembanganByIDHandler(c *gin.Context) {
 
 	kategoriRows, err := config.DB.Query(kategoriQuery, p.IDPerkembangan)
 	if err != nil {
-		fmt.Printf("Kategori query error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, models.ApiResponse{
 			Success: false,
-			Error:   fmt.Sprintf("Error fetching kategori: %v", err),
+			Message: "Error fetching kategori",
+			Errors:  gin.H{"detail": err.Error()},
 		})
 		return
 	}
@@ -208,17 +212,16 @@ func GetPerkembanganByIDHandler(c *gin.Context) {
 	for kategoriRows.Next() {
 		var pk models.PerkembanganKategori
 		if err := kategoriRows.Scan(&pk.IDCategori, &pk.IDPerkembangan, &pk.NamaKategori, &pk.Nilai, &pk.StatusUtama, &pk.Deskripsi, &pk.CreatedAt, &pk.UpdatedAt); err != nil {
-			fmt.Printf("Kategori scan error: %v\n", err)
 			continue
 		}
 		kategoriDetails = append(kategoriDetails, pk)
 	}
 
 	p.KategoriDetails = kategoriDetails
-	fmt.Printf("✓ Found: ID=%d, Nama=%s, Kategori=%d items\n", p.IDPerkembangan, p.NamaAnak, len(kategoriDetails))
 
 	c.JSON(http.StatusOK, models.ApiResponse{
 		Success: true,
+		Message: "Detail perkembangan berhasil diambil",
 		Data:    p,
 	})
 }
