@@ -6,7 +6,6 @@ import '../models/pengumuman_model.dart';
 import '../models/perkembangan_model.dart';
 
 class ApiService {
-  // Override tanpa ubah source code:
   // Android emulator: flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8081
   // Device fisik (satu WiFi): flutter run --dart-define=API_BASE_URL=http://<IP_LAPTOP>:8081
   static const String baseUrl = String.fromEnvironment(

@@ -1,220 +1,1287 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
-@section('title', 'Edit Perkembangan')
+@section('title', 'Edit Perkembangan Anak')
 
 @section('content')
-<div class="row">
-    <div class="col-md-10">
-        <h2><i class="bi bi-pencil"></i> Edit Perkembangan Anak</h2>
-    </div>
-</div>
+<style>
+    :root {
+        --primary-color: #0066FF;
+        --primary-light: #E6F0FF;
+        --primary-dark: #0052CC;
+        --success-color: #10B981;
+        --warning-color: #F59E0B;
+        --danger-color: #EF4444;
+        --info-color: #06B6D4;
+        --neutral-100: #F9FAFB;
+        --neutral-200: #F3F4F6;
+        --neutral-300: #E5E7EB;
+        --neutral-400: #D1D5DB;
+        --neutral-600: #4B5563;
+        --neutral-700: #374151;
+        --neutral-900: #111827;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
 
-<div class="card mt-4">
-    <div class="card-body">
-        <form action="{{ route('perkembangan.update', $perkembangan->id_perkembangan) }}" method="POST">
-            @csrf
-            @method('PUT')
+    * {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-            <!-- Info Anak & Guru -->
-            <div class="row mb-4">
-                <div class="col-md-12">
-                    <label for="nomor_induk_siswa" class="form-label">Siswa / Anak <span class="text-danger">*</span></label>
-                    <select class="form-control @error('nomor_induk_siswa') is-invalid @enderror" id="nomor_induk_siswa" name="nomor_induk_siswa" required>
-                        <option value="">-- Pilih Siswa --</option>
-                        @foreach ($siswa as $s)
-                            <option value="{{ $s->nomor_induk_siswa }}" {{ old('nomor_induk_siswa', $perkembangan->nomor_induk_siswa) == $s->nomor_induk_siswa ? 'selected' : '' }}>
-                                {{ $s->nama_siswa }} ({{ $s->kelas->nama_kelas ?? '-' }})
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('nomor_induk_siswa')
-                        <div class="invalid-feedback d-block">{{ $message }}</div>
-                    @enderror
-                </div>
+    .page-wrapper {
+        background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+        min-height: 100vh;
+        padding: 2.5rem 0;
+    }
+
+    .premium-header {
+        margin-bottom: 2rem;
+        animation: slideDown 0.5s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .premium-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--neutral-900);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .premium-header .breadcrumb-text {
+        color: var(--neutral-600);
+        font-size: 0.95rem;
+        margin-top: 0.5rem;
+    }
+
+    .premium-card {
+        background: white;
+        border: 1px solid var(--neutral-200);
+        border-radius: 1rem;
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .premium-card-body {
+        padding: 3rem;
+    }
+
+    .form-section {
+        margin-bottom: 3rem;
+    }
+
+    .form-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .section-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--neutral-300), transparent);
+        margin: 2.5rem 0;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--neutral-900);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .section-title-icon {
+        width: 32px;
+        height: 32px;
+        background: var(--primary-light);
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-color);
+        font-size: 1rem;
+    }
+
+    /* STUDENT SELECTION PREMIUM */
+    .student-search-wrapper {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .student-search-input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 2.75rem;
+        border: 1.5px solid var(--neutral-300);
+        border-radius: 0.875rem;
+        font-size: 1rem;
+        color: var(--neutral-900);
+        background: white;
+        transition: all 0.3s ease;
+    }
+
+    .student-search-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px var(--primary-light);
+        background: white;
+    }
+
+    .student-search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--neutral-400);
+        pointer-events: none;
+    }
+
+    .student-cards-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.25rem;
+        max-height: 700px;
+        overflow-y: auto;
+        padding: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .student-cards-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .student-cards-container::-webkit-scrollbar-track {
+        background: var(--neutral-100);
+        border-radius: 0.5rem;
+    }
+
+    .student-cards-container::-webkit-scrollbar-thumb {
+        background: var(--neutral-300);
+        border-radius: 0.5rem;
+    }
+
+    .student-cards-container::-webkit-scrollbar-thumb:hover {
+        background: var(--neutral-400);
+    }
+
+    .student-card {
+        background: white;
+        border: 2px solid var(--neutral-200);
+        border-radius: 1rem;
+        padding: 1.25rem;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .student-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary-color), var(--info-color));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .student-card:hover {
+        border-color: var(--neutral-300);
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .student-card.selected {
+        border-color: var(--primary-color);
+        background: var(--primary-light);
+        box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+    }
+
+    .student-card.selected::before {
+        opacity: 1;
+    }
+
+    .student-card-content {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .student-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 0.875rem;
+        background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .student-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .student-name {
+        font-weight: 600;
+        color: var(--neutral-900);
+        margin: 0;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .student-meta {
+        font-size: 0.85rem;
+        color: var(--neutral-600);
+        margin: 0.25rem 0;
+    }
+
+    .student-check {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 24px;
+        height: 24px;
+        background: var(--success-color);
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        opacity: 0;
+        transform: scale(0);
+        transition: all 0.3s ease;
+    }
+
+    .student-card.selected .student-check {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .selected-student-badge {
+        display: none;
+        background: linear-gradient(135deg, var(--primary-light), rgba(0, 102, 255, 0.05));
+        border: 1.5px solid var(--primary-color);
+        border-radius: 0.875rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        animation: slideDown 0.3s ease-out;
+    }
+
+    .selected-student-badge.active {
+        display: block;
+    }
+
+    .selected-student-badge-content {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .selected-student-badge-icon {
+        width: 36px;
+        height: 36px;
+        background: var(--primary-color);
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1rem;
+    }
+
+    .selected-student-badge-text {
+        flex: 1;
+    }
+
+    .selected-student-badge-label {
+        font-size: 0.875rem;
+        color: var(--neutral-600);
+        margin: 0;
+    }
+
+    .selected-student-badge-name {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--neutral-900);
+        margin: 0;
+    }
+
+    /* PERIODE SECTION */
+    .periode-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .periode-item {
+        background: var(--neutral-100);
+        border: 1.5px solid var(--neutral-200);
+        border-radius: 0.875rem;
+        padding: 1.25rem;
+        text-align: center;
+    }
+
+    .periode-label {
+        font-size: 0.85rem;
+        color: var(--neutral-600);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+
+    .periode-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+
+    /* STATUS PILLS PREMIUM */
+    .status-pills-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .status-pill-wrapper {
+        position: relative;
+    }
+
+    .status-pill-input {
+        display: none;
+    }
+
+    .status-pill-label {
+        display: block;
+        padding: 1rem;
+        border: 2px solid var(--neutral-300);
+        border-radius: 0.875rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .status-pill-label:hover {
+        border-color: var(--neutral-400);
+        background: var(--neutral-100);
+    }
+
+    .status-pill-input:checked + .status-pill-label {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-badge-bb {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger-color);
+    }
+
+    .status-badge-mb {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning-color);
+    }
+
+    .status-badge-bsh {
+        background: rgba(6, 182, 212, 0.1);
+        color: var(--info-color);
+    }
+
+    .status-badge-bsb {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success-color);
+    }
+
+    .status-pill-text {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--neutral-900);
+    }
+
+    .status-input:checked + .status-pill-label {
+        border-color: var(--primary-color);
+        background: var(--primary-light);
+    }
+
+    /* TEMPLATE DESCRIPTION */
+    .template-description {
+        display: none;
+        background: linear-gradient(135deg, rgba(0, 102, 255, 0.05), rgba(6, 182, 212, 0.05));
+        border: 1.5px solid var(--primary-light);
+        border-radius: 0.875rem;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        animation: slideDown 0.3s ease-out;
+    }
+
+    .template-description.active {
+        display: block;
+    }
+
+    .template-description-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.75rem;
+    }
+
+    .template-description-text {
+        font-size: 0.95rem;
+        color: var(--neutral-700);
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    /* TEXTAREA PREMIUM */
+    .textarea-wrapper {
+        position: relative;
+    }
+
+    .textarea-premium {
+        width: 100%;
+        padding: 1rem;
+        border: 1.5px solid var(--neutral-300);
+        border-radius: 0.875rem;
+        font-size: 1rem;
+        color: var(--neutral-900);
+        font-family: inherit;
+        background: white;
+        resize: vertical;
+        min-height: 120px;
+    }
+
+    .textarea-premium:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px var(--primary-light);
+        background: white;
+    }
+
+    .textarea-hint {
+        font-size: 0.85rem;
+        color: var(--neutral-600);
+        margin-top: 0.5rem;
+    }
+
+    /* KATEGORI CARDS */
+    .kategori-cards-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .kategori-card-wrapper {
+        position: relative;
+    }
+
+    .kategori-checkbox-input {
+        display: none;
+    }
+
+    .kategori-card {
+        background: white;
+        border: 2px solid var(--neutral-200);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        display: block;
+    }
+
+    .kategori-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-color), var(--info-color));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .kategori-card:hover {
+        border-color: var(--neutral-300);
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .kategori-checkbox-input:checked + .kategori-card {
+        border-color: var(--primary-color);
+        background: var(--primary-light);
+        box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+    }
+
+    .kategori-checkbox-input:checked + .kategori-card::before {
+        opacity: 1;
+    }
+
+    .kategori-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .kategori-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--neutral-900);
+        margin: 0;
+    }
+
+    .kategori-check {
+        width: 24px;
+        height: 24px;
+        background: var(--success-color);
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        opacity: 0;
+        transform: scale(0);
+        transition: all 0.3s ease;
+    }
+
+    .kategori-checkbox-input:checked + .kategori-card .kategori-check {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .nilai-wrapper {
+        display: none;
+    }
+
+    .kategori-checkbox-input:checked ~ .nilai-wrapper {
+        display: block;
+        animation: slideDown 0.3s ease-out;
+    }
+
+    .nilai-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--neutral-700);
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .nilai-display {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        background: var(--primary-light);
+        color: var(--primary-color);
+        border-radius: 0.5rem;
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+
+    .nilai-slider-container {
+        display: none;
+    }
+
+    .nilai-slider {
+        display: none;
+    }
+
+    .nilai-slider::-webkit-slider-thumb {
+        display: none;
+    }
+
+    .nilai-slider::-webkit-slider-thumb:hover {
+        display: none;
+    }
+
+    .nilai-slider::-moz-range-thumb {
+        display: none;
+    }
+
+    .nilai-slider::-moz-range-thumb:hover {
+        display: none;
+    }
+
+    .nilai-scale-labels {
+        display: none;
+    }
+
+    .rating-stars {
+        display: grid;
+        grid-template-columns: repeat(10, 1fr);
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .rating-star {
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 0.65rem;
+        border: 2px solid var(--neutral-300);
+        background: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--neutral-600);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .rating-star:hover {
+        border-color: var(--primary-color);
+        background: var(--primary-light);
+        color: var(--primary-color);
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25);
+    }
+
+    .rating-star:active {
+        transform: translateY(-1px) scale(1.02);
+    }
+
+    .rating-star.active {
+        background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+        border-color: var(--primary-color);
+        color: white;
+        box-shadow: 0 4px 15px rgba(0, 102, 255, 0.35);
+        font-weight: 800;
+    }
+
+    .rating-stars-labels {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--neutral-600);
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        padding: 0 0.5rem;
+    }
+
+    .rating-label-item {
+        padding: 0.5rem 0;
+        border-bottom: 1px dashed var(--neutral-300);
+    }
+
+    .rating-label-item:first-child {
+        grid-column: 1;
+        text-align: center;
+    }
+
+    .rating-label-item:nth-child(2) {
+        grid-column: 2;
+        text-align: center;
+    }
+
+    .rating-label-item:nth-child(3) {
+        grid-column: 3;
+        text-align: center;
+    }
+
+    .nilai-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--neutral-700);
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .nilai-display {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        background: var(--primary-light);
+        color: var(--primary-color);
+        border-radius: 0.5rem;
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+
+    .nilai-slider-container {
+        display: none;
+    }
+
+    .nilai-slider {
+        display: none;
+    }
+
+    .nilai-slider::-webkit-slider-thumb {
+        display: none;
+    }
+
+    .nilai-slider::-webkit-slider-thumb:hover {
+        display: none;
+    }
+
+    .nilai-slider::-moz-range-thumb {
+        display: none;
+    }
+
+    .nilai-slider::-moz-range-thumb:hover {
+        display: none;
+    }
+
+    .nilai-scale-labels {
+        display: none;
+    }
+
+    /* ACTION BUTTONS */
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2.5rem;
+        justify-content: flex-end;
+    }
+
+    .btn-premium {
+        padding: 1rem 2.5rem !important;
+        border: none !important;
+        border-radius: 0.875rem !important;
+        font-size: 1.05rem !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.625rem !important;
+        text-decoration: none !important;
+        letter-spacing: 0.5px !important;
+        position: relative !important;
+        overflow: hidden !important;
+        box-shadow: none !important;
+    }
+
+    .btn-premium::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.5s, height 0.5s;
+        z-index: 0;
+    }
+
+    .btn-premium:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    .btn-save {
+        background: linear-gradient(135deg, #0066FF 0%, #0052CC 100%) !important;
+        color: white !important;
+        box-shadow: 0 8px 24px rgba(0, 102, 255, 0.4), 0 0 1px rgba(0, 102, 255, 0.5) !important;
+        border: none !important;
+        position: relative;
+    }
+
+    .btn-save i {
+        font-size: 1.15rem;
+        transition: transform 0.3s ease;
+        position: relative;
+        z-index: 1;
+    }
+
+    .btn-save:hover {
+        transform: translateY(-4px) !important;
+        box-shadow: 0 12px 32px rgba(0, 102, 255, 0.5), 0 0 2px rgba(0, 102, 255, 0.6) !important;
+    }
+
+    .btn-save:hover i {
+        transform: scale(1.15);
+    }
+
+    .btn-save:active {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 16px rgba(0, 102, 255, 0.4) !important;
+    }
+
+    .btn-cancel {
+        background: white !important;
+        color: var(--neutral-600) !important;
+        border: 2px solid var(--neutral-300) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+        position: relative;
+    }
+
+    .btn-cancel i {
+        font-size: 1rem;
+        transition: transform 0.3s ease;
+        position: relative;
+        z-index: 1;
+    }
+
+    .btn-cancel:hover {
+        background: var(--neutral-50) !important;
+        border-color: var(--neutral-400) !important;
+        color: var(--neutral-700) !important;
+        transform: translateY(-3px) !important;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
+    }
+
+    .btn-cancel:hover i {
+        transform: rotate(90deg);
+    }
+
+    .btn-cancel:active {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+        display: none;
+        text-align: center;
+        padding: 2rem;
+        background: var(--neutral-100);
+        border-radius: 0.875rem;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .empty-state.active {
+        display: block;
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state-text {
+        color: var(--neutral-600);
+        font-size: 0.95rem;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+        .premium-card-body {
+            padding: 1.5rem;
+        }
+
+        .student-cards-container {
+            grid-template-columns: 1fr;
+        }
+
+        .kategori-cards-container {
+            grid-template-columns: 1fr;
+        }
+
+        .status-pills-container {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn-premium {
+            justify-content: center;
+            width: 100%;
+        }
+
+        .premium-header h1 {
+            font-size: 1.5rem;
+        }
+    }
+
+    /* ANIMATIONS */
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    .loading {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+</style>
+
+<div class="page-wrapper">
+    <div class="container-lg">
+        <!-- HEADER -->
+        <div class="premium-header">
+            <h1>
+                <i class="bi bi-plus-circle"></i>
+                Edit Perkembangan Anak
+            </h1>
+            <div class="breadcrumb-text">
+                <i class="bi bi-info-circle"></i>
+                Dokumentasikan perkembangan akademik, sosial, dan emosional siswa dengan detail
             </div>
+        </div>
 
-            <!-- Periode Laporan (Auto-generate dari current date) -->
-            @php
-                $currentMonth = \Carbon\Carbon::now()->month;
-                $currentYear = \Carbon\Carbon::now()->year;
-                $monthNames = [
-                    1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-                    5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-                    9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
-                ];
-            @endphp
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <label for="bulan_display" class="form-label">Bulan <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="bulan_display" disabled value="{{ $monthNames[$currentMonth] }}">
-                    <input type="hidden" name="bulan" id="bulan" value="{{ $currentMonth }}">
-                    <small class="text-muted">Auto-generate berdasarkan tanggal sekarang</small>
-                </div>
+        <!-- MAIN FORM CARD -->
+        <div class="premium-card">
+            <div class="premium-card-body">
+                <form action="{{ route('perkembangan.update', $perkembangan->id_perkembangan) }}" method="POST" id="form-perkembangan">
+                    @csrf
 
-                <div class="col-md-6">
-                    <label for="tahun_display" class="form-label">Tahun <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="tahun_display" disabled value="{{ $currentYear }}">
-                    <input type="hidden" name="tahun" id="tahun" value="{{ $currentYear }}">
-                    <small class="text-muted">Auto-generate berdasarkan tanggal sekarang</small>
-                </div>
-            </div>
+                    <!-- ===== SECTION 1: PILIH SISWA ===== -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <div class="section-title-icon"><i class="bi bi-person-fill"></i></div>
+                            Pilih Siswa
+                        </div>
 
-            <hr>
+                        @if($filterType === 'kelas')
+                            <p style="color: var(--neutral-600); font-size: 0.9rem; margin-bottom: 1.5rem;">
+                                <i class="bi bi-info-circle" style="color: var(--info-color); margin-right: 0.5rem;"></i>
+                                Menampilkan siswa dari kelas Anda
+                            </p>
+                        @endif
 
-            <!-- Indikator Capaian (Global) -->
-            <div class="mb-4">
-                <label class="form-label">Indikator Capaian <span class="text-danger">*</span></label>
-                @php
-                    $statusDescriptions = [
-                        'BB' => 'Anak belum menunjukkan kemampuan dalam aspek ini. Perlu dukungan dan bimbingan intensif dari guru untuk mengembangkan kompetensi ini.',
-                        'MB' => 'Anak mulai menunjukkan kemampuan dalam aspek ini namun masih memerlukan bimbingan. Perlu terus didukung untuk mencapai perkembangan yang lebih baik.',
-                        'BSH' => 'Anak menunjukkan kemampuan yang sesuai dengan harapan untuk usia/tingkatannya. Anak mampu melaksanakan tugas dengan cukup baik.',
-                        'BSB' => 'Anak menunjukkan kemampuan yang sangat menonjol dalam aspek ini. Anak mampu melaksanakan tugas dengan sangat baik dan melampaui harapan.'
-                    ];
-                @endphp
-                <div class="d-flex gap-3 mb-3">
-                    <div class="form-check">
-                        <input class="form-check-input status-radio" type="radio" id="status_bb" name="status_utama" value="BB" 
-                               {{ old('status_utama', $perkembangan->status_utama) == 'BB' ? 'checked' : '' }} required>
-                        <label class="form-check-label" for="status_bb">
-                            <span class="badge bg-danger">BB</span> Belum Berkembang
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input status-radio" type="radio" id="status_mb" name="status_utama" value="MB" 
-                               {{ old('status_utama', $perkembangan->status_utama) == 'MB' ? 'checked' : '' }} required>
-                        <label class="form-check-label" for="status_mb">
-                            <span class="badge bg-warning text-dark">MB</span> Mulai Berkembang
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input status-radio" type="radio" id="status_bsh" name="status_utama" value="BSH" 
-                               {{ old('status_utama', $perkembangan->status_utama) == 'BSH' ? 'checked' : '' }} required>
-                        <label class="form-check-label" for="status_bsh">
-                            <span class="badge bg-info">BSH</span> Sesuai Harapan
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input status-radio" type="radio" id="status_bsb" name="status_utama" value="BSB" 
-                               {{ old('status_utama', $perkembangan->status_utama) == 'BSB' ? 'checked' : '' }} required>
-                        <label class="form-check-label" for="status_bsb">
-                            <span class="badge bg-success">BSB</span> Sangat Baik
-                        </label>
-                    </div>
-                </div>
-                @error('status_utama')
-                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                @enderror
+                        <div class="student-search-wrapper">
+                            <i class="bi bi-search student-search-icon"></i>
+                            <input type="text" class="student-search-input" id="siswa-search" 
+                                   placeholder="Cari nama siswa atau nomor induk..." autocomplete="off">
+                        </div>
 
-                <!-- Template Deskripsi Auto-generate -->
-                <div id="template-deskripsi" class="alert alert-info mb-3" style="display: none;">
-                    <strong>Template Deskripsi:</strong>
-                    <p id="template-text" class="mb-0 mt-2"></p>
-                </div>
-
-                <!-- Form Deskripsi Tambahan -->
-                <div class="mb-3">
-                    <label for="deskripsi_tambahan" class="form-label">Deskripsi Tambahan</label>
-                    <textarea class="form-control" 
-                              id="deskripsi_tambahan" 
-                              name="deskripsi_tambahan" 
-                              rows="3" 
-                              placeholder="Tambahkan catatan atau observasi tambahan (opsional)...">{{ old('deskripsi_tambahan', $perkembangan->deskripsi) }}</textarea>
-                    <small class="text-muted">Tambahkan detail khusus atau catatan penting yang ingin dicatat.</small>
-                </div>
-            </div>
-
-            <hr>
-
-            <!-- Kategori Perkembangan dengan Nilai (1-10) -->
-            <div class="mb-4">
-                <label class="form-label">Kategori Perkembangan <span class="text-danger">*</span></label>
-                <div class="row">
-                    @php
-                        $categories = ['Akademik', 'Sosial', 'Emosional'];
-                    @endphp
-                    @foreach($categories as $category)
-                        <div class="col-md-6 mb-3">
-                            <div class="card p-3" style="background-color: #FFF8F4;">
-                                <div class="row align-items-center">
-                                    <div class="col-md-4">
-                                        <div class="form-check">
-                                            <input class="form-check-input kategori-checkbox" type="checkbox" 
-                                                   id="checkbox_{{ $category }}" name="kategori[]" value="{{ $category }}"
-                                                   data-kategori="{{ strtolower($category) }}"
-                                                   {{ in_array($category, $selectedCategories) ? 'checked' : '' }}>
-                                            <label class="form-check-label fw-bold" for="checkbox_{{ $category }}">
-                                                {{ $category }}
-                                            </label>
+                        <div class="student-cards-container" id="siswa-list">
+                            @forelse($siswa as $s)
+                                <div class="student-card-wrapper" data-nama="{{ strtolower($s->nama_siswa) }}" 
+                                     data-nomor="{{ $s->nomor_induk_siswa }}">
+                                    <div class="student-card" onclick="selectStudent(this)">
+                                        <div class="student-card-content">
+                                            <div class="student-avatar">{{ substr($s->nama_siswa, 0, 1) }}</div>
+                                            <div class="student-info">
+                                                <p class="student-name">{{ $s->nama_siswa }}</p>
+                                                <div class="student-meta">ID: {{ $s->nomor_induk_siswa }}</div>
+                                                <div class="student-meta"><i class="bi bi-bookmark"></i> {{ $s->kelas->nama_kelas ?? '-' }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="student-check">
+                                            <i class="bi bi-check-lg"></i>
                                         </div>
                                     </div>
-                                    <div class="col-md-8">
-                                        <label for="nilai_{{ strtolower($category) }}" class="form-label mb-1">Nilai (1-10)</label>
-                                        <select class="form-select @error('nilai_' . strtolower($category)) is-invalid @enderror" 
-                                                id="nilai_{{ strtolower($category) }}" 
-                                                name="nilai_{{ strtolower($category) }}"
-                                                style="display: {{ in_array($category, $selectedCategories) ? 'block' : 'none' }};">
-                                            <option value="">Pilih nilai...</option>
-                                            @for ($i = 1; $i <= 10; $i++)
-                                                <option value="{{ $i }}" {{ (isset($kategoriMap[$category]) && $kategoriMap[$category]['nilai'] == $i) || old('nilai_' . strtolower($category)) == $i ? 'selected' : '' }}>
-                                                    {{ $i }}
-                                                </option>
-                                            @endfor
-                                        </select>
-                                        @error('nilai_' . strtolower($category))
-                                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                                        @enderror
-                                    </div>
+                                </div>
+                            @empty
+                                <div class="empty-state active" style="grid-column: 1/-1;">
+                                    <div class="empty-state-icon">ðŸ“­</div>
+                                    <p class="empty-state-text">Tidak ada siswa yang tersedia</p>
+                                </div>
+                            @endforelse
+                        </div>
+
+                        <div class="selected-student-badge" id="selected-student-badge">
+                            <div class="selected-student-badge-content">
+                                <div class="selected-student-badge-icon">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                </div>
+                                <div class="selected-student-badge-text">
+                                    <p class="selected-student-badge-label">Siswa Terpilih</p>
+                                    <p class="selected-student-badge-name" id="selected-student-name"></p>
                                 </div>
                             </div>
                         </div>
-                    @endforeach
-                </div>
-                @error('kategori')
-                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                @enderror
-            </div>
 
-            <!-- Indikator Capaian -->
-            <div class="mb-4">
-                <label class="form-label">Indikator Capaian <span class="text-danger">*</span></label>
-                @php
-                    $templateDescriptions = [
-                        'BB' => 'Belum berkembang',
-                        'MB' => 'Mulai berkembang',
-                        'BSH' => 'Berkembang sesuai harapan',
-                        'BSB' => 'Berkembang sangat baik'
-                    ];
-                @endphp
-            </div>
+                        <input type="hidden" id="nomor_induk_siswa" name="nomor_induk_siswa" 
+                               value="{{ old('nomor_induk_siswa') }}" required>
 
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle"></i> Perbarui
-                </button>
-                <a href="{{ route('perkembangan.index') }}" class="btn btn-secondary">
-                    <i class="bi bi-x-circle"></i> Batal
-                </a>
+                        @error('nomor_induk_siswa')
+                            <div style="background: rgba(239, 68, 68, 0.1); border: 1.5px solid var(--danger-color); 
+                                        border-radius: 0.875rem; padding: 1rem; color: var(--danger-color); 
+                                        margin-top: 1rem; font-size: 0.9rem;">
+                                <i class="bi bi-exclamation-circle"></i> {{ $message }}
+                            </div>
+                        @enderror
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <!-- ===== SECTION 2: PERIODE ===== -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <div class="section-title-icon"><i class="bi bi-calendar2-check"></i></div>
+                            Periode Pelaporan
+                        </div>
+
+                        @php
+                            $currentMonth = \Carbon\Carbon::now()->month;
+                            $currentYear = \Carbon\Carbon::now()->year;
+                            $monthNames = [
+                                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+                            ];
+                        @endphp
+
+                        <div class="periode-container">
+                            <div class="periode-item">
+                                <div class="periode-label">Bulan</div>
+                                <div class="periode-value">{{ $monthNames[$currentMonth] }}</div>
+                                <input type="hidden" name="bulan" id="bulan" value="{{ $currentMonth }}">
+                            </div>
+                            <div class="periode-item">
+                                <div class="periode-label">Tahun</div>
+                                <div class="periode-value">{{ $currentYear }}</div>
+                                <input type="hidden" name="tahun" id="tahun" value="{{ $currentYear }}">
+                            </div>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--neutral-600); margin-top: 0.75rem;">
+                            <i class="bi bi-info-circle"></i> Periode otomatis diisi berdasarkan tanggal hari ini
+                        </p>
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <!-- ===== SECTION 3: INDIKATOR CAPAIAN ===== -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <div class="section-title-icon"><i class="bi bi-graph-up"></i></div>
+                            Indikator Capaian Keseluruhan
+                        </div>
+
+                        <div class="status-pills-container">
+                            <div class="status-pill-wrapper">
+                                <input type="radio" class="status-pill-input status-radio" id="status_bb" 
+                                       name="status_utama" value="BB" {{ old('status_utama') == 'BB' ? 'checked' : '' }}>
+                                <label class="status-pill-label" for="status_bb">
+                                    <div class="status-badge status-badge-bb">BB</div>
+                                    <div class="status-pill-text">Belum Berkembang</div>
+                                </label>
+                            </div>
+
+                            <div class="status-pill-wrapper">
+                                <input type="radio" class="status-pill-input status-radio" id="status_mb" 
+                                       name="status_utama" value="MB" {{ old('status_utama') == 'MB' ? 'checked' : '' }}>
+                                <label class="status-pill-label" for="status_mb">
+                                    <div class="status-badge status-badge-mb">MB</div>
+                                    <div class="status-pill-text">Mulai Berkembang</div>
+                                </label>
+                            </div>
+
+                            <div class="status-pill-wrapper">
+                                <input type="radio" class="status-pill-input status-radio" id="status_bsh" 
+                                       name="status_utama" value="BSH" {{ old('status_utama') == 'BSH' ? 'checked' : '' }}>
+                                <label class="status-pill-label" for="status_bsh">
+                                    <div class="status-badge status-badge-bsh">BSH</div>
+                                    <div class="status-pill-text">Sesuai Harapan</div>
+                                </label>
+                            </div>
+
+                            <div class="status-pill-wrapper">
+                                <input type="radio" class="status-pill-input status-radio" id="status_bsb" 
+                                       name="status_utama" value="BSB" {{ old('status_utama') == 'BSB' ? 'checked' : '' }}>
+                                <label class="status-pill-label" for="status_bsb">
+                                    <div class="status-badge status-badge-bsb">BSB</div>
+                                    <div class="status-pill-text">Sangat Baik</div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="template-description" id="template-deskripsi">
+                            <div class="template-description-label">
+                                <i class="bi bi-lightbulb"></i> Template Deskripsi
+                            </div>
+                            <p class="template-description-text" id="template-text"></p>
+                        </div>
+
+                        @error('status_utama')
+                            <div style="background: rgba(239, 68, 68, 0.1); border: 1.5px solid var(--danger-color); 
+                                        border-radius: 0.875rem; padding: 1rem; color: var(--danger-color); 
+                                        font-size: 0.9rem; margin-top: 1rem;">
+                                <i class="bi bi-exclamation-circle"></i> {{ $message }}
+                            </div>
+                        @enderror
+                    </div>
+
+                    <!-- DESKRIPSI TAMBAHAN -->
+                    <div style="margin-top: 1.5rem;">
+                        <label style="font-weight: 600; color: var(--neutral-900); margin-bottom: 0.75rem; display: block;">
+                            Deskripsi & Catatan Tambahan
+                        </label>
+                        <div class="textarea-wrapper">
+                            <textarea class="textarea-premium" id="deskripsi_tambahan" name="deskripsi_tambahan" 
+                                      placeholder="Tambahkan observasi khusus atau catatan penting tentang perkembangan siswa...">{{ old('deskripsi_tambahan') }}</textarea>
+                        </div>
+                        <div class="textarea-hint">
+                            <i class="bi bi-info-circle"></i> Opsional - Tuliskan detail khusus atau catatan penting
+                        </div>
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <!-- ===== SECTION 4: KATEGORI PERKEMBANGAN ===== -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <div class="section-title-icon"><i class="bi bi-bar-chart"></i></div>
+                            Kategori Perkembangan
+                        </div>
+
+                        <div class="kategori-cards-container">
+                            @php
+                                $categories = ['Akademik', 'Sosial', 'Emosional'];
+                                $selectedCategories = old('kategori', []);
+                            @endphp
+
+                            @foreach($categories as $category)
+                                <div class="kategori-card-wrapper">
+                                    <input type="checkbox" class="kategori-checkbox-input kategori-checkbox" 
+                                           id="checkbox_{{ $category }}" name="kategori[]" value="{{ $category }}"
+                                           data-kategori="{{ strtolower($category) }}"
+                                           {{ in_array($category, (array)$selectedCategories) ? 'checked' : '' }}>
+                                    <label for="checkbox_{{ $category }}" class="kategori-card">
+                                        <div class="kategori-card-header">
+                                            <h3 class="kategori-title">{{ $category }}</h3>
+                                            <div class="kategori-check">
+                                                <i class="bi bi-check-lg"></i>
+                                            </div>
+                                        </div>
+
+                                        @if($category === 'Akademik')
+                                            <p style="font-size: 0.85rem; color: var(--neutral-600); margin: 0;">
+                                                Kemampuan kognitif dan akademis
+                                            </p>
+                                        @elseif($category === 'Sosial')
+                                            <p style="font-size: 0.85rem; color: var(--neutral-600); margin: 0;">
+                                                Interaksi dan kerjasama dengan teman
+                                            </p>
+                                        @else
+                                            <p style="font-size: 0.85rem; color: var(--neutral-600); margin: 0;">
+                                                Regulasi emosi dan pengendalian diri
+                                            </p>
+                                        @endif
+                                    </label>
+
+                                    <div class="nilai-wrapper">
+                                        <label class="nilai-label">
+                                            Nilai Perkembangan
+                                            <span class="nilai-display">
+                                                <i class="bi bi-graph-up"></i>
+                                                <span id="nilai_display_{{ strtolower($category) }}">{{ old('nilai_' . strtolower($category), $perkembangan->{'nilai_' . strtolower($category)}) || '-' }}</span>/10
+                                            </span>
+                                        </label>
+
+                                        <div class="nilai-slider-container">
+                                            <input type="range" class="nilai-slider nilai-input" 
+                                                   id="nilai_{{ strtolower($category) }}" 
+                                                   name="nilai_{{ strtolower($category) }}"
+                                                   min="1" max="10" value="{{ old('nilai_' . strtolower($category), $perkembangan->{'nilai_' . strtolower($category)}) }}"
+                                                   data-kategori="{{ strtolower($category) }}">
+                                            <div class="nilai-scale-labels">
+                                                <span>Rendah</span>
+                                                <span>Sedang</span>
+                                                <span>Tinggi</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="rating-stars" id="rating_{{ strtolower($category) }}">
+                                            @for ($i = 1; $i <= 10; $i++)
+                                                <button type="button" class="rating-star" data-value="{{ $i }}" 
+                                                        data-kategori="{{ strtolower($category) }}"
+                                                        title="{{ $i }} - {{ $i <= 3 ? 'Rendah' : ($i <= 6 ? 'Sedang' : ($i <= 8 ? 'Tinggi' : 'Sangat Tinggi')) }}">
+                                                    {{ $i }}
+                                                </button>
+                                            @endfor
+                                        </div>
+
+                                        <div class="rating-stars-labels">
+                                            <div class="rating-label-item">🔴 Rendah<br>(1-3)</div>
+                                            <div class="rating-label-item">🟡 Sedang<br>(4-6)</div>
+                                            <div class="rating-label-item">🟢 Tinggi<br>(7-10)</div>
+                                        </div>
+
+                                        @error('nilai_' . strtolower($category))
+                                            <div style="color: var(--danger-color); font-size: 0.85rem; margin-top: 0.5rem;">
+                                                {{ $message }}
+                                            </div>
+                                        @enderror
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        @error('kategori')
+                            <div style="background: rgba(239, 68, 68, 0.1); border: 1.5px solid var(--danger-color); 
+                                        border-radius: 0.875rem; padding: 1rem; color: var(--danger-color); 
+                                        font-size: 0.9rem; margin-top: 1.5rem;">
+                                <i class="bi bi-exclamation-circle"></i> {{ $message }}
+                            </div>
+                        @enderror
+                    </div>
+
+                    <!-- ACTION BUTTONS -->
+                    <div class="action-buttons">
+                        <a href="{{ route('perkembangan.index') }}" class="btn-premium btn-cancel" style="background: white !important; color: #4B5563 !important; border: 2px solid #E5E7EB !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important; padding: 1rem 2.5rem !important; border-radius: 0.875rem !important; font-size: 1.05rem !important; font-weight: 700 !important; cursor: pointer !important; text-decoration: none !important; display: inline-flex !important; align-items: center !important; gap: 0.625rem !important;">
+                            <i class="bi bi-x-lg"></i> Batal
+                        </a>
+                        <button type="submit" class="btn-premium btn-save" style="background: linear-gradient(135deg, #0066FF 0%, #0052CC 100%) !important; color: white !important; box-shadow: 0 8px 24px rgba(0, 102, 255, 0.4), 0 0 1px rgba(0, 102, 255, 0.5) !important; border: none !important; padding: 1rem 2.5rem !important; border-radius: 0.875rem !important; font-size: 1.05rem !important; font-weight: 700 !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; gap: 0.625rem !important; position: relative !important;">
+                            <i class="bi bi-check-circle"></i> Update Perkembangan
+                        </button>
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<style>
-    .card {
-        transition: all 0.3s ease;
-    }
-    .card:hover {
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    .border-danger { }
-    .border-warning { }
-    .border-info { }
-    .border-success { }
-</style>
-
 <script>
-    // Template descriptions untuk setiap indikator
+    // Template descriptions
     const templateDescriptions = {
         'BB': 'Anak belum menunjukkan kemampuan dalam aspek ini. Perlu dukungan dan bimbingan intensif dari guru untuk mengembangkan kompetensi ini.',
         'MB': 'Anak mulai menunjukkan kemampuan dalam aspek ini namun masih memerlukan bimbingan. Perlu terus didukung untuk mencapai perkembangan yang lebih baik.',
@@ -222,41 +1289,168 @@
         'BSB': 'Anak menunjukkan kemampuan yang sangat menonjol dalam aspek ini. Anak mampu melaksanakan tugas dengan sangat baik dan melampaui harapan.'
     };
 
-    // Handle status radio untuk show/hide template
+    // Select Student Function
+    function selectStudent(element) {
+        document.querySelectorAll('.student-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+
+        element.classList.add('selected');
+
+        const wrapper = element.closest('.student-card-wrapper');
+        const nomorInduk = wrapper.dataset.nomor;
+        const namaSiswa = element.querySelector('.student-name').textContent;
+
+        document.getElementById('nomor_induk_siswa').value = nomorInduk;
+
+        const badge = document.getElementById('selected-student-badge');
+        badge.classList.add('active');
+        document.getElementById('selected-student-name').textContent = namaSiswa + ' (' + nomorInduk + ')';
+    }
+
+    // Search Students
+    const searchInput = document.getElementById('siswa-search');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase();
+            const wrappers = document.querySelectorAll('.student-card-wrapper');
+            let visibleCount = 0;
+
+            wrappers.forEach(wrapper => {
+                const nama = wrapper.dataset.nama;
+                const nomor = wrapper.dataset.nomor.toLowerCase();
+                const match = nama.includes(searchTerm) || nomor.includes(searchTerm);
+
+                wrapper.style.display = match ? 'block' : 'none';
+                if (match) visibleCount++;
+            });
+
+            if (visibleCount === 0) {
+                if (!document.getElementById('no-results')) {
+                    const noResults = document.createElement('div');
+                    noResults.id = 'no-results';
+                    noResults.className = 'empty-state active';
+                    noResults.style.gridColumn = '1/-1';
+                    noResults.innerHTML = '<div class="empty-state-icon">ðŸ”</div><p class="empty-state-text">Tidak ada siswa yang cocok dengan pencarian</p>';
+                    document.getElementById('siswa-list').appendChild(noResults);
+                }
+            } else {
+                const noResults = document.getElementById('no-results');
+                if (noResults) noResults.remove();
+            }
+        });
+    }
+
+    // Status Radio Handler
     document.querySelectorAll('.status-radio').forEach(radio => {
         radio.addEventListener('change', function() {
-            const selectedStatus = this.value;
             const templateDiv = document.getElementById('template-deskripsi');
             const templateText = document.getElementById('template-text');
-            
-            if (selectedStatus && templateDescriptions[selectedStatus]) {
-                templateText.textContent = templateDescriptions[selectedStatus];
-                templateDiv.style.display = 'block';
+
+            if (this.checked && templateDescriptions[this.value]) {
+                templateText.textContent = templateDescriptions[this.value];
+                templateDiv.classList.add('active');
             } else {
-                templateDiv.style.display = 'none';
+                templateDiv.classList.remove('active');
             }
         });
     });
 
-    // Handle kategori checkboxes
+    // Initialize nilai input
+    function initializeNilaiInput(kategori) {
+        const slider = document.getElementById('nilai_' + kategori);
+        const ratingContainer = document.getElementById('rating_' + kategori);
+
+        if (!slider || !ratingContainer) return;
+
+        // Update on slider change
+        slider.addEventListener('input', function() {
+            updateNilaiDisplay(kategori, this.value);
+        });
+
+        // Update on rating star click
+        const stars = ratingContainer.querySelectorAll('.rating-star');
+        stars.forEach(star => {
+            star.addEventListener('click', function() {
+                setRating(kategori, this.dataset.value);
+            });
+        });
+
+        // Initialize display
+        if (slider.value) {
+            updateNilaiDisplay(kategori, slider.value);
+        }
+    }
+
+    // Set rating from stars
+    function setRating(kategori, value) {
+        const slider = document.getElementById('nilai_' + kategori);
+        const ratingContainer = document.getElementById('rating_' + kategori);
+
+        if (slider && ratingContainer) {
+            slider.value = value;
+            updateNilaiDisplay(kategori, value);
+
+            // Update star UI
+            ratingContainer.querySelectorAll('.rating-star').forEach(star => {
+                if (parseInt(star.dataset.value) <= parseInt(value)) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+        }
+    }
+
+    // Update nilai display
+    function updateNilaiDisplay(kategori, value) {
+        const display = document.getElementById('nilai_display_' + kategori);
+        const ratingContainer = document.getElementById('rating_' + kategori);
+
+        if (display) {
+            display.textContent = value;
+        }
+
+        // Update star UI
+        if (ratingContainer) {
+            ratingContainer.querySelectorAll('.rating-star').forEach(star => {
+                if (parseInt(star.dataset.value) <= parseInt(value)) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+        }
+    }
+
+    // Kategori Checkbox Handler
     document.querySelectorAll('.kategori-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             const kategoriLower = this.dataset.kategori;
-            const select = document.getElementById('nilai_' + kategoriLower);
-            
-            if (this.checked) {
-                select.style.display = 'block';
-                select.required = true;
-            } else {
-                select.style.display = 'none';
-                select.required = false;
-                select.value = '';
+            const wrapper = this.closest('.kategori-card-wrapper');
+            const nilaiWrapper = wrapper.querySelector('.nilai-wrapper');
+
+            if (this.checked && nilaiWrapper) {
+                nilaiWrapper.style.display = 'block';
+                // Initialize slider and rating stars
+                initializeNilaiInput(kategoriLower);
+            } else if (nilaiWrapper) {
+                nilaiWrapper.style.display = 'none';
+                const input = wrapper.querySelector('input[type="range"]');
+                if (input) input.value = '';
             }
         });
     });
 
-    // Form submission validation
-    document.querySelector('form').addEventListener('submit', function(e) {
+    // Form Submission
+    document.getElementById('form-perkembangan').addEventListener('submit', function(e) {
+        const selectedStudent = document.getElementById('nomor_induk_siswa').value;
+        if (!selectedStudent) {
+            e.preventDefault();
+            alert('Pilih siswa terlebih dahulu');
+            return false;
+        }
+
         const selectedCategories = document.querySelectorAll('.kategori-checkbox:checked');
         if (selectedCategories.length !== 3) {
             e.preventDefault();
@@ -264,12 +1458,12 @@
             return false;
         }
 
-        // Validate each selected category has nilai
         for (let checkbox of selectedCategories) {
             const kategoriLower = checkbox.dataset.kategori;
-            const nilaiInput = document.getElementById('nilai_' + kategoriLower);
+            const wrapper = checkbox.closest('.kategori-card-wrapper');
+            const slider = wrapper.querySelector('input[type="range"]');
 
-            if (!nilaiInput.value) {
+            if (!slider || !slider.value) {
                 e.preventDefault();
                 alert('Isi nilai untuk kategori ' + checkbox.value);
                 return false;
@@ -277,27 +1471,34 @@
         }
     });
 
-    // Initialize on page load
+    // Restore selected student on page load
     window.addEventListener('DOMContentLoaded', function() {
-        // Show template jika status sudah dipilih
-        const checkedStatus = document.querySelector('.status-radio:checked');
-        if (checkedStatus) {
-            const selectedStatus = checkedStatus.value;
-            const templateDiv = document.getElementById('template-deskripsi');
-            const templateText = document.getElementById('template-text');
-            
-            if (selectedStatus && templateDescriptions[selectedStatus]) {
-                templateText.textContent = templateDescriptions[selectedStatus];
-                templateDiv.style.display = 'block';
+        const selectedNomor = document.getElementById('nomor_induk_siswa').value;
+        if (selectedNomor) {
+            const card = document.querySelector('[data-nomor="' + selectedNomor + '"] .student-card');
+            if (card) {
+                selectStudent(card);
             }
         }
 
-        // Show selects untuk kategori yang sudah di-check
+        // Show template if status already selected
+        const checkedStatus = document.querySelector('.status-radio:checked');
+        if (checkedStatus) {
+            const templateDiv = document.getElementById('template-deskripsi');
+            const templateText = document.getElementById('template-text');
+            templateText.textContent = templateDescriptions[checkedStatus.value];
+            templateDiv.classList.add('active');
+        }
+
+        // Show nilai wrappers for checked categories and initialize them
         document.querySelectorAll('.kategori-checkbox:checked').forEach(checkbox => {
             const kategoriLower = checkbox.dataset.kategori;
-            const select = document.getElementById('nilai_' + kategoriLower);
-            select.style.display = 'block';
-            select.required = true;
+            const wrapper = checkbox.closest('.kategori-card-wrapper');
+            const nilaiWrapper = wrapper.querySelector('.nilai-wrapper');
+            if (nilaiWrapper) {
+                nilaiWrapper.style.display = 'block';
+                initializeNilaiInput(kategoriLower);
+            }
         });
     });
 </script>

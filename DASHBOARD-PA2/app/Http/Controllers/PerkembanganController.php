@@ -13,11 +13,34 @@ class PerkembanganController extends Controller
 {
     public function index()
     {
-        // Semua guru (termasuk superadmin) bisa melihat SEMUA perkembangan anak
-        $perkembangan = Perkembangan::with('guru')
-            ->with('siswa.kelas')
-            ->orderBy('id_perkembangan', 'desc')
-            ->get();
+        // Super admin bisa melihat SEMUA perkembangan, 
+        // Guru regular hanya bisa melihat perkembangan dari siswa di kelasnya
+        if (session('is_super_admin')) {
+            $perkembangan = Perkembangan::with('guru')
+                ->with('siswa.kelas')
+                ->orderBy('id_perkembangan', 'desc')
+                ->get();
+        } else {
+            // Filter perkembangan berdasarkan siswa di kelas guru
+            $kelasGuruArray = Kelas::where('id_guru', session('id_guru'))
+                ->pluck('id_kelas')
+                ->toArray();
+            
+            if (empty($kelasGuruArray)) {
+                // Guru belum punya kelas, tampilkan kosong
+                $perkembangan = collect();
+            } else {
+                $siswaGuruArray = Siswa::whereIn('id_kelas', $kelasGuruArray)
+                    ->pluck('nomor_induk_siswa')
+                    ->toArray();
+                
+                $perkembangan = Perkembangan::whereIn('nomor_induk_siswa', $siswaGuruArray)
+                    ->with('guru')
+                    ->with('siswa.kelas')
+                    ->orderBy('id_perkembangan', 'desc')
+                    ->get();
+            }
+        }
         
         return view('perkembangan.index', compact('perkembangan'));
     }
@@ -32,10 +55,32 @@ class PerkembanganController extends Controller
             );
         }
 
-        // Tampilkan SEMUA siswa yang ada
-        $siswa = Siswa::with('kelas')->get();
+        // Filter siswa berdasarkan kelas yang diampuh guru
+        if (session('is_super_admin')) {
+            // Super admin bisa lihat SEMUA siswa
+            $siswa = Siswa::with('kelas')->orderBy('nama_siswa')->get();
+            $filterType = 'semua';
+        } else {
+            // Guru regular hanya bisa lihat siswa di kelasnya
+            $kelasGuruArray = Kelas::where('id_guru', session('id_guru'))
+                ->pluck('id_kelas')
+                ->toArray();
+            
+            if (empty($kelasGuruArray)) {
+                return redirect()->route('perkembangan.index')->with('error', 
+                    'Anda belum ditugaskan mengajar di kelas manapun. ' .
+                    'Hubungi super admin untuk menugaskan kelas Anda.'
+                );
+            }
+            
+            $siswa = Siswa::whereIn('id_kelas', $kelasGuruArray)
+                ->with('kelas')
+                ->orderBy('nama_siswa')
+                ->get();
+            $filterType = 'kelas';
+        }
 
-        return view('perkembangan.create', compact('siswa'));
+        return view('perkembangan.create', compact('siswa', 'filterType'));
     }
 
     public function store(Request $request)
@@ -44,6 +89,24 @@ class PerkembanganController extends Controller
             return redirect()->route('perkembangan.index')->with('error', 
                 'Anda tidak berwenang menambah perkembangan. Hanya guru yang dapat menambah perkembangan.'
             );
+        }
+
+        // Authorize: Regular guru hanya bisa input untuk siswa di kelasnya
+        if (!session('is_super_admin')) {
+            $kelasGuruArray = Kelas::where('id_guru', session('id_guru'))
+                ->pluck('id_kelas')
+                ->toArray();
+            $siswaGuruArray = !empty($kelasGuruArray) 
+                ? Siswa::whereIn('id_kelas', $kelasGuruArray)->pluck('nomor_induk_siswa')->toArray() 
+                : [];
+            
+            // Cek apakah student_id yang dipilih ada di kelas guru
+            $selectedStudent = $request->input('nomor_induk_siswa');
+            if (!in_array($selectedStudent, $siswaGuruArray)) {
+                return redirect()->route('perkembangan.create')->with('error', 
+                    'Anda hanya bisa menginput perkembangan untuk siswa di kelas Anda.'
+                );
+            }
         }
 
         // Validate kategori dan status_utama - harus semua 3 kategori
@@ -153,8 +216,23 @@ class PerkembanganController extends Controller
             }
         }
 
-        // Tampilkan SEMUA siswa yang ada
-        $siswa = Siswa::with('kelas')->get();
+        // Filter siswa berdasarkan kelas yang diampuh guru
+        if (session('is_super_admin')) {
+            // Super admin bisa lihat SEMUA siswa
+            $siswa = Siswa::with('kelas')->orderBy('nama_siswa')->get();
+            $filterType = 'semua';
+        } else {
+            // Guru regular hanya bisa lihat siswa di kelasnya
+            $kelasGuruArray = Kelas::where('id_guru', session('id_guru'))
+                ->pluck('id_kelas')
+                ->toArray();
+            
+            $siswa = Siswa::whereIn('id_kelas', $kelasGuruArray)
+                ->with('kelas')
+                ->orderBy('nama_siswa')
+                ->get();
+            $filterType = 'kelas';
+        }
         
         // Load kategori details with eager loading
         $perkembangan->load('kategoriDetails');
@@ -171,7 +249,7 @@ class PerkembanganController extends Controller
             ];
         }
 
-        return view('perkembangan.edit', compact('perkembangan', 'siswa', 'selectedCategories', 'kategoriMap'));
+        return view('perkembangan.edit', compact('perkembangan', 'siswa', 'selectedCategories', 'kategoriMap', 'filterType'));
     }
 
     public function update(Request $request, Perkembangan $perkembangan)

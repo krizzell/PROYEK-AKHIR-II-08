@@ -532,7 +532,6 @@
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
-        display: block;
     }
 
     .kategori-card::before {
@@ -609,115 +608,9 @@
         font-size: 0.9rem;
         font-weight: 600;
         color: var(--neutral-700);
-        margin-bottom: 1rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        margin-bottom: 0.75rem;
+        display: block;
     }
-
-    .nilai-display {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.375rem 0.75rem;
-        background: var(--primary-light);
-        color: var(--primary-color);
-        border-radius: 0.5rem;
-        font-weight: 700;
-        font-size: 0.95rem;
-    }
-
-    .nilai-slider-container {
-        display: none;
-    }
-
-    .nilai-slider {
-        display: none;
-    }
-
-    .nilai-scale-labels {
-        display: none;
-    }
-
-    .rating-stars {
-        display: grid;
-        grid-template-columns: repeat(10, 1fr);
-        gap: 0.5rem;
-        margin-top: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .rating-star {
-        width: 100%;
-        aspect-ratio: 1;
-        border-radius: 0.65rem;
-        border: 2px solid var(--neutral-300);
-        background: white;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.95rem;
-        font-weight: 700;
-        color: var(--neutral-600);
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    }
-
-    .rating-star:hover {
-        border-color: var(--primary-color);
-        background: var(--primary-light);
-        color: var(--primary-color);
-        transform: translateY(-3px) scale(1.05);
-        box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25);
-    }
-
-    .rating-star:active {
-        transform: translateY(-1px) scale(1.02);
-    }
-
-    .rating-star.active {
-        background: linear-gradient(135deg, var(--primary-color), var(--info-color));
-        border-color: var(--primary-color);
-        color: white;
-        box-shadow: 0 4px 15px rgba(0, 102, 255, 0.35);
-        font-weight: 800;
-    }
-
-    .rating-stars-labels {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 0;
-        font-size: 0.7rem;
-        font-weight: 700;
-        color: var(--neutral-600);
-        text-align: center;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-        padding: 0 0.5rem;
-    }
-
-    .rating-label-item {
-        padding: 0.5rem 0;
-        border-bottom: 1px dashed var(--neutral-300);
-    }
-
-    .rating-label-item:first-child {
-        grid-column: 1;
-        text-align: center;
-    }
-
-    .rating-label-item:nth-child(2) {
-        grid-column: 2;
-        text-align: center;
-    }
-
-    .rating-label-item:nth-child(3) {
-        grid-column: 3;
-        text-align: center;
-    }
-
-    .nilai-label {
 
     .nilai-scale {
         display: flex;
@@ -780,102 +673,45 @@
     }
 
     .btn-premium {
-        padding: 1rem 2.5rem !important;
-        border: none !important;
-        border-radius: 0.875rem !important;
-        font-size: 1.05rem !important;
-        font-weight: 700 !important;
-        cursor: pointer !important;
-        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 0.625rem !important;
-        text-decoration: none !important;
-        letter-spacing: 0.5px !important;
-        position: relative !important;
-        overflow: hidden !important;
-        box-shadow: none !important;
-    }
-
-    .btn-premium::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.3);
-        transform: translate(-50%, -50%);
-        transition: width 0.5s, height 0.5s;
-        z-index: 0;
-    }
-
-    .btn-premium:hover::before {
-        width: 300px;
-        height: 300px;
+        padding: 0.875rem 2rem;
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        letter-spacing: 0.3px;
     }
 
     .btn-save {
-        background: linear-gradient(135deg, #0066FF 0%, #0052CC 100%) !important;
-        color: white !important;
-        box-shadow: 0 8px 24px rgba(0, 102, 255, 0.4), 0 0 1px rgba(0, 102, 255, 0.5) !important;
-        border: none !important;
-        position: relative;
-    }
-
-    .btn-save i {
-        font-size: 1.15rem;
-        transition: transform 0.3s ease;
-        position: relative;
-        z-index: 1;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
     }
 
     .btn-save:hover {
-        transform: translateY(-4px) !important;
-        box-shadow: 0 12px 32px rgba(0, 102, 255, 0.5), 0 0 2px rgba(0, 102, 255, 0.6) !important;
-    }
-
-    .btn-save:hover i {
-        transform: scale(1.15);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 102, 255, 0.4);
     }
 
     .btn-save:active {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 16px rgba(0, 102, 255, 0.4) !important;
+        transform: translateY(0);
+        box-shadow: 0 2px 8px rgba(0, 102, 255, 0.2);
     }
 
     .btn-cancel {
-        background: white !important;
-        color: var(--neutral-600) !important;
-        border: 2px solid var(--neutral-300) !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-        position: relative;
-    }
-
-    .btn-cancel i {
-        font-size: 1rem;
-        transition: transform 0.3s ease;
-        position: relative;
-        z-index: 1;
+        background: white;
+        color: var(--neutral-700);
+        border: 1.5px solid var(--neutral-300);
     }
 
     .btn-cancel:hover {
-        background: var(--neutral-50) !important;
-        border-color: var(--neutral-400) !important;
-        color: var(--neutral-700) !important;
-        transform: translateY(-3px) !important;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
-    }
-
-    .btn-cancel:hover i {
-        transform: rotate(90deg);
-    }
-
-    .btn-cancel:active {
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08) !important;
+        background: var(--neutral-100);
+        border-color: var(--neutral-400);
     }
 
     /* EMPTY STATE */
@@ -1173,7 +1009,7 @@
                                            id="checkbox_{{ $category }}" name="kategori[]" value="{{ $category }}"
                                            data-kategori="{{ strtolower($category) }}"
                                            {{ in_array($category, (array)$selectedCategories) ? 'checked' : '' }}>
-                                    <label for="checkbox_{{ $category }}" class="kategori-card">
+                                    <div class="kategori-card">
                                         <div class="kategori-card-header">
                                             <h3 class="kategori-title">{{ $category }}</h3>
                                             <div class="kategori-check">
@@ -1194,45 +1030,19 @@
                                                 Regulasi emosi dan pengendalian diri
                                             </p>
                                         @endif
-                                    </label>
+                                    </div>
 
                                     <div class="nilai-wrapper">
-                                        <label class="nilai-label">
-                                            Nilai Perkembangan
-                                            <span class="nilai-display">
-                                                <i class="bi bi-graph-up"></i>
-                                                <span id="nilai_display_{{ strtolower($category) }}">-</span>/10
-                                            </span>
-                                        </label>
-
-                                        <div class="nilai-slider-container">
-                                            <input type="range" class="nilai-slider nilai-input" 
-                                                   id="nilai_{{ strtolower($category) }}" 
-                                                   name="nilai_{{ strtolower($category) }}"
-                                                   min="1" max="10" value="{{ old('nilai_' . strtolower($category), '') }}"
-                                                   data-kategori="{{ strtolower($category) }}">
-                                            <div class="nilai-scale-labels">
-                                                <span>Rendah</span>
-                                                <span>Sedang</span>
-                                                <span>Tinggi</span>
-                                            </div>
-                                        </div>
-
-                                        <div class="rating-stars" id="rating_{{ strtolower($category) }}">
+                                        <label class="nilai-label">Nilai Perkembangan (1-10)</label>
+                                        <select class="nilai-select" id="nilai_{{ strtolower($category) }}" 
+                                                name="nilai_{{ strtolower($category) }}">
+                                            <option value="">Pilih nilai...</option>
                                             @for ($i = 1; $i <= 10; $i++)
-                                                <button type="button" class="rating-star" data-value="{{ $i }}" 
-                                                        data-kategori="{{ strtolower($category) }}"
-                                                        title="{{ $i }} - {{ $i <= 3 ? 'Rendah' : ($i <= 6 ? 'Sedang' : ($i <= 8 ? 'Tinggi' : 'Sangat Tinggi')) }}">
-                                                    {{ $i }}
-                                                </button>
+                                                <option value="{{ $i }}" {{ old('nilai_' . strtolower($category)) == $i ? 'selected' : '' }}>
+                                                    {{ $i }} - {{ $i <= 3 ? 'Rendah' : ($i <= 6 ? 'Sedang' : ($i <= 8 ? 'Tinggi' : 'Sangat Tinggi')) }}
+                                                </option>
                                             @endfor
-                                        </div>
-
-                                        <div class="rating-stars-labels">
-                                            <div class="rating-label-item">🔴 Rendah<br>(1-3)</div>
-                                            <div class="rating-label-item">🟡 Sedang<br>(4-6)</div>
-                                            <div class="rating-label-item">🟢 Tinggi<br>(7-10)</div>
-                                        </div>
+                                        </select>
 
                                         @error('nilai_' . strtolower($category))
                                             <div style="color: var(--danger-color); font-size: 0.85rem; margin-top: 0.5rem;">
@@ -1255,10 +1065,10 @@
 
                     <!-- ACTION BUTTONS -->
                     <div class="action-buttons">
-                        <a href="{{ route('perkembangan.index') }}" class="btn-premium btn-cancel" style="background: white !important; color: #4B5563 !important; border: 2px solid #E5E7EB !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important; padding: 1rem 2.5rem !important; border-radius: 0.875rem !important; font-size: 1.05rem !important; font-weight: 700 !important; cursor: pointer !important; text-decoration: none !important; display: inline-flex !important; align-items: center !important; gap: 0.625rem !important;">
+                        <a href="{{ route('perkembangan.index') }}" class="btn-premium btn-cancel">
                             <i class="bi bi-x-lg"></i> Batal
                         </a>
-                        <button type="submit" class="btn-premium btn-save" style="background: linear-gradient(135deg, #0066FF 0%, #0052CC 100%) !important; color: white !important; box-shadow: 0 8px 24px rgba(0, 102, 255, 0.4), 0 0 1px rgba(0, 102, 255, 0.5) !important; border: none !important; padding: 1rem 2.5rem !important; border-radius: 0.875rem !important; font-size: 1.05rem !important; font-weight: 700 !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; gap: 0.625rem !important; position: relative !important;">
+                        <button type="submit" class="btn-premium btn-save">
                             <i class="bi bi-check-circle"></i> Simpan Perkembangan
                         </button>
                     </div>
@@ -1348,89 +1158,14 @@
     document.querySelectorAll('.kategori-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             const kategoriLower = this.dataset.kategori;
-            const wrapper = this.closest('.kategori-card-wrapper');
-            const nilaiWrapper = wrapper.querySelector('.nilai-wrapper');
-            const ratingStars = wrapper.querySelectorAll('.rating-star');
+            const nilaiWrapper = document.querySelector('[data-kategori="' + kategoriLower + '"]')?.closest('.kategori-card-wrapper')?.querySelector('.nilai-wrapper');
 
             if (this.checked && nilaiWrapper) {
                 nilaiWrapper.style.display = 'block';
-                // Initialize rating star click handlers
-                ratingStars.forEach(star => {
-                    star.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        setRating(kategoriLower, this.dataset.value);
-                    });
-                });
-                // Initialize existing value
-                const hiddenInput = wrapper.querySelector('input[type="range"]');
-                if (hiddenInput && hiddenInput.value) {
-                    updateNilaiDisplay(kategoriLower, hiddenInput.value, wrapper);
-                }
             } else if (nilaiWrapper) {
                 nilaiWrapper.style.display = 'none';
-                const input = wrapper.querySelector('input[type="range"]');
-                if (input) input.value = '';
-                // Remove active state
-                ratingStars.forEach(star => star.classList.remove('active'));
-            }
-        });
-    });
-
-    // Set rating value - MAIN FUNCTION
-    function setRating(kategori, value) {
-        const wrapper = document.querySelector(`[data-kategori="${kategori}"]`)?.closest('.kategori-card-wrapper');
-        if (!wrapper) return;
-
-        const slider = wrapper.querySelector('input[type="range"]');
-        const display = wrapper.querySelector(`#nilai_display_${kategori}`);
-        const ratingStars = wrapper.querySelectorAll('.rating-star');
-
-        if (slider) {
-            slider.value = value;
-        }
-
-        updateNilaiDisplay(kategori, value, wrapper);
-    }
-
-    // Update nilai display - VISUAL UPDATE FUNCTION
-    function updateNilaiDisplay(kategori, value, wrapper) {
-        const display = wrapper.querySelector(`#nilai_display_${kategori}`);
-        
-        if (display) {
-            display.textContent = value;
-        }
-
-        // Update star active states
-        const ratingStars = wrapper.querySelectorAll('.rating-star');
-        ratingStars.forEach(star => {
-            if (parseInt(star.dataset.value) <= parseInt(value)) {
-                star.classList.add('active');
-            } else {
-                star.classList.remove('active');
-            }
-        });
-    }
-
-    // Initialize nilai input - EMPTY FUNCTION (NOT USED ANYMORE)
-    function initializeNilaiInput(kategori) {
-        // Function kept for backward compatibility with checkbox handler
-    }
-
-    // Kategori Checkbox Handler
-    document.querySelectorAll('.kategori-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const kategoriLower = this.dataset.kategori;
-            const wrapper = this.closest('.kategori-card-wrapper');
-            const nilaiWrapper = wrapper.querySelector('.nilai-wrapper');
-
-            if (this.checked && nilaiWrapper) {
-                nilaiWrapper.style.display = 'block';
-                // Initialize slider and rating stars
-                initializeNilaiInput(kategoriLower);
-            } else if (nilaiWrapper) {
-                nilaiWrapper.style.display = 'none';
-                const input = wrapper.querySelector('input[type="range"]');
-                if (input) input.value = '';
+                const select = nilaiWrapper.querySelector('select');
+                select.value = '';
             }
         });
     });
@@ -1454,9 +1189,9 @@
         for (let checkbox of selectedCategories) {
             const kategoriLower = checkbox.dataset.kategori;
             const wrapper = checkbox.closest('.kategori-card-wrapper');
-            const slider = wrapper.querySelector('input[type="range"]');
+            const select = wrapper.querySelector('select');
 
-            if (!slider || !slider.value) {
+            if (!select.value) {
                 e.preventDefault();
                 alert('Isi nilai untuk kategori ' + checkbox.value);
                 return false;
@@ -1483,14 +1218,12 @@
             templateDiv.classList.add('active');
         }
 
-        // Show nilai wrappers for checked categories and initialize them
+        // Show nilai wrappers for checked categories
         document.querySelectorAll('.kategori-checkbox:checked').forEach(checkbox => {
-            const kategoriLower = checkbox.dataset.kategori;
             const wrapper = checkbox.closest('.kategori-card-wrapper');
             const nilaiWrapper = wrapper.querySelector('.nilai-wrapper');
             if (nilaiWrapper) {
                 nilaiWrapper.style.display = 'block';
-                initializeNilaiInput(kategoriLower);
             }
         });
     });
