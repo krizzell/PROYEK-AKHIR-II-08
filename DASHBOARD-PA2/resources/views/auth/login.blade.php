@@ -4,241 +4,283 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - School Monitor</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
     <style>
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+/* ===== BODY ===== */
+body {
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #eaf0fb 0%, #f8fbff 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+}
 
-        .login-wrapper {
-            width: 100%;
-            max-width: 500px;
-            padding: 20px;
-        }
+/* ===== CONTAINER ===== */
+.login-page {
+    width: 100%;
+    max-width: 1080px;
+    min-height: 540px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: #ffffff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.14);
+}
 
-        .login-container {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-        }
+/* ===== LEFT SIDE ===== */
+.login-left {
+    position: relative;
+    background:
+        radial-gradient(circle at 45% 45%, rgba(251, 185, 47, 0.14), transparent 28%),
+        radial-gradient(circle at 62% 48%, rgba(59, 130, 246, 0.10), transparent 34%),
+        #ffffff;
+    border-right: 1px solid #e5e7eb;
+    overflow: hidden;
+}
 
-        .login-header {
-            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-            padding: 50px 40px 40px;
-            text-align: center;
-        }
+.left-content {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+    color: #1e293b;
+    text-align: center;
+}
 
-        .logo-icon {
-            width: 70px;
-            height: 70px;
-            background: linear-gradient(135deg, #fbb92f 0%, #ffd89b 100%);
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 36px;
-            box-shadow: 0 8px 20px rgba(251, 185, 47, 0.2);
-        }
+/* ===== LOGO FIX (INI YANG PENTING) ===== */
+.left-logo {
+    margin-bottom: 20px;
+    text-align: center;
+}
 
-        .login-header h1 {
-            font-size: 32px;
-            margin: 15px 0 8px;
-            font-weight: 700;
-            color: #2c3e50;
-        }
+.left-logo img {
+    width: 185px; 
+    height: auto;
+    object-fit: contain;
+}
 
-        .login-header p {
-            margin: 0;
-            font-size: 14px;
-            color: #95a5a6;
-            font-weight: 500;
-        }
+/* ===== TEXT LEFT ===== */
+.left-content h2 {
+    font-size: 30px;
+    font-weight: 800;
+    margin-bottom: 15px;
+}
 
-        .login-body {
-            padding: 40px;
-        }
+.left-content p {
+    font-size: 18px;
+    color: #64748b;
+    max-width: 340px;
+    margin: 0 auto;
+}
 
-        .form-group {
-            margin-bottom: 24px;
-        }
+/* ===== RIGHT SIDE ===== */
+.login-right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 54px 64px;
+    background: #ffffff;
+}
 
-        .form-label {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-        }
+.login-card {
+    width: 100%;
+    max-width: 390px;
+}
 
-        .form-control {
-            border: none;
-            border-radius: 10px;
-            padding: 12px 16px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            background-color: #f8f9fa;
-        }
+/* ===== HEADER ===== */
+.brand {
+    margin-bottom: 34px;
+}
 
-        .form-control:focus {
-            border-color: #fbb92f;
-            background-color: white;
-            box-shadow: 0 0 0 4px rgba(251, 185, 47, 0.1);
-            outline: none;
-        }
+.logo-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #fbb92f 0%, #ffd166 100%);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: #fff;
+    box-shadow: 0 14px 30px rgba(251, 185, 47, 0.28);
+    margin-bottom: 22px;
+}
 
-        .form-control::placeholder {
-            color: #bdc3c7;
-        }
+.brand h1 {
+    font-size: 30px;
+    font-weight: 800;
+    color: #172033;
+    margin-bottom: 8px;
+}
 
-        .form-control.is-invalid {
-            border-color: #dc3545;
-        }
+.brand p {
+    color: #64748b;
+    font-size: 14px;
+}
 
-        .form-control.is-invalid:focus {
-            box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.1);
-        }
+/* ===== FORM ===== */
+.form-group {
+    margin-bottom: 22px;
+}
 
-        .btn-login {
-            background: linear-gradient(135deg, #fbb92f 0%, #ffb900 100%);
-            border: none;
-            color: white;
-            padding: 14px 20px;
-            border-radius: 10px;
-            font-weight: 600;
-            width: 100%;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            font-size: 15px;
-            box-shadow: 0 8px 20px rgba(251, 185, 47, 0.3);
-        }
+.form-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 9px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
 
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 28px rgba(251, 185, 47, 0.4);
-            color: white;
-        }
+.input-icon {
+    position: relative;
+}
 
-        .btn-login:active {
-            transform: translateY(0);
-        }
+/* ICON KIRI (KUNCI) */
+.input-icon-left {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
 
-        .alert {
-            border-radius: 10px;
-            margin-bottom: 24px;
-            border: none;
-            padding: 14px 16px;
-            font-size: 13px;
-        }
+/* ICON KANAN (MATA) */
+.toggle-password {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #94a3b8;
+    font-size: 18px;
+}
 
-        .alert-danger {
-            background-color: #fff5f5;
-            border-color: #fecaca;
-            color: #991b1b;
-        }
+.form-control {
+    height: 52px;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    padding: 12px 16px 12px 46px;
+    font-size: 14px;
+}
 
-        .alert-success {
-            background-color: #f0fdf4;
-            border-color: #bcf0da;
-            color: #166534;
-        }
+.form-control:focus {
+    background: #ffffff;
+    border-color: #fbb92f;
+    box-shadow: 0 0 0 4px rgba(251, 185, 47, 0.14);
+}
 
-        .error-message {
-            color: #dc3545;
-            font-size: 12px;
-            margin-top: 6px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
+/* ===== BUTTON ===== */
+.btn-login {
+    width: 100%;
+    height: 52px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #fbb92f 0%, #f59e0b 100%);
+    color: white;
+    font-weight: 700;
+}
 
-        .login-footer {
-            margin-top: 24px;
-            padding-top: 24px;
-            text-align: center;
-            color: #95a5a6;
-            font-size: 13px;
-        }
+/* ===== FOOTER ===== */
+.login-footer {
+    margin-top: 28px;
+    color: #94a3b8;
+    font-size: 12.5px;
+    text-align: center;
+}
 
-        .login-footer p {
-            margin: 0;
-        }
+/* ===== RESPONSIVE ===== */
+@media (max-width: 992px) {
+    .login-page {
+        grid-template-columns: 1fr;
+        max-width: 430px;
+    }
 
-        .demo-info {
-            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-            padding: 16px;
-            border-radius: 10px;
-            font-size: 12px;
-            color: #1565c0;
-            margin-top: 16px;
-        }
+    .login-left {
+        display: none;
+    }
 
-        .demo-info i {
-            margin-right: 6px;
-        }
+    .login-right {
+        padding: 38px 28px;
+    }
+}
 
-        /* Animation */
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+/* ===== PASSWORD TOGGLE ===== */
+.password-wrapper {
+    position: relative;
+}
 
-        .login-container {
-            animation: slideIn 0.5s ease;
-        }
+.toggle-password {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #94a3b8;
+    font-size: 18px;
+}
 
-        .input-icon {
-            position: relative;
-        }
+.toggle-password:hover {
+    color: #f59e0b;
+}
 
-        .input-icon i {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #95a5a6;
-            pointer-events: none;
-        }
+/* Biar icon tidak nabrak text */
+.form-control {
+    height: 52px;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    padding: 12px 45px 12px 46px; 
+    /* kiri 46px buat icon kunci */
+    /* kanan 45px buat icon mata */
+    font-size: 14px;
+}
 
-        .input-icon .form-control {
-            padding-left: 42px;
-        }
+
+
     </style>
 </head>
 <body>
-    <div class="login-wrapper">
-        <div class="login-container">
-            <div class="login-header">
-                <div class="logo-icon">
-                    <i class="bi bi-mortarboard"></i>
-                </div>
-                <h1>TK Swasta Mutiara Balige</h1>
-                <p>Admin Dashboard PA-2</p>
-            </div>
+    <main class="login-page">
+        <section class="login-left">
+            <div class="left-content">
+                <div>
+                    <!-- LOGO -->
+                    <div class="left-logo">
+                        <img src="{{ asset('images/logo_tk_mutiara.png') }}" alt="Logo Sekolah">
+                    </div>
 
-            <div class="login-body">
+                    <h2>Selamat datang di School Monitor</h2>
+                    <p>Akses dashboard untuk mengelola data dan aktivitas sekolah secara efisien.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="login-right">
+            <div class="login-card">
+                <div class="brand">
+                    <div class="logo-icon">
+                        <i class="bi bi-mortarboard"></i>
+                    </div>
+                    <h1>TK Swasta Mutiara Balige</h1>
+                    <p>Masuk ke Admin Dashboard PA-2</p>
+                </div>
+
                 @if ($errors->any())
                     <div class="alert alert-danger">
                         <i class="bi bi-exclamation-circle"></i>
@@ -263,12 +305,12 @@
                             Username
                         </label>
                         <div class="input-icon">
-                            <i class="bi bi-person-circle"></i>
-                            <input type="text" 
-                                   class="form-control @error('username') is-invalid @enderror" 
-                                   id="username" 
-                                   name="username" 
-                                   value="{{ old('username') }}" 
+                            <i class="bi bi-person-circle input-icon-left"></i>
+                            <input type="text"
+                                   class="form-control @error('username') is-invalid @enderror"
+                                   id="username"
+                                   name="username"
+                                   value="{{ old('username') }}"
                                    placeholder="Masukkan username"
                                    required autofocus>
                         </div>
@@ -285,14 +327,19 @@
                             <i class="bi bi-lock"></i>
                             Password
                         </label>
-                        <div class="input-icon">
-                            <i class="bi bi-key"></i>
+                       <div class="input-icon password-wrapper">
+                            <!-- icon kiri -->
+                            <i class="bi bi-key input-icon-left"></i>
+
                             <input type="password" 
-                                   class="form-control @error('password') is-invalid @enderror" 
-                                   id="password" 
-                                   name="password" 
-                                   placeholder="Masukkan password"
-                                   required>
+                                class="form-control @error('password') is-invalid @enderror" 
+                                id="password" 
+                                name="password" 
+                                placeholder="Masukkan password"
+                                required>
+
+                            <!-- icon kanan -->
+                            <i class="bi bi-eye toggle-password" id="togglePassword"></i>
                         </div>
                         @error('password')
                             <div class="error-message">
@@ -316,9 +363,24 @@
                     <p>&copy; 2026 School Monitor - Early Childhood Education Dashboard</p>
                 </div>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    const togglePassword = document.getElementById('togglePassword');
+    const password = document.getElementById('password');
+
+    togglePassword.addEventListener('click', function () {
+        // Toggle type
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+
+        // Ganti icon
+        this.classList.toggle('bi-eye');
+        this.classList.toggle('bi-eye-slash');
+    });
+</script>
 </body>
 </html>
