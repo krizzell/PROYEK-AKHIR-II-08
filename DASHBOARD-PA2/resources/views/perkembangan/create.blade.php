@@ -5,13 +5,13 @@
 @section('content')
 <style>
     :root {
-        --primary-color: #0066FF;
-        --primary-light: #E6F0FF;
-        --primary-dark: #0052CC;
+        --primary-color: #F97316;
+        --primary-light: #FFEDE3;
+        --primary-dark: #F97316;
         --success-color: #10B981;
         --warning-color: #F59E0B;
         --danger-color: #EF4444;
-        --info-color: #06B6D4;
+        --info-color: #0EA5E9;
         --neutral-100: #F9FAFB;
         --neutral-200: #F3F4F6;
         --neutral-300: #E5E7EB;
@@ -30,7 +30,7 @@
     }
 
     .page-wrapper {
-        background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+        background: #FFFFFF;
         min-height: 100vh;
         padding: 2.5rem 0;
     }
@@ -818,9 +818,9 @@
     }
 
     .btn-save {
-        background: linear-gradient(135deg, #0066FF 0%, #0052CC 100%) !important;
+        background: linear-gradient(135deg, #F97316 0%, #EA580C 100%) !important;
         color: white !important;
-        box-shadow: 0 8px 24px rgba(0, 102, 255, 0.4), 0 0 1px rgba(0, 102, 255, 0.5) !important;
+        box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4), 0 0 1px rgba(249, 115, 22, 0.5) !important;
         border: none !important;
         position: relative;
     }
@@ -834,7 +834,7 @@
 
     .btn-save:hover {
         transform: translateY(-4px) !important;
-        box-shadow: 0 12px 32px rgba(0, 102, 255, 0.5), 0 0 2px rgba(0, 102, 255, 0.6) !important;
+        box-shadow: 0 12px 32px rgba(249, 115, 22, 0.5), 0 0 2px rgba(249, 115, 22, 0.6) !important;
     }
 
     .btn-save:hover i {
@@ -843,7 +843,7 @@
 
     .btn-save:active {
         transform: translateY(-2px) !important;
-        box-shadow: 0 6px 16px rgba(0, 102, 255, 0.4) !important;
+        box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4) !important;
     }
 
     .btn-cancel {
@@ -1185,7 +1185,7 @@
                             Hasil Perhitungan Otomatis
                         </div>
 
-                        <div style="background: linear-gradient(135deg, #E6F0FF 0%, #F0E6FF 100%); border: 2px solid #0066FF; border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.5rem;">
+                        <div style="background: linear-gradient(135deg, #FFEDE3 0%, #FFF5F0 100%); border: 2px solid #F97316; border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.5rem;">
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                                 <!-- Rata-rata Nilai -->
                                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; background: white; border-radius: 0.75rem; box-shadow: 0 2px 8px rgba(0, 102, 255, 0.1);">
@@ -1255,7 +1255,7 @@
                         <a href="{{ route('perkembangan.index') }}" class="btn-premium btn-cancel" style="background: white !important; color: #4B5563 !important; border: 2px solid #E5E7EB !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important; padding: 1rem 2.5rem !important; border-radius: 0.875rem !important; font-size: 1.05rem !important; font-weight: 700 !important; cursor: pointer !important; text-decoration: none !important; display: inline-flex !important; align-items: center !important; gap: 0.625rem !important;">
                             <i class="bi bi-x-lg"></i> Batal
                         </a>
-                        <button type="submit" class="btn-premium btn-save" style="background: linear-gradient(135deg, #0066FF 0%, #0052CC 100%) !important; color: white !important; box-shadow: 0 8px 24px rgba(0, 102, 255, 0.4), 0 0 1px rgba(0, 102, 255, 0.5) !important; border: none !important; padding: 1rem 2.5rem !important; border-radius: 0.875rem !important; font-size: 1.05rem !important; font-weight: 700 !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; gap: 0.625rem !important; position: relative !important;">
+                        <button type="submit" class="btn-premium btn-save" style="background: linear-gradient(135deg, #F97316 0%, #EA580C 100%) !important; color: white !important; box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4), 0 0 1px rgba(249, 115, 22, 0.5) !important; border: none !important; padding: 1rem 2.5rem !important; border-radius: 0.875rem !important; font-size: 1.05rem !important; font-weight: 700 !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; gap: 0.625rem !important; position: relative !important;">
                             <i class="bi bi-check-circle"></i> Simpan Perkembangan
                         </button>
                     </div>
@@ -1360,7 +1360,7 @@
         } else if (average <= 8) {
             status = 'BSH';
             statusText = 'Berkembang Sesuai Harapan';
-            badgeColor = '#06B6D4';
+            badgeColor = '#0EA5E9';
         } else {
             status = 'BSB';
             statusText = 'Berkembang Sangat Baik';

@@ -27,12 +27,13 @@
         /* ===== SIDEBAR STYLING ===== */
         .sidebar {
             width: 280px;
-            background-color: #FFF8F4;
+            background-color: #FFFFFF;
             padding: 30px 0;
             position: fixed;
             height: 100vh;
             overflow-y: auto;
             box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+            border-right: 1px solid #FFEDE3;
         }
 
         .sidebar-header {
@@ -44,16 +45,8 @@
         .sidebar-header .logo-title {
             font-size: 22px;
             font-weight: 700;
-            color: #1A1A2E;
+            color: #F97316;
             margin-bottom: 5px;
-        }
-
-        .sidebar-header .logo-subtitle {
-            font-size: 12px;
-            color: #9CA3AF;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         .nav-menu {
@@ -89,16 +82,17 @@
         }
 
         .nav-menu .nav-link:hover {
-            background-color: #FFF8F4;
-            color: #1A1A2E;
+            background-color: #FFEDE3;
+            color: #F97316;
             padding-left: 22px;
         }
 
         .nav-menu .nav-link.active {
-            background: linear-gradient(135deg, #FF8C42 0%, #FF8C42 100%);
-            color: #FFF8F4;
+            background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+            color: #FFFFFF;
             font-weight: 600;
             position: relative;
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
         }
 
         .nav-menu .nav-link.active::before {
@@ -109,7 +103,7 @@
             transform: translateY(-50%);
             width: 4px;
             height: 24px;
-            background: #FF6B1A;
+            background: #FFFFFF;
             border-radius: 0 4px 4px 0;
         }
 
@@ -199,14 +193,14 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #FF8C42 0%, #FFD166 100%);
+            background: linear-gradient(135deg, #F97316 0%, #FFEDE3 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            color: #E85000;
+            color: #F97316;
             font-size: 16px;
-            box-shadow: 0 2px 8px rgba(251, 185, 47, 0.2);
+            box-shadow: 0 2px 8px rgba(249, 115, 22, 0.2);
         }
 
         .user-info-text {
@@ -217,7 +211,7 @@
 
         .user-info-text .user-name {
             font-weight: 600;
-            color: #1A1A2E;
+            color: #000000;
             font-size: 13px;
         }
 
@@ -354,7 +348,6 @@
         <nav class="sidebar">
             <div class="sidebar-header">
                 <div class="logo-title">TK Swasta Mutiara Balige</div>
-                <div class="logo-subtitle">Admin Dashboard PA-2</div>
             </div>
 
             <ul class="nav-menu">
@@ -369,11 +362,6 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ route('pembayaran.index') }}" class="nav-link {{ Route::currentRouteName() == 'pembayaran.index' ? 'active' : '' }}">
-                        <i class="bi bi-credit-card"></i> Verifikasi Pembayaran SPP
-                    </a>
-                </li>
-                <li class="nav-item">
                     <a href="{{ route('pengumuman.index') }}" class="nav-link {{ Route::currentRouteName() == 'pengumuman.index' ? 'active' : '' }}">
                         <i class="bi bi-megaphone"></i> Pengumuman Sekolah
                     </a>
@@ -385,9 +373,6 @@
                 </li>
 
                 @if (session('role') === 'guru')
-                    <div class="admin-divider"></div>
-                    <div class="admin-section-title">Admin Only</div>
-
                     @if (session('is_super_admin'))
                         <li class="nav-item">
                             <a href="{{ route('guru.index') }}" class="nav-link {{ Route::currentRouteName() == 'guru.index' ? 'active' : '' }}">
@@ -514,7 +499,7 @@
                     Swal.fire({
                         title: 'Hapus ' + itemName + '?',
                         text: 'Data yang dihapus tidak dapat dipulihkan',
-                        icon: 'warning',
+                        icon: 'error',
                         showCancelButton: true,
                         confirmButtonColor: '#EF4444',
                         cancelButtonColor: '#9CA3AF',
