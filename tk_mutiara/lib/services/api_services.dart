@@ -21,7 +21,9 @@ class ApiService {
   static String? _token;
   static Map<String, dynamic>? _user;
   static String? _nomorIndukSiswa;
-  static final ValueNotifier<int> paymentRefreshNotifier = ValueNotifier<int>(0);
+  static final ValueNotifier<int> paymentRefreshNotifier = ValueNotifier<int>(
+    0,
+  );
 
   // Getter untuk user data
   static Map<String, dynamic>? get userInfo => _user;
@@ -33,9 +35,9 @@ class ApiService {
   }
 
   static Map<String, String> get _headers => {
-        'Content-Type': 'application/json',
-        if (_token != null) 'Authorization': 'Bearer $_token',
-      };
+    'Content-Type': 'application/json',
+    if (_token != null) 'Authorization': 'Bearer $_token',
+  };
 
   static Map<String, dynamic>? _asMap(dynamic value) {
     if (value is Map<String, dynamic>) return value;
@@ -54,7 +56,8 @@ class ApiService {
 
     final data = map['data'];
     final wrapped = _asMap(data);
-    if (wrapped != null && (wrapped.containsKey('success') || wrapped.containsKey('status'))) {
+    if (wrapped != null &&
+        (wrapped.containsKey('success') || wrapped.containsKey('status'))) {
       return wrapped;
     }
 
@@ -84,28 +87,36 @@ class ApiService {
     return status == 'success';
   }
 
-  static String _extractMessage(dynamic decoded, {String fallback = 'Terjadi kesalahan'}) {
+  static String _extractMessage(
+    dynamic decoded, {
+    String fallback = 'Terjadi kesalahan',
+  }) {
     final envelope = _extractEnvelope(decoded);
     return (envelope['message'] ?? envelope['error'] ?? fallback).toString();
   }
 
   // LOGIN~
-  static Future<Map<String, dynamic>> login(String email, String password) async {
+  static Future<Map<String, dynamic>> login(
+    String email,
+    String password,
+  ) async {
     try {
       print('=== LOGIN REQUEST ===');
       print('URL: $baseUrl/login');
       print('Email: $email');
-      
-      final res = await http.post(
-        Uri.parse('$baseUrl/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw Exception('Request timeout - Backend tidak merespons');
-        },
-      );
+
+      final res = await http
+          .post(
+            Uri.parse('$baseUrl/login'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': email, 'password': password}),
+          )
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('Request timeout - Backend tidak merespons');
+            },
+          );
 
       print('=== RESPONSE ===');
       print('Status: ${res.statusCode}');
@@ -115,12 +126,20 @@ class ApiService {
       print('Parsed Data: $data');
 
       final envelope = _extractEnvelope(data);
-      final userData = _asMap(envelope['user'] ?? envelope['data']?['user'] ?? data['user']) ?? {};
+      final userData =
+          _asMap(
+            envelope['user'] ?? envelope['data']?['user'] ?? data['user'],
+          ) ??
+          {};
 
       if (res.statusCode == 200 && _isSuccess(data)) {
         _token = (envelope['token'] ?? data['token'])?.toString();
-        _user = userData;  // SAVE USER DATA
-        _nomorIndukSiswa = (userData['nomor_induk_siswa'] ?? envelope['nomor_induk_siswa'] ?? data['nomor_induk_siswa'])?.toString();  // SAVE NOMOR INDUK SISWA
+        _user = userData; // SAVE USER DATA
+        _nomorIndukSiswa =
+            (userData['nomor_induk_siswa'] ??
+                    envelope['nomor_induk_siswa'] ??
+                    data['nomor_induk_siswa'])
+                ?.toString(); // SAVE NOMOR INDUK SISWA
         print('✓ Token saved: $_token');
         print('✓ User saved: $_user');
         print('✓ Nomor Induk Siswa saved: $_nomorIndukSiswa');
@@ -128,22 +147,16 @@ class ApiService {
           'success': true,
           'token': _token,
           'user': _user ?? {},
-          'message': _extractMessage(data, fallback: 'Login berhasil')
+          'message': _extractMessage(data, fallback: 'Login berhasil'),
         };
       } else {
         final errorMsg = _extractMessage(data, fallback: 'Login gagal');
         print('✗ Login Error: $errorMsg');
-        return {
-          'success': false,
-          'message': errorMsg,
-        };
+        return {'success': false, 'message': errorMsg};
       }
     } catch (e) {
       print('✗ Exception: $e');
-      return {
-        'success': false,
-        'message': 'Koneksi error: $e'
-      };
+      return {'success': false, 'message': 'Koneksi error: $e'};
     }
   }
 
@@ -160,14 +173,13 @@ class ApiService {
       print('=== GET PENGUMUMAN ===');
       print('Token: $_token');
       print('URL: $baseUrl/api/pengumuman');
-      
-      final res = await http.get(
-        Uri.parse('$baseUrl/api/pengumuman'),
-        headers: _headers,
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () => throw Exception('Request timeout'),
-      );
+
+      final res = await http
+          .get(Uri.parse('$baseUrl/api/pengumuman'), headers: _headers)
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => throw Exception('Request timeout'),
+          );
 
       print('Status: ${res.statusCode}');
       print('Body: ${res.body}');
@@ -178,7 +190,10 @@ class ApiService {
         print('Data count: ${data.length}');
 
         final result = data
-            .map((e) => PengumumanModel.fromJson(Map<String, dynamic>.from(e as Map)))
+            .map(
+              (e) =>
+                  PengumumanModel.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
             .toList();
         print('✓ Loaded ${result.length} pengumuman records');
         return result;
@@ -201,19 +216,27 @@ class ApiService {
       print('=== GET PERKEMBANGAN ===');
       print('Token: $_token');
       print('Nomor Induk Siswa: $_nomorIndukSiswa');
-      print('URL: $baseUrl/api/perkembangan?nomor_induk_siswa=$_nomorIndukSiswa');
-      
-      if (_nomorIndukSiswa == null) {
-        throw Exception('Siswa belum login atau nomor_induk_siswa tidak tersimpan');
-      }
-      
-      final res = await http.get(
-        Uri.parse('$baseUrl/api/perkembangan?nomor_induk_siswa=$_nomorIndukSiswa'),
-        headers: _headers,
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () => throw Exception('Request timeout'),
+      print(
+        'URL: $baseUrl/api/perkembangan?nomor_induk_siswa=$_nomorIndukSiswa',
       );
+
+      if (_nomorIndukSiswa == null) {
+        throw Exception(
+          'Siswa belum login atau nomor_induk_siswa tidak tersimpan',
+        );
+      }
+
+      final res = await http
+          .get(
+            Uri.parse(
+              '$baseUrl/api/perkembangan?nomor_induk_siswa=$_nomorIndukSiswa',
+            ),
+            headers: _headers,
+          )
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => throw Exception('Request timeout'),
+          );
 
       print('Status: ${res.statusCode}');
       print('Body: ${res.body}');
@@ -228,12 +251,19 @@ class ApiService {
           print('Data count: ${data.length}');
 
           final result = data
-              .map((e) => PerkembanganModel.fromJson(Map<String, dynamic>.from(e as Map)))
+              .map(
+                (e) => PerkembanganModel.fromJson(
+                  Map<String, dynamic>.from(e as Map),
+                ),
+              )
               .toList();
           print('✓ Loaded ${result.length} perkembangan records');
           return result;
         } else {
-          final message = _extractMessage(envelope, fallback: 'Error loading perkembangan');
+          final message = _extractMessage(
+            envelope,
+            fallback: 'Error loading perkembangan',
+          );
           print('API error: $message');
           throw Exception('API error: $message');
         }
@@ -255,19 +285,20 @@ class ApiService {
     try {
       print('=== GET PEMBAYARAN (TAGIHAN) ===');
       print('Nomor Induk Siswa: $_nomorIndukSiswa');
-      print('URL: $baseUrl/api/tagihan?nomor_induk_siswa=$_nomorIndukSiswa');
-      
+      print('URL: $baseUrl/api/tagihan');
+
       if (_nomorIndukSiswa == null) {
-        throw Exception('Siswa belum login atau nomor_induk_siswa tidak tersimpan');
+        throw Exception(
+          'Siswa belum login atau nomor_induk_siswa tidak tersimpan',
+        );
       }
 
-      final res = await http.get(
-        Uri.parse('$baseUrl/api/tagihan?nomor_induk_siswa=$_nomorIndukSiswa'),
-        headers: _headers,
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () => throw Exception('Request timeout'),
-      );
+      final res = await http
+          .get(Uri.parse('$baseUrl/api/tagihan'), headers: _headers)
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => throw Exception('Request timeout'),
+          );
 
       print('Status: ${res.statusCode}');
       print('Body: ${res.body}');
@@ -278,9 +309,17 @@ class ApiService {
         if (_isSuccess(decoded)) {
           final List data = _extractList(decoded);
           print('✓ Loaded ${data.length} tagihan records');
-          return data.map((e) => PembayaranModel.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+          return data
+              .map(
+                (e) => PembayaranModel.fromJson(
+                  Map<String, dynamic>.from(e as Map),
+                ),
+              )
+              .toList();
         } else {
-          throw Exception(_extractMessage(decoded, fallback: 'Error loading tagihan'));
+          throw Exception(
+            _extractMessage(decoded, fallback: 'Error loading tagihan'),
+          );
         }
       } else if (res.statusCode == 401) {
         throw Exception('Sesi habis, silakan login ulang');
@@ -295,24 +334,26 @@ class ApiService {
   // BAYAR SPP
   static Future<Map<String, dynamic>> bayarSPP(String id, String metode) async {
     try {
-      print('=== CREATE PEMBAYARAN ===');
-      print('URL: $baseUrl/api/create-payment');
-      print('invoice_id: $id');
+      print('=== CREATE MIDTRANS TRANSACTION ===');
+      print('URL: $baseUrl/api/payment/create-transaction');
+      print('id_tagihan: $id');
       print('payment_method: $metode');
 
-      final res = await http.post(
-        Uri.parse('$baseUrl/api/create-payment'),
-        headers: _headers,
-        body: jsonEncode({
-          'invoice_id': int.tryParse(id) ?? 0,
-          'user_id': _user?['id_akun'],
-          'payment_method': metode,
-          'auto_success': true,
-        }),
-      ).timeout(
-        const Duration(seconds: 15),
-        onTimeout: () => throw Exception('Request timeout'),
-      );
+      final int idTagihan = int.tryParse(id) ?? 0;
+      if (idTagihan <= 0) {
+        return {'success': false, 'message': 'ID tagihan tidak valid'};
+      }
+
+      final res = await http
+          .post(
+            Uri.parse('$baseUrl/api/payment/create-transaction'),
+            headers: _headers,
+            body: jsonEncode({'id_tagihan': idTagihan}),
+          )
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () => throw Exception('Request timeout'),
+          );
 
       print('Status: ${res.statusCode}');
       print('Body: ${res.body}');
@@ -322,17 +363,23 @@ class ApiService {
         final payload = _extractMap(data);
         return {
           'success': true,
+          'id_tagihan': payload['id_tagihan'],
+          'id_pembayaran': payload['id_pembayaran'],
           'snap_token': payload['snap_token'],
           'redirect_url': payload['redirect_url'],
-          'transaction_id': payload['transaction_id'],
           'order_id': payload['order_id'],
-          'payment_status': payload['payment_status'],
-          'auto_success': payload['auto_success'] ?? false,
+          'status_tagihan': payload['status_tagihan'],
+          'status_bayar': payload['status_bayar'],
+          'amount': payload['amount'],
+          'client_key': payload['client_key'],
         };
       } else {
         return {
           'success': false,
-          'message': data['message'] ?? 'Gagal membuat transaksi pembayaran',
+          'message': _extractMessage(
+            data,
+            fallback: 'Gagal membuat transaksi pembayaran',
+          ),
         };
       }
     } catch (e) {
@@ -340,19 +387,28 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> cekStatusPembayaran(String transactionId) async {
+  static Future<Map<String, dynamic>> cekStatusPembayaran(
+    String idTagihan,
+  ) async {
     try {
-      final res = await http.get(
-        Uri.parse('$baseUrl/api/pembayaran/$transactionId/status'),
-        headers: _headers,
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () => throw Exception('Request timeout'),
-      );
+      final int parsed = int.tryParse(idTagihan) ?? 0;
+      if (parsed <= 0) {
+        return {'success': false, 'message': 'ID tagihan tidak valid'};
+      }
+
+      final res = await http
+          .get(
+            Uri.parse('$baseUrl/api/payment/status/$parsed'),
+            headers: _headers,
+          )
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => throw Exception('Request timeout'),
+          );
 
       final data = jsonDecode(res.body);
-      if (res.statusCode == 200 && data['status'] == 'success') {
-        return {'success': true, 'data': data['data']};
+      if (res.statusCode == 200 && _isSuccess(data)) {
+        return {'success': true, 'data': _extractMap(data)};
       }
 
       return {
@@ -371,13 +427,12 @@ class ApiService {
       print('Token: $_token');
       print('URL: $baseUrl/api/profile');
 
-      final res = await http.get(
-        Uri.parse('$baseUrl/api/profile'),
-        headers: _headers,
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () => throw Exception('Request timeout'),
-      );
+      final res = await http
+          .get(Uri.parse('$baseUrl/api/profile'), headers: _headers)
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => throw Exception('Request timeout'),
+          );
 
       print('Status: ${res.statusCode}');
       print('Body: ${res.body}');
@@ -388,7 +443,9 @@ class ApiService {
           print('✓ Profile loaded successfully');
           return {'success': true, 'data': _extractMap(data)};
         } else {
-          throw Exception(_extractMessage(data, fallback: 'Error loading profile'));
+          throw Exception(
+            _extractMessage(data, fallback: 'Error loading profile'),
+          );
         }
       } else if (res.statusCode == 401) {
         throw Exception('Sesi habis, silakan login ulang');
@@ -410,17 +467,19 @@ class ApiService {
       print('=== UPDATE PASSWORD ===');
       print('URL: $baseUrl/api/profile/password');
 
-      final res = await http.put(
-        Uri.parse('$baseUrl/api/profile/password'),
-        headers: _headers,
-        body: jsonEncode({
-          'old_password': oldPassword,
-          'new_password': newPassword,
-        }),
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () => throw Exception('Request timeout'),
-      );
+      final res = await http
+          .put(
+            Uri.parse('$baseUrl/api/profile/password'),
+            headers: _headers,
+            body: jsonEncode({
+              'old_password': oldPassword,
+              'new_password': newPassword,
+            }),
+          )
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => throw Exception('Request timeout'),
+          );
 
       print('Status: ${res.statusCode}');
       print('Body: ${res.body}');
@@ -429,9 +488,21 @@ class ApiService {
         final data = jsonDecode(res.body);
         if (_isSuccess(data)) {
           print('✓ Password updated successfully');
-          return {'success': true, 'message': _extractMessage(data, fallback: 'Password berhasil diubah')};
+          return {
+            'success': true,
+            'message': _extractMessage(
+              data,
+              fallback: 'Password berhasil diubah',
+            ),
+          };
         } else {
-          return {'success': false, 'message': _extractMessage(data, fallback: 'Error updating password')};
+          return {
+            'success': false,
+            'message': _extractMessage(
+              data,
+              fallback: 'Error updating password',
+            ),
+          };
         }
       } else if (res.statusCode == 401) {
         return {'success': false, 'message': 'Password lama tidak sesuai'};
@@ -445,20 +516,24 @@ class ApiService {
   }
 
   // UPDATE PROFILE
-  static Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> updateProfile(
+    Map<String, dynamic> data,
+  ) async {
     try {
       print('=== UPDATE PROFILE ===');
       print('URL: $baseUrl/api/profile');
       print('Data: $data');
 
-      final res = await http.put(
-        Uri.parse('$baseUrl/api/profile'),
-        headers: _headers,
-        body: jsonEncode(data),
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () => throw Exception('Request timeout'),
-      );
+      final res = await http
+          .put(
+            Uri.parse('$baseUrl/api/profile'),
+            headers: _headers,
+            body: jsonEncode(data),
+          )
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => throw Exception('Request timeout'),
+          );
 
       print('Status: ${res.statusCode}');
       print('Body: ${res.body}');
@@ -467,9 +542,21 @@ class ApiService {
         final responseData = jsonDecode(res.body);
         if (_isSuccess(responseData)) {
           print('✓ Profile updated successfully');
-          return {'success': true, 'message': _extractMessage(responseData, fallback: 'Profil berhasil diubah')};
+          return {
+            'success': true,
+            'message': _extractMessage(
+              responseData,
+              fallback: 'Profil berhasil diubah',
+            ),
+          };
         } else {
-          return {'success': false, 'message': _extractMessage(responseData, fallback: 'Error updating profile')};
+          return {
+            'success': false,
+            'message': _extractMessage(
+              responseData,
+              fallback: 'Error updating profile',
+            ),
+          };
         }
       } else if (res.statusCode == 401) {
         return {'success': false, 'message': 'Sesi habis, silakan login ulang'};

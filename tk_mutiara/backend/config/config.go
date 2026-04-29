@@ -24,6 +24,11 @@ type Config struct {
 	JWTSecret     string
 	JWTExpiration int
 	Environment   string
+
+	// Midtrans
+	MidtransServerKey   string
+	MidtransClientKey   string
+	MidtransEnvironment string
 }
 
 var AppConfig *Config
@@ -53,6 +58,11 @@ func LoadConfig() error {
 		JWTSecret:     getEnv("JWT_SECRET", "tk_mutiara_secret_key"),
 		JWTExpiration: exp,
 		Environment:   getEnv("ENVIRONMENT", "development"),
+
+		// Midtrans
+		MidtransServerKey:   getEnv("MIDTRANS_SERVER_KEY", ""),
+		MidtransClientKey:   getEnv("MIDTRANS_CLIENT_KEY", ""),
+		MidtransEnvironment: getEnv("MIDTRANS_ENVIRONMENT", "sandbox"),
 	}
 
 	return nil

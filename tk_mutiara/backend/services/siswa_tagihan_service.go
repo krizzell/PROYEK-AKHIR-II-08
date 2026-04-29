@@ -270,10 +270,9 @@ func UpdatePembayaranStatusService(db *sql.DB, updateReq *models.UpdatePembayara
 	validStatuses := map[string]bool{
 		"menunggu": true,
 		"diterima": true,
-		"ditolak":  true,
 	}
 	if !validStatuses[updateReq.StatusBayar] {
-		return fmt.Errorf("status bayar tidak valid. gunakan: menunggu, diterima, atau ditolak")
+		return fmt.Errorf("status bayar tidak valid. gunakan: menunggu atau diterima")
 	}
 
 	// Cek pembayaran exist

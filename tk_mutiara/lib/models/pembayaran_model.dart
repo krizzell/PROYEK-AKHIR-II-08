@@ -27,7 +27,12 @@ class PembayaranModel {
 
   factory PembayaranModel.fromJson(Map<String, dynamic> json) {
     final rawPeriode = (json['periode'] ?? '').toString();
-    final normalizedStatus = (json['payment_status'] ?? json['status'] ?? 'belum_bayar').toString();
+    final normalizedStatus =
+        (json['status_tagihan'] ??
+                json['payment_status'] ??
+                json['status'] ??
+                'belum_bayar')
+            .toString();
 
     return PembayaranModel(
       idTagihan: json['id_tagihan'] is int
@@ -39,8 +44,11 @@ class PembayaranModel {
       jumlahTagihan: json['jumlah_tagihan'] is int
           ? json['jumlah_tagihan'] as int
           : ((json['jumlah_tagihan'] is double)
-            ? (json['jumlah_tagihan'] as double).round()
-            : (double.tryParse((json['jumlah_tagihan'] ?? '0').toString())?.round() ?? 0)),
+                ? (json['jumlah_tagihan'] as double).round()
+                : (double.tryParse(
+                        (json['jumlah_tagihan'] ?? '0').toString(),
+                      )?.round() ??
+                      0)),
       periode: rawPeriode,
       paymentStatus: normalizedStatus,
       transactionId: (json['transaction_id'] ?? '').toString(),

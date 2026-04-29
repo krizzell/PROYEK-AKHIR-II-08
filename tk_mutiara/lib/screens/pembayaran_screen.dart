@@ -3,16 +3,13 @@ import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../models/pembayaran_model.dart';
 import '../services/api_services.dart';
+import 'payment_webview_screen.dart';
 
 class PembayaranScreen extends StatefulWidget {
   final PembayaranModel? tagihan;
   final VoidCallback? onBackPressed;
-  
-  const PembayaranScreen({
-    super.key,
-    this.tagihan,
-    this.onBackPressed,
-  });
+
+  const PembayaranScreen({super.key, this.tagihan, this.onBackPressed});
 
   @override
   State<PembayaranScreen> createState() => _PembayaranScreenState();
@@ -25,7 +22,9 @@ class _PembayaranScreenState extends State<PembayaranScreen>
   bool _isProcessing = false;
   bool _isDone = false;
   String? _error;
-  String _paidTransactionId = '-';
+  String _lastOrderId = '-';
+  String _lastTagihanId = '-';
+  String _lastRedirectUrl = '';
   String _paymentStateLabel = 'Belum Dibayar';
   List<PembayaranModel> _allTagihan = [];
 
@@ -117,13 +116,18 @@ class _PembayaranScreenState extends State<PembayaranScreen>
     if (!mounted) return;
 
     if (result['success'] == true) {
-      _paidTransactionId = (result['transaction_id'] ?? '-').toString();
-      final paymentStatus = (result['payment_status'] ?? '').toString().toLowerCase();
+      _lastOrderId = (result['order_id'] ?? '-').toString();
+      _lastTagihanId = (result['id_tagihan'] ?? tagihan.id).toString();
+      _lastRedirectUrl = (result['redirect_url'] ?? '').toString();
+      final paymentStatus = (result['status_tagihan'] ?? '')
+          .toString()
+          .toLowerCase();
 
       if (paymentStatus == 'lunas') {
         setState(() {
           _isDone = true;
           _paymentStateLabel = 'Lunas';
+          _isProcessing = false;
         });
         _doneController.forward();
         HapticFeedback.heavyImpact();
@@ -134,7 +138,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Transaksi berhasil dibuat. Sistem sedang menunggu callback Midtrans.'),
+          content: Text('Transaksi dibuat. Lanjutkan pembayaran di Midtrans.'),
         ),
       );
 
@@ -142,10 +146,23 @@ class _PembayaranScreenState extends State<PembayaranScreen>
         _paymentStateLabel = 'Menunggu Pembayaran';
       });
 
+      if (_lastRedirectUrl.isNotEmpty) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PaymentWebViewScreen(initialUrl: _lastRedirectUrl),
+          ),
+        );
+      }
+
       await _pollStatusInBackground();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['message'] ?? 'Gagal membuat transaksi pembayaran')),
+        SnackBar(
+          content: Text(
+            result['message'] ?? 'Gagal membuat transaksi pembayaran',
+          ),
+        ),
       );
     }
 
@@ -156,14 +173,17 @@ class _PembayaranScreenState extends State<PembayaranScreen>
 
   Future<void> _pollStatusInBackground() async {
     // Poll for a short period to capture immediate settlement in sandbox.
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 20; i++) {
       await Future.delayed(const Duration(seconds: 3));
       if (!mounted) return;
+      if (_lastTagihanId == '-' || _lastTagihanId.isEmpty) return;
 
-      final result = await ApiService.cekStatusPembayaran(_paidTransactionId);
+      final result = await ApiService.cekStatusPembayaran(_lastTagihanId);
       if (result['success'] == true) {
         final data = result['data'] as Map<String, dynamic>? ?? {};
-        final paymentStatus = (data['payment_status'] ?? '').toString().toLowerCase();
+        final paymentStatus = (data['status_tagihan'] ?? '')
+            .toString()
+            .toLowerCase();
         if (paymentStatus == 'lunas') {
           setState(() {
             _isDone = true;
@@ -180,7 +200,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
   }
 
   Future<void> _cekStatusPembayaran() async {
-    if (_paidTransactionId == '-' || _paidTransactionId.isEmpty) {
+    if (_lastTagihanId == '-' || _lastTagihanId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Belum ada transaksi yang dibuat.')),
       );
@@ -188,12 +208,14 @@ class _PembayaranScreenState extends State<PembayaranScreen>
     }
 
     setState(() => _isProcessing = true);
-    final result = await ApiService.cekStatusPembayaran(_paidTransactionId);
+    final result = await ApiService.cekStatusPembayaran(_lastTagihanId);
     if (!mounted) return;
 
     if (result['success'] == true) {
       final data = result['data'] as Map<String, dynamic>? ?? {};
-      final paymentStatus = (data['payment_status'] ?? '').toString().toLowerCase();
+      final paymentStatus = (data['status_tagihan'] ?? '')
+          .toString()
+          .toLowerCase();
 
       if (paymentStatus == 'lunas') {
         setState(() {
@@ -211,13 +233,19 @@ class _PembayaranScreenState extends State<PembayaranScreen>
           _isProcessing = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Status masih belum_bayar/pending. Selesaikan pembayaran di Midtrans dulu.')),
+          const SnackBar(
+            content: Text(
+              'Status masih belum bayar. Selesaikan pembayaran di Midtrans dulu.',
+            ),
+          ),
         );
       }
     } else {
       setState(() => _isProcessing = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['message'] ?? 'Gagal cek status pembayaran')),
+        SnackBar(
+          content: Text(result['message'] ?? 'Gagal cek status pembayaran'),
+        ),
       );
     }
   }
@@ -290,7 +318,10 @@ class _PembayaranScreenState extends State<PembayaranScreen>
               children: [
                 _buildTagihanCard(tagihan),
                 const SizedBox(height: 24),
-                if (tagihan.isLunas) _buildLunasNotice() else _buildMethodSection(),
+                if (tagihan.isLunas)
+                  _buildLunasNotice()
+                else
+                  _buildMethodSection(),
                 const SizedBox(height: 24),
                 _buildInfoBox(),
                 const SizedBox(height: 100),
@@ -310,10 +341,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
         children: [
           IconButton(
             onPressed: widget.onBackPressed ?? () => Navigator.pop(context),
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 18,
-            ),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
             color: AppTheme.primary,
           ),
           const SizedBox(width: 4),
@@ -385,7 +413,10 @@ class _PembayaranScreenState extends State<PembayaranScreen>
             ],
           ),
           const SizedBox(height: 16),
-          _tagihanRow('Nama Siswa', tagihan.namaSiswa.isEmpty ? '-' : tagihan.namaSiswa),
+          _tagihanRow(
+            'Nama Siswa',
+            tagihan.namaSiswa.isEmpty ? '-' : tagihan.namaSiswa,
+          ),
           _tagihanRow('Kelas', tagihan.kelas.isEmpty ? '-' : tagihan.kelas),
           _tagihanRow('Periode', tagihan.periode),
           const Divider(color: Colors.white24, height: 24),
@@ -549,7 +580,9 @@ class _PembayaranScreenState extends State<PembayaranScreen>
           width: double.infinity,
           height: 56,
           child: ElevatedButton(
-            onPressed: (_isProcessing || tagihan == null || tagihan.isLunas) ? null : _processBayar,
+            onPressed: (_isProcessing || tagihan == null || tagihan.isLunas)
+                ? null
+                : _processBayar,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
               disabledBackgroundColor: AppTheme.primary.withOpacity(0.6),
@@ -578,7 +611,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
                   ),
           ),
         ),
-        if (_paidTransactionId != '-') ...[
+        if (_lastTagihanId != '-') ...[
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
@@ -654,7 +687,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
           const SizedBox(width: 10),
           const Expanded(
             child: Text(
-              'Pembayaran akan diverifikasi dalam 1x24 jam. Simpan bukti transfer sebagai referensi.',
+              'Status pembayaran akan otomatis berubah menjadi lunas setelah webhook Midtrans diterima server.',
               style: TextStyle(
                 color: AppTheme.textDark,
                 fontSize: 12,
@@ -726,7 +759,8 @@ class _PembayaranScreenState extends State<PembayaranScreen>
               ),
               child: Column(
                 children: [
-                  _successRow('Transaction ID', _paidTransactionId),
+                  _successRow('Tagihan ID', _lastTagihanId),
+                  _successRow('Order ID', _lastOrderId),
                   _successRow(
                     'Metode',
                     _methods[_selectedMethod]['label'] as String,

@@ -50,6 +50,7 @@ func main() {
 
 	// Login route - NEW HANDLER
 	r.POST("/login", handlers.LoginHandler)
+	r.POST("/api/payment/webhook/midtrans", handlers.MidtransWebhookHandler)
 
 	// ==============================
 	// PROTECTED ROUTES
@@ -57,6 +58,11 @@ func main() {
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())
 	{
+		// Payment routes for parent app
+		protected.GET("/tagihan", handlers.GetMyTagihanHandler)
+		protected.POST("/payment/create-transaction", handlers.CreateMidtransTransactionHandler)
+		protected.GET("/payment/status/:idTagihan", handlers.GetPaymentStatusHandler)
+
 		// Pengumuman routes
 		protected.GET("/pengumuman", handlers.GetPengumumanHandler)
 		protected.GET("/pengumuman/:id", handlers.GetPengumumanByIDHandler)
