@@ -117,7 +117,7 @@
             padding: 15px 25px 10px;
             font-size: 11px;
             font-weight: 700;
-            color: #9CA3AF;
+            color: #6B7280;
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-top: 10px;
@@ -125,7 +125,7 @@
 
         .admin-divider {
             height: 1px;
-            background: linear-gradient(to right, transparent, #9CA3AF, transparent);
+            background: linear-gradient(to right, transparent, #6B7280, transparent);
             margin: 15px 0;
         }
 
@@ -230,7 +230,7 @@
 
         .user-info-text .user-role {
             font-size: 11px;
-            color: #9CA3AF;
+            color: #6B7280;
             font-weight: 500;
         }
 
@@ -282,7 +282,7 @@
 
         .page-subtitle {
             font-size: 14px;
-            color: #9CA3AF;
+            color: #6B7280;
             font-weight: 500;
         }
 
@@ -328,7 +328,7 @@
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #9CA3AF;
+            background: #6B7280;
             border-radius: 4px;
         }
 
@@ -534,7 +534,7 @@
                         icon: 'error',
                         showCancelButton: true,
                         confirmButtonColor: '#EF4444',
-                        cancelButtonColor: '#9CA3AF',
+                        cancelButtonColor: '#6B7280',
                         confirmButtonText: 'Ya, Hapus',
                         cancelButtonText: 'Batal',
                         backdrop: true,

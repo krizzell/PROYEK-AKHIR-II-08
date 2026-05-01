@@ -30,7 +30,7 @@
     }
 
     .page-wrapper {
-        background: #FFFFFF;
+        background: transparent;
         min-height: 100vh;
         padding: 2.5rem 0;
     }
@@ -68,12 +68,14 @@
     }
 
     .premium-card {
-        background: white;
-        border: 1px solid var(--neutral-200);
-        border-radius: 1rem;
-        box-shadow: var(--shadow-lg);
+        background: #FFFFFF;
+        border-radius: 16px;
+        border: 1px solid rgba(226, 232, 240, 0.6);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+        position: relative;
         overflow: hidden;
         animation: fadeIn 0.6s ease-out;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     @keyframes fadeIn {
@@ -963,21 +965,19 @@
 
 <div class="page-wrapper">
     <div class="container-lg">
-        <!-- HEADER -->
-        <div class="premium-header">
-            <h1>
-                <i class="bi bi-plus-circle"></i>
-                Edit Perkembangan Anak
-            </h1>
-            <div class="breadcrumb-text">
-                <i class="bi bi-info-circle"></i>
-                Dokumentasikan perkembangan akademik, sosial, dan emosional siswa dengan detail
-            </div>
-        </div>
-
         <!-- MAIN FORM CARD -->
         <div class="premium-card">
             <div class="premium-card-body">
+                <div class="premium-header">
+                    <h1>
+                        <i class="bi bi-plus-circle"></i>
+                        Edit Perkembangan Anak
+                    </h1>
+                    <div class="breadcrumb-text">
+                        <i class="bi bi-info-circle"></i>
+                        Dokumentasikan perkembangan akademik, sosial, dan emosional siswa dengan detail
+                    </div>
+                </div>
                 <form action="{{ route('perkembangan.update', $perkembangan->id_perkembangan) }}" method="POST" id="form-perkembangan">
                     @csrf
 

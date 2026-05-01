@@ -22,7 +22,7 @@
     }
 
     .page-wrapper {
-        background: #FFFFFF;
+        background: transparent;
         min-height: 100vh;
         padding: 2.5rem 0;
     }
@@ -60,12 +60,14 @@
     }
 
     .premium-card {
-        background: white;
-        border: 1px solid var(--neutral-200);
-        border-radius: 1rem;
-        box-shadow: var(--shadow-lg);
+        background: #FFFFFF;
+        border-radius: 16px;
+        border: 1px solid rgba(226, 232, 240, 0.6);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+        position: relative;
         overflow: hidden;
         animation: fadeIn 0.6s ease-out;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     @keyframes fadeIn {
@@ -157,7 +159,7 @@
     }
 
     .form-control::placeholder {
-        color: #9CA3AF;
+        color: #6B7280;
     }
 
     textarea.form-control {
@@ -254,13 +256,12 @@
 
 <div class="page-wrapper">
     <div style="max-width: 900px; margin: 0 auto; padding: 0 1.5rem;">
-        <div class="premium-header">
-            <h1><i class="bi bi-pencil-square"></i> Edit Siswa</h1>
-            <p class="breadcrumb-text">Perbarui informasi siswa pada form di bawah</p>
-        </div>
-
         <div class="premium-card">
             <div class="premium-card-body">
+                <div class="premium-header">
+                    <h1><i class="bi bi-pencil-square"></i> Edit Siswa</h1>
+                    <p class="breadcrumb-text">Perbarui informasi siswa pada form di bawah</p>
+                </div>
                 <form action="{{ route('siswa.update', ['nomor_induk_siswa' => $siswa->nomor_induk_siswa]) }}" method="POST" id="form-siswa">
                     @csrf
                     @method('PUT')

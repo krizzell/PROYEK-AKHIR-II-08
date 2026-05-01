@@ -19,9 +19,20 @@
     }
 
     .page-wrapper {
-        background: #FFFFFF;
+        background: transparent;
         min-height: 100vh;
         padding: 2.5rem 0;
+    }
+
+    .container-lg {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: #FFFFFF;
+        border-radius: 16px;
+        padding: 24px 3rem;
+        border: 1px solid rgba(226, 232, 240, 0.6);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+        position: relative;
     }
 
     .premium-header {
@@ -112,7 +123,7 @@
     }
 
     .form-control::placeholder {
-        color: #9CA3AF;
+        color: #6B7280;
     }
 
     .invalid-feedback {
@@ -179,7 +190,7 @@
 </style>
 
 <div class="page-wrapper">
-    <div class="container-lg" style="max-width: 1000px; margin: 0 auto;">
+    <div class="container-lg">
         <div class="premium-header">
             <h1><i class="bi bi-collection"></i> Tambah Kelas Baru</h1>
             <p class="breadcrumb-text">Isi form di bawah untuk menambahkan kelas baru</p>

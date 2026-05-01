@@ -30,9 +30,20 @@
     }
 
     .page-wrapper {
-        background: #FFFFFF;
+        background: transparent;
         min-height: 100vh;
         padding: 2.5rem 0;
+    }
+
+    .container-lg {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: #FFFFFF;
+        border-radius: 16px;
+        padding: 24px 3rem;
+        border: 1px solid rgba(226, 232, 240, 0.6);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+        position: relative;
     }
 
     .premium-header {
