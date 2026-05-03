@@ -314,3 +314,53 @@ func UpdateProfileHandler(c *gin.Context) {
 		Message: "Profil berhasil diubah",
 	})
 }
+
+// SaveFcmTokenHandler handles POST /api/user/fcm-token
+func SaveFcmTokenHandler(c *gin.Context) {
+    userID, exists := c.Get("user_id")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, models.ApiResponse{
+            Success: false,
+            Message: "User tidak ditemukan",
+        })
+        return
+    }
+
+    userIDInt, err := toInt(userID)
+    if err != nil || userIDInt <= 0 {
+        c.JSON(http.StatusUnauthorized, models.ApiResponse{
+            Success: false,
+            Message: "User tidak valid",
+        })
+        return
+    }
+
+    var req struct {
+        FcmToken string `json:"fcm_token" binding:"required"`
+    }
+
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, models.ApiResponse{
+            Success: false,
+            Message: "fcm_token harus diisi",
+        })
+        return
+    }
+
+    _, err = config.DB.Exec(
+        `UPDATE akun SET fcm_token = ? WHERE id_akun = ?`,
+        req.FcmToken, userIDInt,
+    )
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, models.ApiResponse{
+            Success: false,
+            Message: "Gagal menyimpan FCM token",
+        })
+        return
+    }
+
+    c.JSON(http.StatusOK, models.ApiResponse{
+        Success: true,
+        Message: "FCM token berhasil disimpan",
+    })
+}

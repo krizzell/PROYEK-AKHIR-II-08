@@ -2,14 +2,20 @@ package services
 
 import (
 	"bytes"
+	"crypto"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha512"
+	"crypto/x509"
 	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -45,7 +51,6 @@ type midtransSnapResponse struct {
 	RedirectURL string `json:"redirect_url"`
 }
 
-// CreateMidtransTransaction membuat transaksi baru ke Midtrans Snap dan menyimpan draft pembayaran.
 func CreateMidtransTransaction(db *sql.DB, nomorIndukSiswa string, idTagihan int) (*models.CreateMidtransTransactionResponse, error) {
 	if strings.TrimSpace(config.AppConfig.MidtransServerKey) == "" {
 		return nil, fmt.Errorf("MIDTRANS_SERVER_KEY belum diatur")
@@ -155,7 +160,155 @@ func requestMidtransSnap(payload midtransSnapRequest) (*midtransSnapResponse, er
 	return &parsed, nil
 }
 
-// fetchMidtransStatusAPI mengambil status pembayaran dari API Midtrans langsung
+func getFcmTokenByOrderID(db *sql.DB, orderID string) (string, error) {
+	query := `
+		SELECT a.fcm_token
+		FROM akun a
+		JOIN siswa s ON a.nomor_induk_siswa = s.nomor_induk_siswa
+		JOIN tagihan t ON t.nomor_induk_siswa = s.nomor_induk_siswa
+		JOIN pembayaran p ON p.id_tagihan = t.id_tagihan
+		WHERE p.midtrans_order_id = ?
+		LIMIT 1
+	`
+	var fcmToken sql.NullString
+	err := db.QueryRow(query, orderID).Scan(&fcmToken)
+	if err != nil {
+		return "", fmt.Errorf("gagal ambil fcm token: %w", err)
+	}
+	if !fcmToken.Valid || strings.TrimSpace(fcmToken.String) == "" {
+		return "", fmt.Errorf("fcm token tidak tersedia")
+	}
+	return fcmToken.String, nil
+}
+
+func getAccessToken() (string, error) {
+	serviceAccountPath := config.AppConfig.FCMServiceAccountPath
+	if serviceAccountPath == "" {
+		serviceAccountPath = "firebase-service-account.json"
+	}
+
+	data, err := os.ReadFile(serviceAccountPath)
+	if err != nil {
+		return "", fmt.Errorf("gagal baca service account: %w", err)
+	}
+
+	var sa struct {
+		ClientEmail string `json:"client_email"`
+		PrivateKey  string `json:"private_key"`
+		TokenURI    string `json:"token_uri"`
+	}
+	if err := json.Unmarshal(data, &sa); err != nil {
+		return "", fmt.Errorf("gagal parse service account: %w", err)
+	}
+
+	now := time.Now()
+	claims := map[string]interface{}{
+		"iss":   sa.ClientEmail,
+		"scope": "https://www.googleapis.com/auth/firebase.messaging",
+		"aud":   sa.TokenURI,
+		"iat":   now.Unix(),
+		"exp":   now.Add(time.Hour).Unix(),
+	}
+
+	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RS256","typ":"JWT"}`))
+	claimsBytes, _ := json.Marshal(claims)
+	payload := base64.RawURLEncoding.EncodeToString(claimsBytes)
+	signingInput := header + "." + payload
+
+	block, _ := pem.Decode([]byte(sa.PrivateKey))
+	if block == nil {
+		return "", fmt.Errorf("gagal decode private key PEM")
+	}
+	privateKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	if err != nil {
+		return "", fmt.Errorf("gagal parse private key: %w", err)
+	}
+
+	rsaKey, ok := privateKey.(*rsa.PrivateKey)
+	if !ok {
+		return "", fmt.Errorf("private key bukan RSA")
+	}
+
+	h := crypto.SHA256.New()
+	h.Write([]byte(signingInput))
+	signature, err := rsa.SignPKCS1v15(rand.Reader, rsaKey, crypto.SHA256, h.Sum(nil))
+	if err != nil {
+		return "", fmt.Errorf("gagal sign JWT: %w", err)
+	}
+
+	jwt := signingInput + "." + base64.RawURLEncoding.EncodeToString(signature)
+
+	formData := "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=" + jwt
+	resp, err := http.Post(sa.TokenURI, "application/x-www-form-urlencoded", strings.NewReader(formData))
+	if err != nil {
+		return "", fmt.Errorf("gagal request access token: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var tokenResp struct {
+		AccessToken string `json:"access_token"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+		return "", fmt.Errorf("gagal parse token response: %w", err)
+	}
+	if tokenResp.AccessToken == "" {
+		return "", fmt.Errorf("access token kosong")
+	}
+
+	return tokenResp.AccessToken, nil
+}
+
+func sendFCMNotification(fcmToken, title, body string) error {
+	projectID := "proyek-akhir-ii-12e39"
+
+	accessToken, err := getAccessToken()
+	if err != nil {
+		return fmt.Errorf("gagal dapat access token: %w", err)
+	}
+
+	payload := map[string]interface{}{
+		"message": map[string]interface{}{
+			"token": fcmToken,
+			"notification": map[string]string{
+				"title": title,
+				"body":  body,
+			},
+			"data": map[string]string{
+				"type": "payment_success",
+			},
+		},
+	}
+
+	bodyBytes, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("gagal encode FCM payload: %w", err)
+	}
+
+	url := fmt.Sprintf("https://fcm.googleapis.com/v1/projects/%s/messages:send", projectID)
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return fmt.Errorf("gagal membuat request FCM: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("gagal mengirim FCM: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBytes, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("FCM response %d: %s", resp.StatusCode, string(respBytes))
+	}
+
+	fmt.Printf("✓ FCM sent successfully: %s\n", string(respBytes))
+	return nil
+}
+
 func fetchMidtransStatusAPI(orderID string) (*models.MidtransNotification, error) {
 	baseURL := "https://api.sandbox.midtrans.com"
 	if strings.EqualFold(config.AppConfig.MidtransEnvironment, "production") {
@@ -191,7 +344,6 @@ func fetchMidtransStatusAPI(orderID string) (*models.MidtransNotification, error
 	return &parsed, nil
 }
 
-// processMidtransStatus berisi logika internal update database saat status Midtrans diterima
 func processMidtransStatus(db *sql.DB, payload *models.MidtransNotification) error {
 	rawPayload, _ := json.Marshal(payload)
 	if err := repository.UpdatePembayaranMidtransStatus(
@@ -210,6 +362,19 @@ func processMidtransStatus(db *sql.DB, payload *models.MidtransNotification) err
 		if err := repository.MarkPembayaranLunasByOrderID(db, payload.OrderID); err != nil {
 			return err
 		}
+
+		fcmToken, err := getFcmTokenByOrderID(db, payload.OrderID)
+		if err != nil {
+			fmt.Printf("⚠ Gagal ambil FCM token untuk order %s: %v\n", payload.OrderID, err)
+		} else {
+			if err := sendFCMNotification(
+				fcmToken,
+				"Pembayaran Berhasil ✅",
+				fmt.Sprintf("Pembayaran SPP untuk order %s telah dikonfirmasi.", payload.OrderID),
+			); err != nil {
+				fmt.Printf("⚠ Gagal kirim FCM untuk order %s: %v\n", payload.OrderID, err)
+			}
+		}
 	}
 
 	if err := repository.SyncTagihanStatusByOrderID(db, payload.OrderID); err != nil {
@@ -219,7 +384,6 @@ func processMidtransStatus(db *sql.DB, payload *models.MidtransNotification) err
 	return nil
 }
 
-// HandleMidtransWebhook memproses notifikasi Midtrans dan update status pembayaran/tagihan.
 func HandleMidtransWebhook(db *sql.DB, payload *models.MidtransNotification) error {
 	if !isValidMidtransSignature(payload) {
 		return fmt.Errorf("signature key midtrans tidak valid")
@@ -252,7 +416,6 @@ func isMidtransSuccess(status, fraudStatus string) bool {
 	return false
 }
 
-// GetPaymentStatusByTagihan untuk polling status di app parent.
 func GetPaymentStatusByTagihan(db *sql.DB, nomorIndukSiswa string, idTagihan int) (*models.PaymentStatusResponse, error) {
 	if idTagihan <= 0 {
 		return nil, fmt.Errorf("id tagihan tidak valid")
@@ -266,13 +429,11 @@ func GetPaymentStatusByTagihan(db *sql.DB, nomorIndukSiswa string, idTagihan int
 		return nil, err
 	}
 
-	// Cek status ke midtrans jika belum lunas dan punya order id
 	if res.StatusTagihan != "lunas" && res.OrderID != "" {
 		midtransStatus, errAPI := fetchMidtransStatusAPI(res.OrderID)
 		if errAPI == nil && midtransStatus != nil && midtransStatus.TransactionStatus != "" {
 			_ = processMidtransStatus(db, midtransStatus)
-			
-			// Ambil ulang status terbaru dari DB setelah di update
+
 			newRes, errDB := repository.GetPaymentStatusByTagihanAndSiswa(db, idTagihan, nomorIndukSiswa)
 			if errDB == nil {
 				return newRes, nil

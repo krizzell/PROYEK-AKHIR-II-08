@@ -82,3 +82,11 @@ func SetupAdminRoutes(r *gin.Engine) {
 		}
 	}
 }
+
+func SetupUserRoutes(r *gin.Engine) {
+	api := r.Group("/api")
+	api.Use(middleware.AuthMiddleware())
+	{
+		api.POST("/user/fcm-token", handlers.SaveFcmTokenHandler)
+	}
+}

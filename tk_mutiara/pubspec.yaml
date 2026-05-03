@@ -39,6 +39,9 @@ dependencies:
   webview_flutter: ^4.7.0
     
   fl_chart: ^0.68.0
+  firebase_core: ^4.7.0
+  firebase_messaging: ^16.2.0
+  flutter_local_notifications: ^17.2.4
 
 dev_dependencies:
   flutter_test:

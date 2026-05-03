@@ -44,11 +44,10 @@ func main() {
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, models.ApiResponse{
 			Success: true,
-			Message: "Backend TK Mutiara jalan 🚀",
+			Message: "Backend TK Mutiara jalan",
 		})
 	})
 
-	// Login route - NEW HANDLER
 	r.POST("/login", handlers.LoginHandler)
 	r.POST("/api/payment/webhook/midtrans", handlers.MidtransWebhookHandler)
 
@@ -58,7 +57,7 @@ func main() {
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())
 	{
-		// Payment routes for parent app
+		// Payment routes
 		protected.GET("/tagihan", handlers.GetMyTagihanHandler)
 		protected.POST("/payment/create-transaction", handlers.CreateMidtransTransactionHandler)
 		protected.GET("/payment/status/:idTagihan", handlers.GetPaymentStatusHandler)
@@ -75,9 +74,12 @@ func main() {
 		protected.GET("/profile", handlers.GetProfileHandler)
 		protected.PUT("/profile", handlers.UpdateProfileHandler)
 		protected.PUT("/profile/password", handlers.UpdatePasswordHandler)
+
+		// FCM Token route 
+		protected.POST("/user/fcm-token", handlers.SaveFcmTokenHandler)
 	}
 
-	// Admin routes (already implemented in handlers/services/repository)
+	// Admin routes
 	routes.SetupAdminRoutes(r)
 
 	// Start server

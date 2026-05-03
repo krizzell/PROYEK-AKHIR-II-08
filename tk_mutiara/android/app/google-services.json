@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "564583702829",
+    "project_id": "proyek-akhir-ii-12e39",
+    "storage_bucket": "proyek-akhir-ii-12e39.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:564583702829:android:393cca86ae9eef9159b3a4",
+        "android_client_info": {
+          "package_name": "com.example.tk_mutiara"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC3tbmdCSgNFoPSqkWxC3owtg_F5ttx7WM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

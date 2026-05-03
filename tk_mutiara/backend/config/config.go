@@ -29,13 +29,14 @@ type Config struct {
 	MidtransServerKey   string
 	MidtransClientKey   string
 	MidtransEnvironment string
+
+	// FCM
+	FCMServiceAccountPath string
 }
 
 var AppConfig *Config
 
-// LoadConfig memuat konfigurasi dari file .env
 func LoadConfig() error {
-	// Load .env file
 	_ = godotenv.Load()
 
 	jwtExp := os.Getenv("JWT_EXPIRATION")
@@ -45,7 +46,6 @@ func LoadConfig() error {
 	exp, _ := strconv.Atoi(jwtExp)
 
 	AppConfig = &Config{
-		// Database
 		DBHost:     getEnv("DB_HOST", "localhost"),
 		DBPort:     getEnv("DB_PORT", "3307"),
 		DBUser:     getEnv("DB_USER", "root"),
@@ -54,21 +54,20 @@ func LoadConfig() error {
 		DBSSLMode:  getEnv("DB_SSL_MODE", "false"),
 		ServerPort: getEnv("SERVER_PORT", "8081"),
 
-		// JWT
 		JWTSecret:     getEnv("JWT_SECRET", "tk_mutiara_secret_key"),
 		JWTExpiration: exp,
 		Environment:   getEnv("ENVIRONMENT", "development"),
 
-		// Midtrans
 		MidtransServerKey:   getEnv("MIDTRANS_SERVER_KEY", ""),
 		MidtransClientKey:   getEnv("MIDTRANS_CLIENT_KEY", ""),
 		MidtransEnvironment: getEnv("MIDTRANS_ENVIRONMENT", "sandbox"),
+
+		FCMServiceAccountPath: getEnv("FIREBASE_SERVICE_ACCOUNT_PATH", "firebase-service-account.json"),
 	}
 
 	return nil
 }
 
-// GetDSN mengembalikan string koneksi database
 func (c *Config) GetDSN() string {
 	return fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s?parseTime=true",

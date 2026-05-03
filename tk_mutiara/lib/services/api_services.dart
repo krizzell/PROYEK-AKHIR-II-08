@@ -4,13 +4,14 @@ import 'package:http/http.dart' as http;
 import '../models/pembayaran_model.dart';
 import '../models/pengumuman_model.dart';
 import '../models/perkembangan_model.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class ApiService {
   // Android emulator: flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8081
-  // Device fisik (satu WiFi): flutter run --dart-define=API_BASE_URL=http://<IP_LAPTOP>:8081
+  // Device fisik (satu WiFi): flutter run --dart-define=API_BASE_URL=http://192.168.39.220:8081
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.234.130:8081',
+    defaultValue: 'http://192.168.39.220:8081',
   );
   static const String imageBaseUrl = String.fromEnvironment(
     'IMAGE_BASE_URL',
@@ -134,7 +135,7 @@ class ApiService {
 
       if (res.statusCode == 200 && _isSuccess(data)) {
         _token = (envelope['token'] ?? data['token'])?.toString();
-        _user = userData; // SAVE USER DATA
+        _user = userData;
         _nomorIndukSiswa =
             (userData['nomor_induk_siswa'] ??
                     envelope['nomor_induk_siswa'] ??
@@ -143,6 +144,11 @@ class ApiService {
         print('✓ Token saved: $_token');
         print('✓ User saved: $_user');
         print('✓ Nomor Induk Siswa saved: $_nomorIndukSiswa');
+
+        final fcmToken = await FirebaseMessaging.instance.getToken();
+        if (fcmToken != null) {
+          await saveFcmToken(fcmToken);
+        }
         return {
           'success': true,
           'token': _token,
@@ -167,6 +173,42 @@ class ApiService {
     _nomorIndukSiswa = null;
   }
 
+  static Future<void> saveFcmToken(String fcmToken) async {
+    try {
+      print('=== SAVE FCM TOKEN ===');
+      print('URL: $baseUrl/api/user/fcm-token');
+      print('FCM Token: $fcmToken');
+      print('Auth Token saat ini: $_token');
+
+      if (_token == null) {
+        print('✗ Tidak bisa simpan FCM token: user belum login');
+        return;
+      }
+
+      final res = await http
+          .post(
+            Uri.parse('$baseUrl/api/user/fcm-token'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $_token',
+            },
+            body: jsonEncode({'fcm_token': fcmToken}),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      print('Status: ${res.statusCode}');
+      print('Body: ${res.body}');
+
+      if (res.statusCode == 200) {
+        print('✓ FCM token saved successfully');
+      } else {
+        print('✗ Failed to save FCM token: ${res.statusCode}');
+      }
+    } catch (e) {
+      print('✗ Error saving FCM token: $e');
+    }
+  }
+
   // PROFILE
   static Future<void> fetchProfile() async {
     if (_token == null) return;
@@ -184,7 +226,10 @@ class ApiService {
             _user = {
               ...?_user,
               ...profileData,
-              'kelas': profileData['nama_kelas'] ?? profileData['kelas'] ?? _user?['kelas'],
+              'kelas':
+                  profileData['nama_kelas'] ??
+                  profileData['kelas'] ??
+                  _user?['kelas'],
             };
           }
         }
