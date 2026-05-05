@@ -202,9 +202,14 @@
 
 <div class="page-header">
     <h1><i class="bi bi-key"></i> Kelola Akun</h1>
-    <a href="{{ route('akun.create') }}" class="btn-add">
-        <i class="bi bi-plus-lg"></i> Generate Akun
-    </a>
+    <div style="display: flex; gap: 0.75rem;">
+        <a href="{{ route('akun.bulkGenerateSiswaForm') }}" class="btn-add" style="background: #06B6D4;">
+            <i class="bi bi-lightning-fill"></i> Generate Bulk Siswa
+        </a>
+        <a href="{{ route('akun.create') }}" class="btn-add">
+            <i class="bi bi-plus-lg"></i> Generate Akun
+        </a>
+    </div>
 </div>
 
 @if ($akun->isEmpty())

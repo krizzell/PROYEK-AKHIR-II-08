@@ -126,4 +126,69 @@ class AkunController extends Controller
         $akun->delete();
         return redirect()->route('akun.index')->with('success', 'Akun berhasil dihapus');
     }
+
+    /**
+     * Show form for bulk generate student accounts
+     */
+    public function bulkGenerateSiswaForm()
+    {
+        // Count students without accounts
+        $siswaWithoutAccount = Siswa::whereDoesntHave('akun')->count();
+        
+        return view('akun.bulk-generate-siswa', compact('siswaWithoutAccount'));
+    }
+
+    /**
+     * Bulk generate accounts for all students
+     */
+    public function bulkGenerateSiswaStore(Request $request)
+    {
+        // Find all students that don't have accounts yet
+        $siswaList = Siswa::whereDoesntHave('akun')->get();
+        
+        if ($siswaList->isEmpty()) {
+            return redirect()->route('akun.index')
+                ->with('warning', 'Semua siswa sudah memiliki akun. Tidak ada siswa baru yang perlu di-generate akun.');
+        }
+
+        $successCount = 0;
+        $errorCount = 0;
+        $errors = [];
+
+        try {
+            foreach ($siswaList as $siswa) {
+                try {
+                    // Generate username from student name
+                    $username = $this->generateUsername($siswa->nama_siswa);
+                    
+                    // Create account for student
+                    Akun::create([
+                        'nomor_induk_siswa' => $siswa->nomor_induk_siswa,
+                        'username' => $username,
+                        'password' => Hash::make('password123'),
+                        'role' => 'orangtua',
+                        'is_super_admin' => 0,
+                    ]);
+                    
+                    $successCount++;
+                } catch (\Exception $e) {
+                    $errorCount++;
+                    $errors[] = "Siswa {$siswa->nama_siswa}: {$e->getMessage()}";
+                }
+            }
+
+            $message = "✓ Berhasil generate {$successCount} akun siswa";
+            if ($errorCount > 0) {
+                $message .= " (Gagal: {$errorCount})";
+            }
+
+            return redirect()->route('akun.index')
+                ->with('success', $message)
+                ->with('errors', !empty($errors) ? $errors : null);
+
+        } catch (\Exception $e) {
+            return redirect()->route('akun.index')
+                ->with('error', 'Gagal generate akun: ' . $e->getMessage());
+        }
+    }
 }

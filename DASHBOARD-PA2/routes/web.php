@@ -38,6 +38,10 @@ Route::middleware('check.guru')->group(function () {
     Route::middleware('check.super.admin')->group(function () {
         Route::resource('guru', GuruController::class);
         Route::resource('akun', AkunController::class);
+        
+        // Bulk generate student accounts
+        Route::get('/akun/bulk-generate-siswa/form', [AkunController::class, 'bulkGenerateSiswaForm'])->name('akun.bulkGenerateSiswaForm');
+        Route::post('/akun/bulk-generate-siswa', [AkunController::class, 'bulkGenerateSiswaStore'])->name('akun.bulkGenerateSiswaStore');
     });
     
     // Routes untuk Kelas - use explicit routes to avoid singularization issue
