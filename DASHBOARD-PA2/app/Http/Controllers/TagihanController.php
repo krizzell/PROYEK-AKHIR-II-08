@@ -192,7 +192,7 @@ class TagihanController extends Controller
             $kelas = Kelas::all();
         }
         
-        return view('tagihan.bulk-create', compact('kelas'));
+        return view('tagihan.bulk-create', compact('kelas', 'isSuperAdmin'));
     }
 
     public function bulkCreateStore(Request $request)
@@ -204,10 +204,21 @@ class TagihanController extends Controller
             'tipe_target' => 'required|in:semua_siswa,per_kelas',
             'id_kelas' => 'required_if:tipe_target,per_kelas|nullable|exists:kelas,id_kelas',
             'jumlah_tagihan' => 'required|numeric|min:1',
-            'periode' => 'required|string|max:20',
+            'bulan' => 'required|numeric|between:1,12',
+            'tahun' => 'required|numeric|min:2020|max:2099',
         ], [
             'id_kelas.required_if' => 'Kelas wajib dipilih jika target per kelas',
+            'bulan.required' => 'Bulan wajib dipilih',
+            'tahun.required' => 'Tahun wajib dipilih',
         ]);
+
+        // Format periode dari bulan dan tahun
+        $bulanNama = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+        $periode = 'SPP ' . $bulanNama[(int)$validated['bulan']] . ' ' . $validated['tahun'];
 
         // Validate permission - guru biasa hanya bisa untuk kelasnya
         if ($idGuru && !$isSuperAdmin) {
@@ -239,14 +250,14 @@ class TagihanController extends Controller
         foreach ($siswaList as $siswa) {
             // Cek apakah sudah ada tagihan dengan periode yang sama
             $existingTagihan = Tagihan::where('nomor_induk_siswa', $siswa->nomor_induk_siswa)
-                                     ->where('periode', $validated['periode'])
+                                     ->where('periode', $periode)
                                      ->exists();
 
             if (!$existingTagihan) {
                 Tagihan::create([
                     'nomor_induk_siswa' => $siswa->nomor_induk_siswa,
                     'jumlah_tagihan' => $validated['jumlah_tagihan'],
-                    'periode' => $validated['periode'],
+                    'periode' => $periode,
                     'status' => 'belum_bayar',
                     'payment_status' => 'belum_bayar'
                 ]);

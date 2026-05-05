@@ -51,6 +51,8 @@ Route::middleware('check.guru')->group(function () {
     
     // Routes untuk Siswa - IMPORTANT: Static routes MUST come before dynamic parameter routes
     Route::get('/siswa', [SiswaController::class, 'index'])->name('siswa.index');
+    Route::get('/siswa/import', [SiswaController::class, 'importForm'])->name('siswa.importForm');
+    Route::post('/siswa/import-store', [SiswaController::class, 'importStore'])->name('siswa.importStore');
     Route::get('/siswa/create', [SiswaController::class, 'create'])->name('siswa.create');
     Route::post('/siswa', [SiswaController::class, 'store'])->name('siswa.store');
     Route::get('/siswa/{nomor_induk_siswa}', [SiswaController::class, 'show'])->name('siswa.show')->where('nomor_induk_siswa', '[0-9]+');

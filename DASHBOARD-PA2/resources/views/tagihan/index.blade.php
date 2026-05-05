@@ -228,9 +228,14 @@
 
 <div class="page-header">
     <h1><i class="bi bi-receipt"></i> Data Tagihan</h1>
-    <a href="{{ route('tagihan.create') }}" class="btn-add">
-        <i class="bi bi-plus-lg"></i> Buat Tagihan
-    </a>
+    <div style="display: flex; gap: 0.75rem;">
+        <a href="{{ route('tagihan.bulkCreate') }}" class="btn-add" style="background: #06B6D4;">
+            <i class="bi bi-lightning-fill"></i> Apply All
+        </a>
+        <a href="{{ route('tagihan.create') }}" class="btn-add">
+            <i class="bi bi-plus-lg"></i> Buat Tagihan
+        </a>
+    </div>
 </div>
 
 <!-- Info Box -->

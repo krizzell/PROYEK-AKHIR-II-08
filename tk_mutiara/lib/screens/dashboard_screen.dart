@@ -208,7 +208,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Halo Bunda👋",
+                    "Halo",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 14,

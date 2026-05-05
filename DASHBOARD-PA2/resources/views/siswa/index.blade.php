@@ -270,9 +270,14 @@
 
 <div class="page-header">
     <h1><i class="bi bi-people"></i> Data Siswa</h1>
-    <a href="{{ route('siswa.create') }}" class="btn-add">
-        <i class="bi bi-plus-lg"></i> Tambah Siswa
-    </a>
+    <div style="display: flex; gap: 0.75rem;">
+        <a href="{{ route('siswa.importForm') }}" class="btn-add" style="background: #06B6D4;">
+            <i class="bi bi-upload"></i> Import Excel
+        </a>
+        <a href="{{ route('siswa.create') }}" class="btn-add">
+            <i class="bi bi-plus-lg"></i> Tambah Siswa
+        </a>
+    </div>
 </div>
 
 <!-- Filter Section -->
@@ -283,8 +288,8 @@
     <form action="{{ route('siswa.index') }}" method="GET">
         <div class="filter-row">
             <div class="filter-group">
-                <label for="nis">NIS</label>
-                <input type="text" id="nis" name="nis" value="{{ request('nis') }}" placeholder="Cari NIS...">
+                <label for="nis">NISN</label>
+                <input type="text" id="nis" name="nis" value="{{ request('nis') }}" placeholder="Cari NISN...">
             </div>
 
             <div class="filter-group">
@@ -345,11 +350,12 @@
             <thead>
                 <tr>
                     <th style="width: 50px;">No</th>
-                    <th>NIS</th>
+                    <th>NISN</th>
                     <th>Nama Siswa</th>
                     <th>Kelas</th>
                     <th>Orang Tua</th>
                     <th>Jenis Kelamin</th>
+                    <th>Alamat</th>
                     <th style="width: 120px;">Aksi</th>
                 </tr>
             </thead>
@@ -362,6 +368,7 @@
                     <td>{{ $item->kelas->nama_kelas ?? '-' }}</td>
                     <td>{{ $item->nama_orgtua }}</td>
                     <td>{{ $item->jenis_kelamin == 'L' ? 'Laki-laki' : 'Perempuan' }}</td>
+                    <td>{{ $item->alamat ?? '-' }}</td>
                     <td>
                         <div class="action-buttons">
                             <a href="{{ route('siswa.show', $item->nomor_induk_siswa) }}" class="btn-action btn-view" title="Lihat">
