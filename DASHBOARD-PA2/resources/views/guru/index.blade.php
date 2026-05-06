@@ -196,7 +196,9 @@
                 <tr>
                     <th style="width: 50px;">No</th>
                     <th>Nama Guru</th>
-                    <th>No. HP</th>
+                    <th>NIP</th>
+                    <th>Role</th>
+                    <th>Kelas</th>
                     <th>Email</th>
                     <th style="width: 120px;">Aksi</th>
                 </tr>
@@ -206,7 +208,46 @@
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td><strong>{{ $item->nama_guru }}</strong></td>
-                    <td>{{ $item->no_hp }}</td>
+                    <td>{{ $item->nip_guru }}</td>
+                    <td>
+                        @php
+                            $role = $item->akun()->first()?->role ?? 'N/A';
+                            $isAdmin = $item->akun()->first()?->is_super_admin;
+                        @endphp
+                        <span style="
+                            display: inline-block;
+                            padding: 0.25rem 0.75rem;
+                            border-radius: 9999px;
+                            font-size: 0.85rem;
+                            font-weight: 600;
+                            background: {{ $isAdmin ? '#FEE2E2' : '#DBEAFE' }};
+                            color: {{ $isAdmin ? '#991B1B' : '#1E40AF' }};
+                        ">
+                            {{ $isAdmin ? 'Super Admin' : ucfirst($role) }}
+                        </span>
+                    </td>
+                    <td>
+                        @php
+                            $kelas = $item->kelasAmpuan()->pluck('nama_kelas')->toArray();
+                        @endphp
+                        @if(count($kelas) > 0)
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                                @foreach($kelas as $k)
+                                    <span style="
+                                        display: inline-block;
+                                        padding: 0.25rem 0.5rem;
+                                        background: #F0F9FF;
+                                        border: 1px solid #0EA5E9;
+                                        border-radius: 0.25rem;
+                                        font-size: 0.8rem;
+                                        color: #0369A1;
+                                    ">{{ $k }}</span>
+                                @endforeach
+                            </div>
+                        @else
+                            <span style="color: #9CA3AF;">-</span>
+                        @endif
+                    </td>
                     <td>{{ $item->email }}</td>
                     <td>
                         <div class="action-buttons">

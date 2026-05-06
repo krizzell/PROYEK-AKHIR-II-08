@@ -75,9 +75,6 @@
         </div>
 
         <div class="d-flex gap-2">
-            <a href="{{ route('tagihan.edit', $tagihan->id_tagihan) }}" class="btn btn-warning">
-                <i class="bi bi-pencil"></i> Edit
-            </a>
             <a href="{{ route('tagihan.index') }}" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Kembali
             </a>

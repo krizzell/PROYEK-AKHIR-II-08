@@ -265,11 +265,16 @@
 
                         <div class="form-group">
                             <label for="periode" class="form-label">Periode Pembayaran <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('periode') is-invalid @enderror" 
-                                   id="periode" name="periode" value="{{ old('periode') }}" placeholder="Contoh: Januari 2026, Februari 2026" required>
-                            @error('periode')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                            @php
+                                $bulanNama = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                                $periodeDisplay = 'SPP ' . $bulanNama[now()->month] . ' ' . now()->year;
+                            @endphp
+                            <div style="padding: 0.75rem; background: #F3F4F6; border: 1px solid var(--neutral-300); border-radius: 0.5rem; font-weight: 500;">
+                                <i class="bi bi-calendar-event"></i> 
+                                <strong>{{ $periodeDisplay }}</strong>
+                            </div>
+                            <!-- Hidden input dengan periode otomatis -->
+                            <input type="hidden" name="periode" value="{{ $periodeDisplay }}">
                         </div>
                     </div>
 

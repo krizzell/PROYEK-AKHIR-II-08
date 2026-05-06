@@ -17,6 +17,14 @@ class TagihanController extends Controller
         // Start query dengan eager loading DARI AWAL
         $query = Tagihan::with('siswa', 'siswa.kelas');
 
+        // Filter untuk guru biasa: hanya lihat tagihan siswa dari kelas mereka
+        if ($idGuru && !$isSuperAdmin) {
+            $guruKelas = Kelas::where('id_guru', $idGuru)->pluck('id_kelas')->toArray();
+            $query->whereHas('siswa', function ($q) use ($guruKelas) {
+                $q->whereIn('id_kelas', $guruKelas);
+            });
+        }
+
         // Filter by NIS
         if (request('nis')) {
             $query->whereHas('siswa', function ($q) {
@@ -51,50 +59,48 @@ class TagihanController extends Controller
         // Execute query
         $tagihan = $query->orderBy('id_tagihan', 'desc')->get();
         
-        // Get ALL filter options
-        $kelas = Kelas::all();
+        // Get filter options - untuk guru biasa, hanya kelas mereka sendiri
+        if ($idGuru && !$isSuperAdmin) {
+            $guruKelas = Kelas::where('id_guru', $idGuru)->pluck('id_kelas')->toArray();
+            $kelas = Kelas::whereIn('id_kelas', $guruKelas)->get();
+        } else {
+            $kelas = Kelas::all();
+        }
+        
         $periode = Tagihan::distinct()->pluck('periode');
         $statuses = ['belum_bayar' => 'Belum Bayar', 'lunas' => 'Lunas'];
 
-        return view('tagihan.index', compact('tagihan', 'kelas', 'periode', 'statuses'));
+        return view('tagihan.index', compact('tagihan', 'kelas', 'periode', 'statuses', 'isSuperAdmin'));
     }
 
     public function create()
     {
-        $idGuru = session('id_guru');
         $isSuperAdmin = session('is_super_admin', false);
         
-        // Guru biasa hanya bisa buat tagihan untuk siswa kelasnya
-        if ($idGuru && !$isSuperAdmin) {
-            // Get kelas milik guru ini
-            $guruKelas = Kelas::where('id_guru', $idGuru)->pluck('id_kelas');
-            $siswa = Siswa::whereIn('id_kelas', $guruKelas)->get();
-        } else {
-            $siswa = Siswa::all();
+        // Hanya super admin yang bisa membuat tagihan
+        if (!$isSuperAdmin) {
+            return redirect()->route('tagihan.index')->with('error', 'Anda tidak berwenang membuat tagihan. Hanya admin yang dapat membuat tagihan.');
         }
+        
+        $siswa = Siswa::all();
         
         return view('tagihan.create', compact('siswa'));
     }
 
     public function store(Request $request)
     {
-        $idGuru = session('id_guru');
         $isSuperAdmin = session('is_super_admin', false);
+        
+        // Hanya super admin yang bisa membuat tagihan
+        if (!$isSuperAdmin) {
+            return redirect()->route('tagihan.index')->with('error', 'Anda tidak berwenang membuat tagihan. Hanya admin yang dapat membuat tagihan.');
+        }
         
         $validated = $request->validate([
             'nomor_induk_siswa' => 'required|exists:siswa,nomor_induk_siswa',
             'jumlah_tagihan' => 'required|numeric|min:0',
             'periode' => 'required|string|max:20',
         ]);
-
-        // Guru biasa hanya bisa buat tagihan untuk siswa kelasnya
-        if ($idGuru && !$isSuperAdmin) {
-            $siswa = Siswa::findOrFail($validated['nomor_induk_siswa']);
-            $guruKelas = Kelas::where('id_guru', $idGuru)->pluck('id_kelas')->toArray();
-            if (!in_array($siswa->id_kelas, $guruKelas)) {
-                return redirect()->route('tagihan.index')->with('error', 'Anda tidak berwenang membuat tagihan untuk siswa ini');
-            }
-        }
 
         // Set payment_status default ke 'belum_bayar'
         $validated['payment_status'] = 'belum_bayar';
@@ -122,126 +128,62 @@ class TagihanController extends Controller
 
     public function edit(Tagihan $tagihan)
     {
-        $idGuru = session('id_guru');
-        $isSuperAdmin = session('is_super_admin', false);
-        
-        // Guru biasa hanya bisa edit tagihan siswa kelasnya
-        if ($idGuru && !$isSuperAdmin) {
-            $guruKelas = Kelas::where('id_guru', $idGuru)->pluck('id_kelas')->toArray();
-            if (!in_array($tagihan->siswa->id_kelas, $guruKelas)) {
-                return redirect()->route('tagihan.index')->with('error', 'Anda tidak berwenang mengedit tagihan ini');
-            }
-            $siswa = Siswa::whereIn('id_kelas', $guruKelas)->get();
-        } else {
-            $siswa = Siswa::all();
-        }
-        
-        return view('tagihan.edit', compact('tagihan', 'siswa'));
+        // Tagihan tidak boleh diedit oleh siapapun untuk menjaga integritas data pembayaran
+        abort(403, 'Data tagihan tidak dapat diedit untuk keamanan data pembayaran.');
     }
 
     public function update(Request $request, Tagihan $tagihan)
     {
-        $idGuru = session('id_guru');
-        $isSuperAdmin = session('is_super_admin', false);
-        
-        // Guru biasa hanya bisa update tagihan siswa kelasnya
-        if ($idGuru && !$isSuperAdmin) {
-            $guruKelas = Kelas::where('id_guru', $idGuru)->pluck('id_kelas')->toArray();
-            if (!in_array($tagihan->siswa->id_kelas, $guruKelas)) {
-                return redirect()->route('tagihan.index')->with('error', 'Anda tidak berwenang mengupdate tagihan ini');
-            }
-        }
-        
-        $validated = $request->validate([
-            'nomor_induk_siswa' => 'required|exists:siswa,nomor_induk_siswa',
-            'jumlah_tagihan' => 'required|numeric|min:0',
-            'periode' => 'required|string|max:20',
-        ]);
-
-        // Status TIDAK bisa diedit manual - hanya berubah via payment gateway
-        $tagihan->update($validated);
-        return redirect()->route('tagihan.index')->with('success', 'Tagihan berhasil diperbarui');
+        // Tagihan tidak boleh diupdate oleh siapapun untuk menjaga integritas data pembayaran
+        abort(403, 'Data tagihan tidak dapat diubah untuk keamanan data pembayaran.');
     }
 
     public function destroy(Tagihan $tagihan)
     {
-        $idGuru = session('id_guru');
-        $isSuperAdmin = session('is_super_admin', false);
-        
-        // Guru biasa hanya bisa delete tagihan siswa kelasnya
-        if ($idGuru && !$isSuperAdmin) {
-            $guruKelas = Kelas::where('id_guru', $idGuru)->pluck('id_kelas')->toArray();
-            if (!in_array($tagihan->siswa->id_kelas, $guruKelas)) {
-                return redirect()->route('tagihan.index')->with('error', 'Anda tidak berwenang menghapus tagihan ini');
-            }
-        }
-        
-        $tagihan->delete();
-        return redirect()->route('tagihan.index')->with('success', 'Tagihan berhasil dihapus');
+        // Tagihan tidak boleh dihapus oleh siapapun untuk menjaga integritas data pembayaran
+        abort(403, 'Data tagihan tidak dapat dihapus untuk keamanan data pembayaran.');
     }
 
     public function bulkCreate()
     {
-        $idGuru = session('id_guru');
         $isSuperAdmin = session('is_super_admin', false);
         
-        // Guru biasa hanya bisa buat tagihan untuk kelasnya
-        if ($idGuru && !$isSuperAdmin) {
-            $kelas = Kelas::where('id_guru', $idGuru)->get();
-        } else {
-            $kelas = Kelas::all();
+        // Hanya super admin yang bisa membuat bulk tagihan
+        if (!$isSuperAdmin) {
+            return redirect()->route('tagihan.index')->with('error', 'Anda tidak berwenang membuat bulk tagihan. Hanya admin yang dapat membuat tagihan.');
         }
         
-        return view('tagihan.bulk-create', compact('kelas', 'isSuperAdmin'));
+        return view('tagihan.bulk-create');
     }
 
     public function bulkCreateStore(Request $request)
     {
-        $idGuru = session('id_guru');
         $isSuperAdmin = session('is_super_admin', false);
         
+        // Hanya super admin yang bisa membuat bulk tagihan
+        if (!$isSuperAdmin) {
+            return redirect()->route('tagihan.index')->with('error', 'Anda tidak berwenang membuat bulk tagihan. Hanya admin yang dapat membuat tagihan.');
+        }
+        
         $validated = $request->validate([
-            'tipe_target' => 'required|in:semua_siswa,per_kelas',
-            'id_kelas' => 'required_if:tipe_target,per_kelas|nullable|exists:kelas,id_kelas',
             'jumlah_tagihan' => 'required|numeric|min:1',
-            'bulan' => 'required|numeric|between:1,12',
-            'tahun' => 'required|numeric|min:2020|max:2099',
         ], [
-            'id_kelas.required_if' => 'Kelas wajib dipilih jika target per kelas',
-            'bulan.required' => 'Bulan wajib dipilih',
-            'tahun.required' => 'Tahun wajib dipilih',
+            'jumlah_tagihan.required' => 'Jumlah tagihan wajib diisi',
+            'jumlah_tagihan.numeric' => 'Jumlah tagihan harus berupa angka',
+            'jumlah_tagihan.min' => 'Jumlah tagihan minimal Rp 1',
         ]);
 
-        // Format periode dari bulan dan tahun
+        // Gunakan current date untuk bulan dan tahun
+        $now = now();
         $bulanNama = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
             5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
             9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
         ];
-        $periode = 'SPP ' . $bulanNama[(int)$validated['bulan']] . ' ' . $validated['tahun'];
+        $periode = 'SPP ' . $bulanNama[$now->month] . ' ' . $now->year;
 
-        // Validate permission - guru biasa hanya bisa untuk kelasnya
-        if ($idGuru && !$isSuperAdmin) {
-            $guruKelas = Kelas::where('id_guru', $idGuru)->pluck('id_kelas')->toArray();
-            
-            if ($validated['tipe_target'] === 'per_kelas' && !in_array($validated['id_kelas'], $guruKelas)) {
-                return redirect()->route('tagihan.index')->with('error', 'Anda tidak berwenang membuat tagihan untuk kelas ini');
-            } elseif ($validated['tipe_target'] === 'semua_siswa') {
-                // Semua siswa berarti hanya kelasnya saja
-                $validated['tipe_target'] = 'per_kelas';
-                $validated['id_kelas'] = $guruKelas[0] ?? null;
-                if (!$validated['id_kelas']) {
-                    return redirect()->route('tagihan.index')->with('error', 'Anda tidak memiliki kelas');
-                }
-            }
-        }
-
-        // Tentukan siswa target
+        // Apply all untuk semua siswa
         $query = Siswa::query();
-        
-        if ($validated['tipe_target'] === 'per_kelas') {
-            $query->where('id_kelas', $validated['id_kelas']);
-        }
         
         $siswaList = $query->get();
         $countCreated = 0;

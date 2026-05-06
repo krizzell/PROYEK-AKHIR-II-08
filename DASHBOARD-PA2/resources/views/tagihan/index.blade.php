@@ -228,6 +228,7 @@
 
 <div class="page-header">
     <h1><i class="bi bi-receipt"></i> Data Tagihan</h1>
+    @if($isSuperAdmin)
     <div style="display: flex; gap: 0.75rem;">
         <a href="{{ route('tagihan.bulkCreate') }}" class="btn-add" style="background: #06B6D4;">
             <i class="bi bi-lightning-fill"></i> Apply All
@@ -236,6 +237,7 @@
             <i class="bi bi-plus-lg"></i> Buat Tagihan
         </a>
     </div>
+    @endif
 </div>
 
 <!-- Info Box -->
@@ -308,16 +310,6 @@
                             <a href="{{ route('tagihan.show', $item->id_tagihan) }}" class="btn-action btn-view" title="Lihat">
                                 <i class="bi bi-eye"></i>
                             </a>
-                            <a href="{{ route('tagihan.edit', $item->id_tagihan) }}" class="btn-action btn-edit" title="Edit">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <form action="{{ route('tagihan.destroy', $item->id_tagihan) }}" method="POST" style="display: inline;">
-                                @csrf
-                                @method('DELETE')
-                                <button type="button" class="btn-action btn-delete" title="Hapus" data-delete-btn data-item-name="tagihan ini">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
                         </div>
                     </td>
                 </tr>
