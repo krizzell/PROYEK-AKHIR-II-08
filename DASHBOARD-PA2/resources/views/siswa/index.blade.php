@@ -281,6 +281,29 @@
 </div>
 
 <!-- Filter Section -->
+@if(session('success') || session('error') || session('warning') || session('import_errors'))
+    <div style="margin-bottom: 1rem;">
+        @if(session('success'))
+            <div style="background:#ECFDF5;border-left:4px solid #10B981;padding:0.75rem;border-radius:0.5rem;margin-bottom:0.5rem;color:#065F46;">{{ session('success') }}</div>
+        @endif
+        @if(session('error'))
+            <div style="background:#FEE2E2;border-left:4px solid #EF4444;padding:0.75rem;border-radius:0.5rem;margin-bottom:0.5rem;color:#7F1D1D;">{{ session('error') }}</div>
+        @endif
+        @if(session('warning'))
+            <div style="background:#FEF3C7;border-left:4px solid #F59E0B;padding:0.75rem;border-radius:0.5rem;margin-bottom:0.5rem;color:#92400E;">{{ session('warning') }}</div>
+        @endif
+        @if(session('import_errors'))
+            <div style="background:#FEE2E2;border-left:4px solid #EF4444;padding:0.75rem;border-radius:0.5rem;color:#7F1D1D;">
+                <strong>Baris gagal diimpor:</strong>
+                <ul style="margin:0.5rem 0 0 1.25rem;">
+                    @foreach(session('import_errors') as $ie)
+                        <li>{{ $ie }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+    </div>
+@endif
 <div class="filter-section">
     <div class="filter-title">
         <i class="bi bi-funnel"></i> Filter Data

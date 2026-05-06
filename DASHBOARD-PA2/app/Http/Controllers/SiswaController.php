@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Siswa;
 use App\Models\Kelas;
+use App\Models\Guru;
 use Illuminate\Http\Request;
 
 class SiswaController extends Controller
@@ -199,11 +200,35 @@ class SiswaController extends Controller
                         continue;
                     }
 
-                    // Find kelas by name
+                    // Find kelas by name (case-insensitive, partial match)
                     $kelas = Kelas::where('nama_kelas', 'like', "%$kelasNama%")->first();
                     if (!$kelas) {
-                        $errors[] = "Baris $rowNumber: Kelas '$kelasNama' tidak ditemukan";
-                        continue;
+                        // Jika tidak ditemukan, buat kelas baru secara otomatis
+                        $kelasNamaClean = trim($kelasNama);
+                        if (empty($kelasNamaClean)) {
+                            $errors[] = "Baris $rowNumber: Nama kelas kosong";
+                            continue;
+                        }
+
+                        try {
+                            // Cari guru default untuk di-assign ke kelas baru
+                            $defaultGuru = Guru::first();
+                            if (!$defaultGuru) {
+                                $defaultGuru = Guru::create([
+                                    'nama_guru' => 'System',
+                                    'no_hp' => '-',
+                                    'email' => 'system@example.local'
+                                ]);
+                            }
+
+                            $kelas = Kelas::create([
+                                'id_guru' => $defaultGuru->id_guru,
+                                'nama_kelas' => $kelasNamaClean,
+                            ]);
+                        } catch (\Exception $e) {
+                            $errors[] = "Baris $rowNumber: Gagal membuat kelas '$kelasNamaClean' - " . $e->getMessage();
+                            continue;
+                        }
                     }
 
                     // Check if siswa already exists
@@ -239,12 +264,12 @@ class SiswaController extends Controller
             fclose($handle);
 
             $message = "Import berhasil! $successCount data siswa telah ditambahkan/diperbarui";
-            if (!empty($errors)) {
-                $message .= ". Tetapi ada " . count($errors) . " baris yang gagal.";
-                return redirect()->route('siswa.index')
-                    ->with('warning', $message)
-                    ->with('errors', $errors);
-            }
+                if (!empty($errors)) {
+                    $message .= ". Tetapi ada " . count($errors) . " baris yang gagal.";
+                    return redirect()->route('siswa.index')
+                        ->with('warning', $message)
+                        ->with('import_errors', $errors);
+                }
 
             return redirect()->route('siswa.index')->with('success', $message);
 
