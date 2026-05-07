@@ -230,6 +230,8 @@
             <strong>Format File yang Didukung:</strong>
             <ul>
                 <li>CSV UTF-8 (.csv)</li>
+                <li>Excel 2007+ (.xlsx)</li>
+                <li>Excel 97-2003 (.xls)</li>
             </ul>
         </div>
 
@@ -237,14 +239,14 @@
             @csrf
 
             <div class="form-group">
-                <label for="file" class="form-label">Pilih File CSV</label>
+                <label for="file" class="form-label">Pilih File CSV / Excel</label>
                 <input type="file" name="file" id="file" class="file-input @error('file') is-invalid @enderror"
-                       accept=".csv" required onchange="updateFileName(this)">
+                       accept=".csv,.xlsx,.xls" required onchange="updateFileName(this)">
                 @error('file')
                     <div style="color: #DC2626; font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
                 @enderror
                 <small style="color: var(--text-secondary); display: block; margin-top: 0.5rem;">
-                    Format: CSV UTF-8 (Comma Delimited) | Ukuran maksimal: 5MB
+                    Format: CSV, XLSX, XLS | Ukuran maksimal: 5MB
                 </small>
             </div>
 

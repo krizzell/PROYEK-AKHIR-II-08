@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Siswa;
 use App\Models\Kelas;
 use App\Models\Guru;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Http\Request;
 
 class SiswaController extends Controller
@@ -110,24 +111,64 @@ class SiswaController extends Controller
     public function importStore(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:csv',
+            'file' => 'required|file|mimes:csv,xlsx,xls,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ], [
             'file.required' => 'File wajib diunggah',
-            'file.mimes' => 'File harus dalam format CSV (.csv)',
+            'file.mimes' => 'File harus dalam format CSV, XLSX, atau XLS',
         ]);
 
         $file = $request->file('file');
         $errors = [];
         $successCount = 0;
+        $rowNumber = 1;
 
         try {
-            // Parse CSV file
-            $handle = fopen($file->getRealPath(), 'r');
+            // Get file extension
+            $extension = strtolower($file->getClientOriginalExtension());
+            
+            // Parse file (CSV or Excel)
+            $rows = [];
+            if ($extension === 'csv') {
+                // Parse CSV file
+                $handle = fopen($file->getRealPath(), 'r');
+                while (($row = fgetcsv($handle)) !== false) {
+                    $rows[] = $row;
+                }
+                fclose($handle);
+            } else {
+                // Parse Excel file (XLSX, XLS)
+                try {
+                    $spreadsheet = IOFactory::load($file->getRealPath());
+                    $worksheet = $spreadsheet->getActiveSheet();
+                    
+                    foreach ($worksheet->getRowIterator() as $row) {
+                        $cellIterator = $row->getCellIterator();
+                        $cellIterator->setIterateOnlyExistingCells(false);
+                        $rowData = [];
+                        
+                        foreach ($cellIterator as $cell) {
+                            $rowData[] = $cell->getValue();
+                        }
+                        
+                        $rows[] = $rowData;
+                    }
+                } catch (\Exception $e) {
+                    return redirect()->route('siswa.index')
+                        ->with('error', 'Gagal membaca file Excel: ' . $e->getMessage());
+                }
+            }
+
+            if (empty($rows)) {
+                return redirect()->route('siswa.index')
+                    ->with('error', 'File kosong atau tidak memiliki data');
+            }
+
             $headers = [];
             $firstRow = true;
-            $rowNumber = 1;
             
-            while (($row = fgetcsv($handle)) !== false) {
+            foreach ($rows as $row) {
+                $rowNumber++;
+
                 if ($firstRow) {
                     // Remove BOM from first cell if present
                     if (!empty($row[0])) {
@@ -137,7 +178,7 @@ class SiswaController extends Controller
                     // Get headers - clean and normalize
                     $headers = [];
                     foreach ($row as $header) {
-                        $headers[] = strtolower(trim($header));
+                        $headers[] = strtolower(trim($header ?? ''));
                     }
                     $firstRow = false;
                     
@@ -162,15 +203,12 @@ class SiswaController extends Controller
                     }
 
                     if ($nisIndex === null || $namaIndex === null || $kelasIndex === null || $orangtuaIndex === null || $jenisIndex === null) {
-                        fclose($handle);
                         return redirect()->route('siswa.index')
-                            ->with('error', 'Format CSV tidak sesuai. Kolom yang diperlukan: NISN, Nama Siswa, Kelas, Orang Tua, Jenis Kelamin');
+                            ->with('error', 'Format file tidak sesuai. Kolom yang diperlukan: NISN, Nama Siswa, Kelas, Orang Tua, Jenis Kelamin');
                     }
                     
                     continue;
                 }
-                
-                $rowNumber++;
 
                 // Skip empty rows
                 if (empty($row[$nisIndex])) {
@@ -260,8 +298,6 @@ class SiswaController extends Controller
                     $errors[] = "Baris $rowNumber: " . $e->getMessage();
                 }
             }
-            
-            fclose($handle);
 
             $message = "Import berhasil! $successCount data siswa telah ditambahkan/diperbarui";
                 if (!empty($errors)) {
