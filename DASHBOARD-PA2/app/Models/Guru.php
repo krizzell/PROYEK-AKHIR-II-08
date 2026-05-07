@@ -13,6 +13,7 @@ class Guru extends Model
     protected $keyType = 'int';
     public $incrementing = true;
     protected $fillable = [
+        'foto_guru',
         'nip_guru',
         'nama_guru',
         'jenis_kelamin',

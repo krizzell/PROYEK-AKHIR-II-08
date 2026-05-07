@@ -265,7 +265,7 @@
         </div>
 
         <!-- MAIN FORM -->
-        <form action="{{ route('guru.update', $guru->id_guru) }}" method="POST">
+        <form action="{{ route('guru.update', $guru->id_guru) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
@@ -275,6 +275,25 @@
                     <div class="section-title-icon"><i class="bi bi-person-fill"></i></div>
                     Data Pribadi
                 </div>
+
+                <div class="form-group">
+                    <label for="foto_guru" class="form-label">Foto Guru <span class="text-muted">(opsional)</span></label>
+                    <input type="file" class="form-control @error('foto_guru') is-invalid @enderror"
+                           id="foto_guru" name="foto_guru" accept="image/*">
+                    <small class="text-muted">Kosongkan jika tidak ingin mengganti foto. JPG, PNG, WEBP, maksimal 4 MB.</small>
+                    @error('foto_guru')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                @if($guru->foto_guru)
+                    <div class="form-group">
+                        <label class="form-label">Foto Saat Ini</label>
+                        <div style="max-width: 180px; border-radius: 1rem; overflow: hidden; border: 1px solid var(--neutral-200); background: var(--neutral-50);">
+                            <img src="{{ asset('storage/' . $guru->foto_guru) }}" alt="Foto {{ $guru->nama_guru }}" style="width: 100%; display: block; object-fit: cover;">
+                        </div>
+                    </div>
+                @endif
 
                 <div class="form-group">
                     <label for="nip_guru" class="form-label">NIP / ID Guru <span class="text-danger">*</span></label>

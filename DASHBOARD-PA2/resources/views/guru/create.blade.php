@@ -266,7 +266,7 @@
         </div>
 
         <!-- MAIN FORM -->
-        <form action="{{ route('guru.store') }}" method="POST">
+        <form action="{{ route('guru.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
             <!-- SECTION 1: Data Pribadi -->
@@ -274,6 +274,16 @@
                 <div class="section-title">
                     <div class="section-title-icon"><i class="bi bi-person-fill"></i></div>
                     Data Pribadi
+                </div>
+
+                <div class="form-group">
+                    <label for="foto_guru" class="form-label">Foto Guru <span class="text-muted">(opsional)</span></label>
+                    <input type="file" class="form-control @error('foto_guru') is-invalid @enderror"
+                           id="foto_guru" name="foto_guru" accept="image/*">
+                    <small class="text-muted">Format: JPG, PNG, WEBP. Maksimal 4 MB.</small>
+                    @error('foto_guru')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="form-group">

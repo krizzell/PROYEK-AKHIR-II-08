@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('guru', function (Blueprint $table) {
+            $table->string('foto_guru')->nullable()->after('nama_guru')->comment('Foto profil guru');
             $table->string('nip_guru', 30)->nullable()->after('id_guru')->comment('NIP / ID Guru');
             $table->enum('jenis_kelamin', ['Laki-laki', 'Perempuan'])->nullable()->after('nama_guru');
             $table->date('tanggal_lahir')->nullable()->after('jenis_kelamin');
@@ -29,6 +30,7 @@ return new class extends Migration
     {
         Schema::table('guru', function (Blueprint $table) {
             $table->dropColumn([
+                'foto_guru',
                 'nip_guru',
                 'jenis_kelamin',
                 'tanggal_lahir',
