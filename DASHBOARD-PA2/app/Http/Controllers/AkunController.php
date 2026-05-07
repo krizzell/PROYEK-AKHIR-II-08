@@ -127,6 +127,18 @@ class AkunController extends Controller
         return redirect()->route('akun.index')->with('success', 'Akun berhasil dihapus');
     }
 
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'selected_akun' => 'required|array|min:1',
+            'selected_akun.*' => 'required|integer|exists:akun,id_akun',
+        ]);
+
+        $deletedCount = Akun::whereIn('id_akun', $validated['selected_akun'])->delete();
+
+        return redirect()->route('akun.index')->with('success', $deletedCount . ' akun berhasil dihapus');
+    }
+
     /**
      * Show form for bulk generate student accounts
      */

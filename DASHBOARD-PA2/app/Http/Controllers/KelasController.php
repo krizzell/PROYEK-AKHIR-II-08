@@ -63,4 +63,16 @@ class KelasController extends Controller
         $kelas->delete();
         return redirect()->route('kelas.index')->with('success', 'Kelas berhasil dihapus');
     }
+
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'selected_kelas' => 'required|array|min:1',
+            'selected_kelas.*' => 'required|integer|exists:kelas,id_kelas',
+        ]);
+
+        $deletedCount = Kelas::whereIn('id_kelas', $validated['selected_kelas'])->delete();
+
+        return redirect()->route('kelas.index')->with('success', $deletedCount . ' data kelas berhasil dihapus');
+    }
 }

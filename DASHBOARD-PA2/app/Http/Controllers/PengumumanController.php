@@ -117,4 +117,23 @@ class PengumumanController extends Controller
         $pengumuman->delete();
         return redirect()->route('pengumuman.index')->with('success', 'Pengumuman berhasil dihapus');
     }
+
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'selected_pengumuman' => 'required|array|min:1',
+            'selected_pengumuman.*' => 'required|integer|exists:pengumuman,id_pengumuman',
+        ]);
+
+        $pengumumanToDelete = Pengumuman::whereIn('id_pengumuman', $validated['selected_pengumuman'])->get();
+        
+        foreach ($pengumumanToDelete as $item) {
+            if ($item->media && Storage::disk('public')->exists($item->media)) {
+                Storage::disk('public')->delete($item->media);
+            }
+        }
+
+        $deletedCount = Pengumuman::whereIn('id_pengumuman', $validated['selected_pengumuman'])->delete();
+        return redirect()->route('pengumuman.index')->with('success', $deletedCount . ' pengumuman berhasil dihapus');
+    }
 }

@@ -102,6 +102,18 @@ class SiswaController extends Controller
         return redirect()->route('siswa.index')->with('success', 'Siswa berhasil dihapus');
     }
 
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'selected_siswa' => 'required|array|min:1',
+            'selected_siswa.*' => 'required|integer|exists:siswa,nomor_induk_siswa',
+        ]);
+
+        $deletedCount = Siswa::whereIn('nomor_induk_siswa', $validated['selected_siswa'])->delete();
+
+        return redirect()->route('siswa.index')->with('success', $deletedCount . ' data siswa berhasil dihapus');
+    }
+
     public function importForm()
     {
         $kelas = Kelas::all();

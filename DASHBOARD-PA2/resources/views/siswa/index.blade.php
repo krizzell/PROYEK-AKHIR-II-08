@@ -266,6 +266,88 @@
     .count-info strong {
         color: var(--text-primary);
     }
+
+    .bulk-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding: 1rem 1.25rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        background: #fff;
+    }
+
+    .bulk-actions.hidden {
+        display: none;
+    }
+
+    .bulk-actions-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .btn-bulk-delete {
+        background: #EF4444;
+        color: white;
+        padding: 0.75rem 1.25rem;
+        border-radius: 0.75rem;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-bulk-delete:hover {
+        background: #DC2626;
+        transform: translateY(-1px);
+    }
+
+    .btn-bulk-delete:disabled {
+        background: #FCA5A5;
+        cursor: not-allowed;
+        transform: none;
+        opacity: 0.8;
+    }
+
+    .btn-bulk-clear {
+        background: white;
+        color: var(--button-gray);
+        padding: 0.75rem 1.25rem;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-color);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-bulk-clear:hover {
+        background: var(--hover-bg);
+        border-color: var(--button-gray);
+    }
+
+    .select-all-wrapper,
+    .row-checkbox-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .siswa-checkbox,
+    #selectAllSiswa {
+        width: 18px;
+        height: 18px;
+        accent-color: #EF4444;
+        cursor: pointer;
+    }
 </style>
 
 <div class="page-header">
@@ -368,10 +450,33 @@
     <div class="count-info">
         Menampilkan <strong>{{ $siswa->count() }}</strong> dari total data siswa
     </div>
+    <form id="bulkDeleteForm" action="{{ route('siswa.bulkDestroy') }}" method="POST" style="display: none;">
+        @csrf
+    </form>
+
+    <div class="bulk-actions">
+        <div class="bulk-actions-info">
+            <span id="selectedSiswaCount" style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;"></span>
+        </div>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <button type="button" class="btn-bulk-clear" id="clearSelectionBtn">
+                <i class="bi bi-x-circle"></i> Batal Pilih
+            </button>
+            <button type="submit" class="btn-bulk-delete" id="bulkDeleteBtn" form="bulkDeleteForm" disabled>
+                <i class="bi bi-trash"></i> Hapus yang Ditandai
+            </button>
+        </div>
+    </div>
+
     <div class="table-container">
         <table class="table">
             <thead>
                 <tr>
+                    <th style="width: 50px;">
+                        <div class="select-all-wrapper">
+                            <input type="checkbox" id="selectAllSiswa" aria-label="Pilih semua siswa">
+                        </div>
+                    </th>
                     <th style="width: 50px;">No</th>
                     <th>NISN</th>
                     <th>Nama Siswa</th>
@@ -385,6 +490,11 @@
             <tbody>
                 @foreach ($siswa as $item)
                 <tr>
+                    <td>
+                        <div class="row-checkbox-wrapper">
+                            <input type="checkbox" class="siswa-checkbox" form="bulkDeleteForm" name="selected_siswa[]" value="{{ $item->nomor_induk_siswa }}" aria-label="Pilih siswa {{ $item->nama_siswa }}">
+                        </div>
+                    </td>
                     <td>{{ $loop->iteration }}</td>
                     <td><strong>{{ $item->nomor_induk_siswa ?? '-' }}</strong></td>
                     <td>{{ $item->nama_siswa }}</td>
@@ -417,3 +527,99 @@
 @endif
 
 @endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const selectAllCheckbox = document.getElementById('selectAllSiswa');
+        const rowCheckboxes = Array.from(document.querySelectorAll('.siswa-checkbox'));
+        const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+        const bulkDeleteForm = document.getElementById('bulkDeleteForm');
+        const selectedSiswaCount = document.getElementById('selectedSiswaCount');
+        const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+        const bulkActionsContainer = document.querySelector('.bulk-actions');
+
+        if (!selectAllCheckbox || !bulkDeleteBtn || !bulkDeleteForm || !selectedSiswaCount || !clearSelectionBtn || !bulkActionsContainer) {
+            return;
+        }
+
+        bulkActionsContainer.classList.add('hidden');
+
+        const syncButtonState = () => {
+            const selectedCount = rowCheckboxes.filter((checkbox) => checkbox.checked).length;
+            
+            if (selectedCount > 0) {
+                bulkActionsContainer.classList.remove('hidden');
+            } else {
+                bulkActionsContainer.classList.add('hidden');
+            }
+            
+            bulkDeleteBtn.disabled = selectedCount === 0;
+            bulkDeleteBtn.innerHTML = selectedCount > 0
+                ? `<i class="bi bi-trash"></i> Hapus yang Ditandai (${selectedCount})`
+                : '<i class="bi bi-trash"></i> Hapus yang Ditandai';
+
+            selectedSiswaCount.innerHTML = selectedCount > 0
+                ? `<i class="bi bi-check-circle-fill" style="color: #10B981; margin-right: 0.5rem;"></i> ${selectedCount} siswa dipilih`
+                : '';
+
+            selectAllCheckbox.checked = selectedCount > 0 && selectedCount === rowCheckboxes.length;
+            selectAllCheckbox.indeterminate = selectedCount > 0 && selectedCount < rowCheckboxes.length;
+        };
+
+        selectAllCheckbox.addEventListener('change', function () {
+            rowCheckboxes.forEach((checkbox) => {
+                checkbox.checked = this.checked;
+            });
+            syncButtonState();
+        });
+
+        clearSelectionBtn.addEventListener('click', function () {
+            rowCheckboxes.forEach((checkbox) => {
+                checkbox.checked = false;
+            });
+            syncButtonState();
+        });
+
+        rowCheckboxes.forEach((checkbox) => {
+            checkbox.addEventListener('change', syncButtonState);
+        });
+
+        bulkDeleteForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const selectedCount = rowCheckboxes.filter((checkbox) => checkbox.checked).length;
+            if (selectedCount === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Belum ada siswa dipilih',
+                    text: 'Centang minimal satu siswa terlebih dahulu.',
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: 'Hapus ' + selectedCount + ' siswa?',
+                text: 'Data yang dihapus tidak dapat dipulihkan',
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonColor: '#EF4444',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Ya, Hapus',
+                cancelButtonText: 'Batal',
+                backdrop: true,
+                allowOutsideClick: true,
+                allowEscapeKey: true,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    bulkDeleteForm.submit();
+                }
+            });
+        });
+
+        syncButtonState();
+    });
+</script>
+@endsection
+
+

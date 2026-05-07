@@ -370,4 +370,15 @@ class PerkembanganController extends Controller
         $perkembangan->delete();
         return redirect()->route('perkembangan.index')->with('success', 'Perkembangan berhasil dihapus');
     }
+
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'selected_perkembangan' => 'required|array|min:1',
+            'selected_perkembangan.*' => 'required|integer|exists:perkembangan,id_perkembangan',
+        ]);
+
+        $deletedCount = Perkembangan::whereIn('id_perkembangan', $validated['selected_perkembangan'])->delete();
+        return redirect()->route('perkembangan.index')->with('success', $deletedCount . ' data perkembangan berhasil dihapus');
+    }
 }

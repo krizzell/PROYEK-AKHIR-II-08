@@ -37,7 +37,10 @@ Route::middleware('check.guru')->group(function () {
     // Routes untuk Guru (hanya super admin)
     Route::middleware('check.super.admin')->group(function () {
         Route::resource('guru', GuruController::class);
+        Route::post('/guru/bulk-destroy', [GuruController::class, 'bulkDestroy'])->name('guru.bulkDestroy');
+        
         Route::resource('akun', AkunController::class);
+        Route::post('/akun/bulk-destroy', [AkunController::class, 'bulkDestroy'])->name('akun.bulkDestroy');
         
         // Bulk generate student accounts
         Route::get('/akun/bulk-generate-siswa/form', [AkunController::class, 'bulkGenerateSiswaForm'])->name('akun.bulkGenerateSiswaForm');
@@ -48,6 +51,7 @@ Route::middleware('check.guru')->group(function () {
     Route::get('/kelas', [KelasController::class, 'index'])->name('kelas.index');
     Route::get('/kelas/create', [KelasController::class, 'create'])->name('kelas.create');
     Route::post('/kelas', [KelasController::class, 'store'])->name('kelas.store');
+    Route::post('/kelas/bulk-destroy', [KelasController::class, 'bulkDestroy'])->name('kelas.bulkDestroy');
     Route::get('/kelas/{id_kelas}', [KelasController::class, 'show'])->name('kelas.show');
     Route::get('/kelas/{id_kelas}/edit', [KelasController::class, 'edit'])->name('kelas.edit');
     Route::put('/kelas/{id_kelas}', [KelasController::class, 'update'])->name('kelas.update');
@@ -59,6 +63,7 @@ Route::middleware('check.guru')->group(function () {
     Route::post('/siswa/import-store', [SiswaController::class, 'importStore'])->name('siswa.importStore');
     Route::get('/siswa/create', [SiswaController::class, 'create'])->name('siswa.create');
     Route::post('/siswa', [SiswaController::class, 'store'])->name('siswa.store');
+    Route::post('/siswa/bulk-destroy', [SiswaController::class, 'bulkDestroy'])->name('siswa.bulkDestroy');
     Route::get('/siswa/{nomor_induk_siswa}', [SiswaController::class, 'show'])->name('siswa.show')->where('nomor_induk_siswa', '[0-9]+');
     Route::get('/siswa/{nomor_induk_siswa}/edit', [SiswaController::class, 'edit'])->name('siswa.edit')->where('nomor_induk_siswa', '[0-9]+');
     Route::put('/siswa/{nomor_induk_siswa}', [SiswaController::class, 'update'])->name('siswa.update')->where('nomor_induk_siswa', '[0-9]+');
@@ -66,9 +71,11 @@ Route::middleware('check.guru')->group(function () {
     
     // Routes untuk Pengumuman
     Route::resource('pengumuman', PengumumanController::class);
+    Route::post('/pengumuman/bulk-destroy', [PengumumanController::class, 'bulkDestroy'])->name('pengumuman.bulkDestroy');
     
     // Routes untuk Perkembangan
     Route::resource('perkembangan', PerkembanganController::class);
+    Route::post('/perkembangan/bulk-destroy', [PerkembanganController::class, 'bulkDestroy'])->name('perkembangan.bulkDestroy');
     
     // Routes untuk Tagihan
     Route::get('/tagihan/bulk-create', [TagihanController::class, 'bulkCreate'])->name('tagihan.bulkCreate');

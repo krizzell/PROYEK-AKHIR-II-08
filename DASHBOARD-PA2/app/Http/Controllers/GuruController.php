@@ -99,4 +99,16 @@ class GuruController extends Controller
         $guru->delete();
         return redirect()->route('guru.index')->with('success', 'Guru berhasil dihapus');
     }
+
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'selected_guru' => 'required|array|min:1',
+            'selected_guru.*' => 'required|integer|exists:guru,id_guru',
+        ]);
+
+        $deletedCount = Guru::whereIn('id_guru', $validated['selected_guru'])->delete();
+
+        return redirect()->route('guru.index')->with('success', $deletedCount . ' data guru berhasil dihapus');
+    }
 }
