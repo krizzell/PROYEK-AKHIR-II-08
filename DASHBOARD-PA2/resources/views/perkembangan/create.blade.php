@@ -983,19 +983,6 @@
                                             </span>
                                         </label>
 
-                                        <div class="nilai-slider-container">
-                                            <input type="range" class="nilai-slider nilai-input" 
-                                                   id="nilai_{{ strtolower($category) }}" 
-                                                   name="nilai_{{ strtolower($category) }}"
-                                                   min="1" max="10" value="{{ old('nilai_' . strtolower($category), '') }}"
-                                                   data-kategori="{{ strtolower($category) }}">
-                                            <div class="nilai-scale-labels">
-                                                <span>Rendah</span>
-                                                <span>Sedang</span>
-                                                <span>Tinggi</span>
-                                            </div>
-                                        </div>
-
                                         <div class="rating-stars" id="rating_{{ strtolower($category) }}">
                                             @for ($i = 1; $i <= 10; $i++)
                                                 <button type="button" class="rating-star" data-value="{{ $i }}" 
@@ -1006,11 +993,18 @@
                                             @endfor
                                         </div>
 
-                                        <div class="rating-stars-labels">
-                                            <div class="rating-label-item">🔴 Rendah<br>(1-3)</div>
-                                            <div class="rating-label-item">🟡 Sedang<br>(4-6)</div>
-                                            <div class="rating-label-item">🟢 Tinggi<br>(7-10)</div>
+
+
+                                        <!-- Deskripsi dinamis yang muncul saat pilih angka -->
+                                        <div id="deskripsi_{{ strtolower($category) }}" 
+                                             style="color: var(--neutral-600); font-size: 0.9rem; font-weight: 500; margin-top: 1rem; min-height: 20px; padding: 0.75rem; background: var(--neutral-50); border-radius: 0.5rem; display: none;">
+                                            
                                         </div>
+
+                                        <input type="hidden" id="nilai_{{ strtolower($category) }}" 
+                                               name="nilai_{{ strtolower($category) }}"
+                                               value="{{ old('nilai_' . strtolower($category), '') }}"
+                                               data-kategori="{{ strtolower($category) }}">
 
                                         @error('nilai_' . strtolower($category))
                                             <div style="color: var(--danger-color); font-size: 0.85rem; margin-top: 0.5rem;">
@@ -1037,7 +1031,7 @@
                     <div class="form-section">
                         <div class="section-title">
                             <div class="section-title-icon"><i class="bi bi-calculator"></i></div>
-                            Hasil Perhitungan Otomatis
+                            Hasil Perhitungan Nilai Akhir
                         </div>
 
                         <div style="background: var(--neutral-50); border: 1px solid var(--neutral-200); border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1.5rem;">
@@ -1129,6 +1123,45 @@
         'BSB': 'Anak menunjukkan kemampuan yang sangat menonjol dalam aspek ini. Anak mampu melaksanakan tugas dengan sangat baik dan melampaui harapan.'
     };
 
+    const deskripsiPerKategori = {
+        'akademik': {
+            1: 'Belum mengenali materi dasar',
+            2: 'Mulai mengenali materi dengan bantuan',
+            3: 'Mulai mencoba memahami materi',
+            4: 'Cukup memahami materi sederhana',
+            5: 'Mulai berkembang dalam pembelajaran',
+            6: 'Memahami materi cukup baik',
+            7: 'Mampu belajar mandiri',
+            8: 'Memahami materi dengan baik dan konsisten',
+            9: 'Sangat aktif dalam pembelajaran',
+            10: 'Sangat optimal dan melampaui target belajar'
+        },
+        'sosial': {
+            1: 'Kesulitan berinteraksi',
+            2: 'Mulai mengenali interaksi sosial',
+            3: 'Mulai berinteraksi sederhana',
+            4: 'Cukup mampu berinteraksi',
+            5: 'Mulai berkembang dalam kerja sama',
+            6: 'Berinteraksi cukup baik',
+            7: 'Mampu bekerja sama mandiri',
+            8: 'Sangat baik dan konsisten bersosialisasi',
+            9: 'Sangat aktif dan percaya diri',
+            10: 'Menjadi contoh positif bagi teman'
+        },
+        'emosional': {
+            1: 'Belum mampu mengontrol emosi',
+            2: 'Mulai mengenali emosi',
+            3: 'Mulai mencoba mengendalikan emosi',
+            4: 'Cukup mampu mengontrol emosi',
+            5: 'Mulai berkembang secara emosional',
+            6: 'Emosi cukup stabil',
+            7: 'Mampu mengendalikan emosi mandiri',
+            8: 'Stabil dan konsisten dalam pengendalian diri',
+            9: 'Sangat baik dalam regulasi emosi',
+            10: 'Sangat matang dan positif secara emosional'
+        }
+    };
+
     // Select Student Function
     function selectStudent(element) {
         // Jika sudah terpilih, maka batalkan pilihan (toggle off)
@@ -1141,12 +1174,10 @@
             return;
         }
 
-        // Batalkan pilihan pada semua card lain
         document.querySelectorAll('.student-card').forEach(card => {
             card.classList.remove('selected');
         });
 
-        // Tandai card ini sebagai terpilih
         element.classList.add('selected');
 
         const wrapper = element.closest('.student-card-wrapper');
@@ -1193,7 +1224,83 @@
         });
     }
 
-    // Status Radio Handler - REMOVED (now auto-generated from category average)
+    // Handle rating star clicks (Consolidated)
+    document.querySelectorAll('.rating-star').forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            const value = button.dataset.value;
+            const kategori = button.dataset.kategori;
+            const containerEl = document.getElementById(`rating_${kategori}`);
+            const deskripsiEl = document.getElementById(`deskripsi_${kategori}`);
+            const nilaiInputEl = document.getElementById(`nilai_${kategori}`);
+            const nilaiDisplayEl = document.getElementById(`nilai_display_${kategori}`);
+
+            // Toggle logic: If the clicked button is already the exact selected value, clear it
+            if (nilaiInputEl.value === value) {
+                nilaiInputEl.value = '';
+                nilaiDisplayEl.textContent = '-';
+                deskripsiEl.style.display = 'none';
+
+                containerEl.querySelectorAll('.rating-star').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+            } else {
+                // Select logic
+                nilaiInputEl.value = value;
+                nilaiDisplayEl.textContent = value;
+
+                // Make stars active up to the selected value
+                containerEl.querySelectorAll('.rating-star').forEach(btn => {
+                    if (parseInt(btn.dataset.value) <= parseInt(value)) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                const deskripsi = deskripsiPerKategori[kategori][value];
+                deskripsiEl.innerHTML = `<strong>${value}.</strong> ${deskripsi}`;
+                deskripsiEl.style.display = 'block';
+                deskripsiEl.style.borderLeft = '3px solid var(--primary-color)';
+            }
+            
+            // Auto-calculate status
+            calculateAndUpdateStatus();
+        });
+    });
+
+    // Restore active state on page load if value exists
+    document.querySelectorAll('[data-kategori]').forEach(input => {
+        if(input.id.startsWith('nilai_')) {
+            const value = input.value;
+            if (value) {
+                const kategori = input.dataset.kategori;
+                const button = document.querySelector(`.rating-star[data-value="${value}"][data-kategori="${kategori}"]`);
+                if (button) {
+                    // Trigger the UI updates manually to avoid click toggling on load
+                    const containerEl = document.getElementById(`rating_${kategori}`);
+                    const deskripsiEl = document.getElementById(`deskripsi_${kategori}`);
+                    const nilaiDisplayEl = document.getElementById(`nilai_display_${kategori}`);
+                    
+                    nilaiDisplayEl.textContent = value;
+                    
+                    containerEl.querySelectorAll('.rating-star').forEach(btn => {
+                        if (parseInt(btn.dataset.value) <= parseInt(value)) {
+                            btn.classList.add('active');
+                        } else {
+                            btn.classList.remove('active');
+                        }
+                    });
+
+                    const deskripsi = deskripsiPerKategori[kategori][value];
+                    deskripsiEl.innerHTML = `<strong>${value}.</strong> ${deskripsi}`;
+                    deskripsiEl.style.display = 'block';
+                    deskripsiEl.style.borderLeft = '3px solid var(--primary-color)';
+                }
+            }
+        }
+    });
+
     // Function to calculate average and auto-generate status
     function calculateAndUpdateStatus() {
         const akademikInput = document.getElementById('nilai_akademik');
@@ -1210,6 +1317,9 @@
             document.getElementById('average-display').textContent = '-';
             document.getElementById('status-badge-display').innerHTML = '<i class="bi bi-dash"></i> Isi kategori terlebih dahulu';
             document.getElementById('hidden_status_utama').value = '';
+            
+            const templateDiv = document.getElementById('template-deskripsi');
+            if(templateDiv) templateDiv.style.display = 'none';
             return;
         }
 
@@ -1248,109 +1358,41 @@
 
         const templateDiv = document.getElementById('template-deskripsi');
         const templateText = document.getElementById('template-text');
-        if (templateDescriptions[status]) {
+        if (templateDescriptions[status] && templateDiv && templateText) {
             templateText.textContent = templateDescriptions[status];
             templateDiv.style.display = 'block';
         }
     }
 
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('rating-star')) {
-            setTimeout(calculateAndUpdateStatus, 100);
-        }
-    });
-
-    document.querySelectorAll('input[type="range"]').forEach(slider => {
-        slider.addEventListener('input', calculateAndUpdateStatus);
-    });
-
     // Kategori Checkbox Handler
     document.querySelectorAll('.kategori-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-            const kategoriLower = this.dataset.kategori;
             const wrapper = this.closest('.kategori-card-wrapper');
             const nilaiWrapper = wrapper.querySelector('.nilai-wrapper');
-            const ratingStars = wrapper.querySelectorAll('.rating-star');
 
             if (this.checked && nilaiWrapper) {
                 nilaiWrapper.style.display = 'block';
-                // Initialize rating star click handlers
-                ratingStars.forEach(star => {
-                    star.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        setRating(kategoriLower, this.dataset.value);
+            } else if (nilaiWrapper) {
+                nilaiWrapper.style.display = 'none';
+                
+                // Also clear the value when checkbox is unchecked
+                const kategoriLower = this.dataset.kategori;
+                const nilaiInputEl = document.getElementById(`nilai_${kategoriLower}`);
+                const nilaiDisplayEl = document.getElementById(`nilai_display_${kategoriLower}`);
+                const containerEl = document.getElementById(`rating_${kategoriLower}`);
+                const deskripsiEl = document.getElementById(`deskripsi_${kategoriLower}`);
+                
+                if(nilaiInputEl) nilaiInputEl.value = '';
+                if(nilaiDisplayEl) nilaiDisplayEl.textContent = '-';
+                if(deskripsiEl) deskripsiEl.style.display = 'none';
+                
+                if(containerEl) {
+                    containerEl.querySelectorAll('.rating-star').forEach(btn => {
+                        btn.classList.remove('active');
                     });
-                });
-                // Initialize existing value
-                const hiddenInput = wrapper.querySelector('input[type="range"]');
-                if (hiddenInput && hiddenInput.value) {
-                    updateNilaiDisplay(kategoriLower, hiddenInput.value, wrapper);
                 }
-            } else if (nilaiWrapper) {
-                nilaiWrapper.style.display = 'none';
-                const input = wrapper.querySelector('input[type="range"]');
-                if (input) input.value = '';
-                // Remove active state
-                ratingStars.forEach(star => star.classList.remove('active'));
-            }
-        });
-    });
-
-    // Set rating value - MAIN FUNCTION
-    function setRating(kategori, value) {
-        const wrapper = document.querySelector(`[data-kategori="${kategori}"]`)?.closest('.kategori-card-wrapper');
-        if (!wrapper) return;
-
-        const slider = wrapper.querySelector('input[type="range"]');
-        const display = wrapper.querySelector(`#nilai_display_${kategori}`);
-        const ratingStars = wrapper.querySelectorAll('.rating-star');
-
-        if (slider) {
-            slider.value = value;
-        }
-
-        updateNilaiDisplay(kategori, value, wrapper);
-    }
-
-    // Update nilai display - VISUAL UPDATE FUNCTION
-    function updateNilaiDisplay(kategori, value, wrapper) {
-        const display = wrapper.querySelector(`#nilai_display_${kategori}`);
-        
-        if (display) {
-            display.textContent = value;
-        }
-
-        // Update star active states
-        const ratingStars = wrapper.querySelectorAll('.rating-star');
-        ratingStars.forEach(star => {
-            if (parseInt(star.dataset.value) <= parseInt(value)) {
-                star.classList.add('active');
-            } else {
-                star.classList.remove('active');
-            }
-        });
-    }
-
-    // Initialize nilai input - EMPTY FUNCTION (NOT USED ANYMORE)
-    function initializeNilaiInput(kategori) {
-        // Function kept for backward compatibility with checkbox handler
-    }
-
-    // Kategori Checkbox Handler
-    document.querySelectorAll('.kategori-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const kategoriLower = this.dataset.kategori;
-            const wrapper = this.closest('.kategori-card-wrapper');
-            const nilaiWrapper = wrapper.querySelector('.nilai-wrapper');
-
-            if (this.checked && nilaiWrapper) {
-                nilaiWrapper.style.display = 'block';
-                // Initialize slider and rating stars
-                initializeNilaiInput(kategoriLower);
-            } else if (nilaiWrapper) {
-                nilaiWrapper.style.display = 'none';
-                const input = wrapper.querySelector('input[type="range"]');
-                if (input) input.value = '';
+                
+                calculateAndUpdateStatus();
             }
         });
     });
@@ -1373,10 +1415,9 @@
 
         for (let checkbox of selectedCategories) {
             const kategoriLower = checkbox.dataset.kategori;
-            const wrapper = checkbox.closest('.kategori-card-wrapper');
-            const slider = wrapper.querySelector('input[type="range"]');
+            const nilaiInputEl = document.getElementById(`nilai_${kategoriLower}`);
 
-            if (!slider || !slider.value) {
+            if (!nilaiInputEl || !nilaiInputEl.value) {
                 e.preventDefault();
                 alert('Isi nilai untuk kategori ' + checkbox.value);
                 return false;
@@ -1394,23 +1435,12 @@
             }
         }
 
-        // Show template if status already selected
-        const checkedStatus = document.querySelector('.status-radio:checked');
-        if (checkedStatus) {
-            const templateDiv = document.getElementById('template-deskripsi');
-            const templateText = document.getElementById('template-text');
-            templateText.textContent = templateDescriptions[checkedStatus.value];
-            templateDiv.classList.add('active');
-        }
-
-        // Show nilai wrappers for checked categories and initialize them
+        // Show nilai wrappers for checked categories
         document.querySelectorAll('.kategori-checkbox:checked').forEach(checkbox => {
-            const kategoriLower = checkbox.dataset.kategori;
             const wrapper = checkbox.closest('.kategori-card-wrapper');
             const nilaiWrapper = wrapper.querySelector('.nilai-wrapper');
             if (nilaiWrapper) {
                 nilaiWrapper.style.display = 'block';
-                initializeNilaiInput(kategoriLower);
             }
         });
 

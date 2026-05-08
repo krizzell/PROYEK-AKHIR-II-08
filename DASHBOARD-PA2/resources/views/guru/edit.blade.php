@@ -339,10 +339,10 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="jabatan" class="form-label">Jabatan <span class="text-danger">*</span></label>
+                        <label for="jabatan" class="form-label">Role <span class="text-danger">*</span></label>
                         <select class="form-select @error('jabatan') is-invalid @enderror" 
                                 id="jabatan" name="jabatan" required>
-                            <option value="">-- Pilih Jabatan --</option>
+                            <option value="">-- Pilih Role --</option>
                             <option value="Guru" {{ old('jabatan', $guru->jabatan) === 'Guru' ? 'selected' : '' }}>Guru</option>
                             <option value="Kepala Sekolah" {{ old('jabatan', $guru->jabatan) === 'Kepala Sekolah' ? 'selected' : '' }}>Kepala Sekolah</option>
                         </select>

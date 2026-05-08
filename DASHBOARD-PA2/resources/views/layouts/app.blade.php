@@ -443,7 +443,7 @@
                             <div class="user-avatar">{{ strtoupper(substr(session('username'), 0, 1)) }}</div>
                             <div class="user-info-text">
                                 <div class="user-name">{{ session('username') }}</div>
-                                <div class="user-role">{{ ucfirst(session('role')) }}</div>
+                                <div class="user-role">{{ ucfirst(session('role_display', session('role'))) }}</div>
                             </div>
                             <i class="bi bi-chevron-down" style="margin-left: 5px; font-size: 12px;"></i>
                         </div>

@@ -22,7 +22,7 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $akun = Akun::where('username', $credentials['username'])->first();
+        $akun = Akun::with('guru')->where('username', $credentials['username'])->first();
 
         if (!$akun || !Hash::check($credentials['password'], $akun->password)) {
             return back()->withErrors([
@@ -30,11 +30,18 @@ class AuthController extends Controller
             ])->onlyInput('username');
         }
 
+        // Tentukan label role untuk ditampilkan
+        $roleDisplay = $akun->role;
+        if ($akun->role === 'guru' && $akun->guru) {
+            $roleDisplay = $akun->guru->jabatan; // "Guru" atau "Kepala Sekolah"
+        }
+
         // Set session
         session([
             'akun_id' => $akun->id_akun, 
             'id_guru' => $akun->id_guru,
             'role' => $akun->role, 
+            'role_display' => $roleDisplay,
             'username' => $akun->username, 
             'is_super_admin' => $akun->is_super_admin
         ]);

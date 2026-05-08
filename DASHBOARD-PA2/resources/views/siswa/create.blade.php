@@ -225,7 +225,7 @@
         </div>
 
         <!-- MAIN FORM -->
-        <form action="{{ route('siswa.store') }}" method="POST" id="form-siswa">
+        <form action="{{ route('siswa.store') }}" method="POST" id="form-siswa" enctype="multipart/form-data">
             @csrf
 
                     <!-- Bagian 1: Informasi Dasar -->
@@ -233,6 +233,16 @@
                         <div class="section-title">
                             <div class="section-title-icon"><i class="bi bi-person-fill"></i></div>
                             Informasi Dasar
+                        </div>
+
+                        <div class="form-group">
+                            <label for="foto_siswa" class="form-label">Foto Siswa <span class="text-muted">(opsional)</span></label>
+                            <input type="file" class="form-control @error('foto_siswa') is-invalid @enderror"
+                                   id="foto_siswa" name="foto_siswa" accept="image/*">
+                            <span class="form-text">Format: JPG, PNG, WEBP. Maksimal 4 MB.</span>
+                            @error('foto_siswa')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="form-grid">
@@ -305,8 +315,8 @@
                                 <label for="jenis_kelamin" class="form-label">Jenis Kelamin <span class="text-danger">*</span></label>
                                 <select class="form-control @error('jenis_kelamin') is-invalid @enderror" id="jenis_kelamin" name="jenis_kelamin" required>
                                     <option value="">-- Pilih --</option>
-                                    <option value="L" {{ old('jenis_kelamin') == 'L' ? 'selected' : '' }}>👦 Laki-laki</option>
-                                    <option value="P" {{ old('jenis_kelamin') == 'P' ? 'selected' : '' }}>👧 Perempuan</option>
+                                    <option value="L" {{ old('jenis_kelamin') == 'L' ? 'selected' : '' }}>Laki-laki</option>
+                                    <option value="P" {{ old('jenis_kelamin') == 'P' ? 'selected' : '' }}>Perempuan</option>
                                 </select>
                                 @error('jenis_kelamin')
                                     <div class="invalid-feedback">{{ $message }}</div>

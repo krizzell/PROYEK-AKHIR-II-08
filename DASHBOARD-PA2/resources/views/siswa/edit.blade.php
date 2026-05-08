@@ -262,7 +262,7 @@
                     <h1><i class="bi bi-pencil-square"></i> Edit Siswa</h1>
                     <p class="breadcrumb-text">Perbarui informasi siswa pada form di bawah</p>
                 </div>
-                <form action="{{ route('siswa.update', ['nomor_induk_siswa' => $siswa->nomor_induk_siswa]) }}" method="POST" id="form-siswa">
+                <form action="{{ route('siswa.update', ['nomor_induk_siswa' => $siswa->nomor_induk_siswa]) }}" method="POST" id="form-siswa" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
@@ -271,6 +271,21 @@
                         <div class="section-title">
                             <div class="section-title-icon"><i class="bi bi-person-fill"></i></div>
                             Informasi Dasar
+                        </div>
+
+                        <div class="form-group">
+                            <label for="foto_siswa" class="form-label">Foto Siswa <span class="text-muted">(opsional)</span></label>
+                            @if ($siswa->foto_siswa)
+                                <div style="margin-bottom: 1rem;">
+                                    <img src="{{ asset('storage/' . $siswa->foto_siswa) }}" alt="Foto Siswa" style="width: 100px; height: 100px; object-fit: cover; border-radius: 12px; border: 2px solid var(--neutral-200);">
+                                </div>
+                            @endif
+                            <input type="file" class="form-control @error('foto_siswa') is-invalid @enderror"
+                                   id="foto_siswa" name="foto_siswa" accept="image/*">
+                            <span class="form-text">Biarkan kosong jika tidak ingin mengubah foto. Format: JPG, PNG, WEBP. Maksimal 4 MB.</span>
+                            @error('foto_siswa')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="form-grid">
@@ -343,8 +358,8 @@
                                 <label for="jenis_kelamin" class="form-label">Jenis Kelamin <span class="text-danger">*</span></label>
                                 <select class="form-control @error('jenis_kelamin') is-invalid @enderror" id="jenis_kelamin" name="jenis_kelamin" required>
                                     <option value="">-- Pilih --</option>
-                                    <option value="L" {{ old('jenis_kelamin', $siswa->jenis_kelamin) == 'L' ? 'selected' : '' }}>👦 Laki-laki</option>
-                                    <option value="P" {{ old('jenis_kelamin', $siswa->jenis_kelamin) == 'P' ? 'selected' : '' }}>👧 Perempuan</option>
+                                    <option value="L" {{ old('jenis_kelamin', $siswa->jenis_kelamin) == 'L' ? 'selected' : '' }}>Laki-laki</option>
+                                    <option value="P" {{ old('jenis_kelamin', $siswa->jenis_kelamin) == 'P' ? 'selected' : '' }}>Perempuan</option>
                                 </select>
                                 @error('jenis_kelamin')
                                     <div class="invalid-feedback">{{ $message }}</div>

@@ -354,7 +354,7 @@
     <h1><i class="bi bi-people"></i> Data Siswa</h1>
     <div style="display: flex; gap: 0.75rem;">
         <a href="{{ route('siswa.importForm') }}" class="btn-add" style="background: #06B6D4;">
-            <i class="bi bi-upload"></i> Import Excel
+            <i class="bi bi-download"></i> Import Excel
         </a>
         <a href="{{ route('siswa.create') }}" class="btn-add">
             <i class="bi bi-plus-lg"></i> Tambah Siswa

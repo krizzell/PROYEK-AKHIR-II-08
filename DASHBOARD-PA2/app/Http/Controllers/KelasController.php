@@ -10,7 +10,7 @@ class KelasController extends Controller
 {
     public function index()
     {
-        $kelas = Kelas::with('guru')->get();
+        $kelas = Kelas::with('guru')->withCount('siswa')->get();
         return view('kelas.index', compact('kelas'));
     }
 
@@ -33,7 +33,7 @@ class KelasController extends Controller
 
     public function show($id_kelas)
     {
-        $kelas = Kelas::findOrFail($id_kelas);
+        $kelas = Kelas::with(['guru', 'siswa'])->findOrFail($id_kelas);
         return view('kelas.show', compact('kelas'));
     }
 

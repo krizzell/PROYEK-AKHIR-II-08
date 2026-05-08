@@ -301,6 +301,7 @@
                     </th>
                     <th style="width: 50px;">No</th>
                     <th>Nama Kelas</th>
+                    <th>Jumlah Siswa</th>
                     <th>Guru Pengampu</th>
                     <th style="width: 120px;">Aksi</th>
                 </tr>
@@ -315,7 +316,23 @@
                     </td>
                     <td>{{ $loop->iteration }}</td>
                     <td><strong>{{ $item->nama_kelas }}</strong></td>
-                    <td>{{ $item->guru->nama_guru ?? '-' }}</td>
+                    <td>
+                        <span style="display: inline-flex; align-items: center; justify-content: center; padding: 0.25rem 0.75rem; border-radius: 1rem; background: #EEF2FF; color: #4F46E5; font-size: 0.85rem; font-weight: 600;">
+                            <i class="bi bi-people-fill" style="margin-right: 0.35rem;"></i> {{ $item->siswa_count }} Siswa
+                        </span>
+                    </td>
+                    <td>
+                        @if($item->guru)
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div style="width: 32px; height: 32px; border-radius: 50%; background: #FDE68A; color: #D97706; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">
+                                    {{ substr($item->guru->nama_guru, 0, 1) }}
+                                </div>
+                                <span style="font-weight: 500; color: var(--text-primary);">{{ $item->guru->nama_guru }}</span>
+                            </div>
+                        @else
+                            <span style="color: var(--text-secondary);"><i class="bi bi-person-x"></i> Belum ada guru</span>
+                        @endif
+                    </td>
                     <td>
                         <div class="action-buttons">
                             <a href="{{ route('kelas.show', $item->id_kelas) }}" class="btn-action btn-view" title="Lihat">

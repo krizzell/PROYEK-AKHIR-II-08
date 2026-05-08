@@ -207,7 +207,7 @@
 </style>
 
 <div class="page-header">
-    <h1><i class="bi bi-upload"></i> Import Data Siswa</h1>
+    <h1><i class="bi bi-download"></i> Import Data Siswa</h1>
 </div>
 
 <div class="content-wrapper">

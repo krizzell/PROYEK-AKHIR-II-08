@@ -7,6 +7,7 @@ use App\Models\Kelas;
 use App\Models\Guru;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class SiswaController extends Controller
 {
@@ -50,6 +51,7 @@ class SiswaController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'foto_siswa' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
             'nomor_induk_siswa' => 'required|numeric|unique:siswa,nomor_induk_siswa',
             'id_kelas' => 'required|exists:kelas,id_kelas',
             'nama_siswa' => 'required|string|max:150',
@@ -58,6 +60,10 @@ class SiswaController extends Controller
             'jenis_kelamin' => 'required|in:L,P',
             'alamat' => 'required|string',
         ]);
+
+        if ($request->hasFile('foto_siswa')) {
+            $validated['foto_siswa'] = $request->file('foto_siswa')->store('siswa', 'public');
+        }
 
         Siswa::create($validated);
         return redirect()->route('siswa.index')->with('success', 'Siswa berhasil ditambahkan');
@@ -82,6 +88,7 @@ class SiswaController extends Controller
         $siswa = Siswa::where('nomor_induk_siswa', $nomor_induk_siswa)->firstOrFail();
         
         $validated = $request->validate([
+            'foto_siswa' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
             'nomor_induk_siswa' => 'required|numeric|unique:siswa,nomor_induk_siswa,' . $siswa->nomor_induk_siswa . ',nomor_induk_siswa',
             'id_kelas' => 'required|exists:kelas,id_kelas',
             'nama_siswa' => 'required|string|max:150',
@@ -91,6 +98,14 @@ class SiswaController extends Controller
             'alamat' => 'required|string',
         ]);
 
+        if ($request->hasFile('foto_siswa')) {
+            if ($siswa->foto_siswa && Storage::disk('public')->exists($siswa->foto_siswa)) {
+                Storage::disk('public')->delete($siswa->foto_siswa);
+            }
+
+            $validated['foto_siswa'] = $request->file('foto_siswa')->store('siswa', 'public');
+        }
+
         $siswa->update($validated);
         return redirect()->route('siswa.index')->with('success', 'Siswa berhasil diperbarui');
     }
@@ -98,6 +113,11 @@ class SiswaController extends Controller
     public function destroy($nomor_induk_siswa)
     {
         $siswa = Siswa::where('nomor_induk_siswa', $nomor_induk_siswa)->firstOrFail();
+
+        if ($siswa->foto_siswa && Storage::disk('public')->exists($siswa->foto_siswa)) {
+            Storage::disk('public')->delete($siswa->foto_siswa);
+        }
+
         $siswa->delete();
         return redirect()->route('siswa.index')->with('success', 'Siswa berhasil dihapus');
     }
@@ -108,6 +128,14 @@ class SiswaController extends Controller
             'selected_siswa' => 'required|array|min:1',
             'selected_siswa.*' => 'required|integer|exists:siswa,nomor_induk_siswa',
         ]);
+
+        $siswaToDelete = Siswa::whereIn('nomor_induk_siswa', $validated['selected_siswa'])->get();
+
+        foreach ($siswaToDelete as $item) {
+            if ($item->foto_siswa && Storage::disk('public')->exists($item->foto_siswa)) {
+                Storage::disk('public')->delete($item->foto_siswa);
+            }
+        }
 
         $deletedCount = Siswa::whereIn('nomor_induk_siswa', $validated['selected_siswa'])->delete();
 

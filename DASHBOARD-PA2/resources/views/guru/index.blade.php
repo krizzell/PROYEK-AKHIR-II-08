@@ -321,8 +321,7 @@
                     <td>{{ $item->nip_guru }}</td>
                     <td>
                         @php
-                            $role = $item->akun()->first()?->role ?? 'N/A';
-                            $isAdmin = $item->akun()->first()?->is_super_admin;
+                            $jabatan = $item->jabatan ?? 'Guru';
                         @endphp
                         <span style="
                             display: inline-block;
@@ -330,10 +329,10 @@
                             border-radius: 9999px;
                             font-size: 0.85rem;
                             font-weight: 600;
-                            background: {{ $isAdmin ? '#FEE2E2' : '#DBEAFE' }};
-                            color: {{ $isAdmin ? '#991B1B' : '#1E40AF' }};
+                            background: {{ $jabatan === 'Kepala Sekolah' ? '#FEE2E2' : '#DBEAFE' }};
+                            color: {{ $jabatan === 'Kepala Sekolah' ? '#991B1B' : '#1E40AF' }};
                         ">
-                            {{ $isAdmin ? 'Super Admin' : ucfirst($role) }}
+                            {{ $jabatan }}
                         </span>
                     </td>
                     <td>
@@ -341,19 +340,7 @@
                             $kelas = $item->kelasAmpuan()->pluck('nama_kelas')->toArray();
                         @endphp
                         @if(count($kelas) > 0)
-                            <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
-                                @foreach($kelas as $k)
-                                    <span style="
-                                        display: inline-block;
-                                        padding: 0.25rem 0.5rem;
-                                        background: #F0F9FF;
-                                        border: 1px solid #0EA5E9;
-                                        border-radius: 0.25rem;
-                                        font-size: 0.8rem;
-                                        color: #0369A1;
-                                    ">{{ $k }}</span>
-                                @endforeach
-                            </div>
+                            {{ implode(', ', $kelas) }}
                         @else
                             <span style="color: #9CA3AF;">-</span>
                         @endif
