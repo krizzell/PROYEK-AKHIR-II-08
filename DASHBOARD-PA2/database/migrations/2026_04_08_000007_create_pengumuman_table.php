@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('id_pengumuman');
             $table->unsignedBigInteger('id_guru');
             $table->string('judul', 150);
-            $table->string('media', 225);
+            $table->longText('media')->nullable();
             $table->dateTime('waktu_unggah');
             $table->text('deskripsi');
             $table->timestamps();

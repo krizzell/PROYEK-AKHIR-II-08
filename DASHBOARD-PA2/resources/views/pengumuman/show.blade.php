@@ -12,10 +12,26 @@
 <div class="card">
     <div class="card-body">
         <!-- Foto/Media -->
-        @if($pengumuman->media)
+        @if(!empty($mediaUrls))
+            <div class="mb-4">
+                <div class="media-gallery-show">
+                    @foreach($mediaUrls as $index => $mediaUrl)
+                        <div class="media-display rounded overflow-hidden" style="background-color: #FFF8F4;">
+                            <img src="{{ $mediaUrl }}" alt="Foto Pengumuman" 
+                                 class="img-fluid" style="max-height: 500px; object-fit: contain; display: block; margin: 0 auto;">
+                        </div>
+                    @endforeach
+                </div>
+                @if(count($mediaUrls) > 1)
+                    <div class="media-caption mt-2 text-muted small">
+                        Menampilkan {{ count($mediaUrls) }} foto pengumuman.
+                    </div>
+                @endif
+            </div>
+        @elseif(!empty($pengumuman->media))
             <div class="mb-4">
                 <div class="media-display rounded overflow-hidden" style="background-color: #FFF8F4;">
-                    <img src="{{ asset('storage/' . $pengumuman->media) }}" alt="Foto Pengumuman" 
+                    <img src="{{ asset('storage/' . ltrim($pengumuman->media, '/')) }}" alt="Foto Pengumuman" 
                          class="img-fluid" style="max-height: 500px; object-fit: contain; display: block; margin: 0 auto;">
                 </div>
             </div>
@@ -76,9 +92,16 @@
 </div>
 
 <style>
+    .media-gallery-show {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
     .media-display {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         border-radius: 12px;
     }
 </style>
+
 @endsection

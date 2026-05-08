@@ -69,7 +69,7 @@ CREATE TABLE `pengumuman` (
   `id_pengumuman` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `id_guru` BIGINT UNSIGNED NOT NULL,
   `judul` VARCHAR(150) NOT NULL,
-  `media` VARCHAR(225) NOT NULL,
+  `media` LONGTEXT DEFAULT NULL,
   `waktu_unggah` DATETIME NOT NULL,
   `deskripsi` TEXT NOT NULL,
   `created_at` TIMESTAMP NULL DEFAULT NULL,

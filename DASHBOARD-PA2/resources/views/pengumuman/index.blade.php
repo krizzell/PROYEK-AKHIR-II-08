@@ -324,8 +324,8 @@
                     </td>
                     <td>{{ $loop->iteration }}</td>
                     <td>
-                        @if($item->media)
-                            <img src="{{ asset('storage/' . $item->media) }}" alt="Thumbnail" class="media-thumbnail">
+                        @if($item->primary_media_url)
+                            <img src="{{ $item->primary_media_url }}" alt="Thumbnail" class="media-thumbnail">
                         @else
                             <span style="color: var(--text-secondary); font-size: 0.85rem;">-</span>
                         @endif

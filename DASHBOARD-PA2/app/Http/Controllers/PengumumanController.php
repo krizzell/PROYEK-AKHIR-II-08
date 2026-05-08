@@ -5,9 +5,53 @@ namespace App\Http\Controllers;
 use App\Models\Pengumuman;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class PengumumanController extends Controller
 {
+    private function storeUploadedMedia(array $files): array
+    {
+        $paths = [];
+
+        foreach ($files as $index => $file) {
+            if (!$file) {
+                continue;
+            }
+
+            $filename = Str::uuid()->toString() . '_' . $index . '_' . preg_replace('/[^A-Za-z0-9._-]/', '_', $file->getClientOriginalName());
+            $paths[] = $file->storeAs('pengumuman', $filename, 'public');
+        }
+
+        return $paths;
+    }
+
+    private function deleteStoredMediaPaths(array $mediaPaths): void
+    {
+        foreach ($mediaPaths as $path) {
+            if ($path && Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
+        }
+    }
+
+    private function buildMediaValidationRules(): array
+    {
+        return [
+            'media' => 'nullable|array',
+            'media.*' => 'image|mimes:jpg,jpeg,png,webp|max:5120',
+        ];
+    }
+
+    private function mediaValidationMessages(): array
+    {
+        return [
+            'media.array' => 'Gambar harus dikirim sebagai daftar file.',
+            'media.*.image' => 'Setiap file harus berupa gambar yang valid.',
+            'media.*.mimes' => 'Format yang diizinkan hanya JPG, JPEG, PNG, dan WEBP.',
+            'media.*.max' => 'Ukuran setiap gambar maksimal 5 MB.',
+        ];
+    }
+
     public function index()
     {
         $pengumuman = Pengumuman::with('guru')->latest('waktu_unggah')->get();
@@ -37,10 +81,9 @@ class PengumumanController extends Controller
 
         $validated = $request->validate([
             'judul' => 'required|string|max:150',
-            'media' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
             'waktu_unggah' => 'required|date_format:Y-m-d\TH:i',
             'deskripsi' => 'required|string',
-        ]);
+        ] + $this->buildMediaValidationRules(), $this->mediaValidationMessages());
 
         // Auto-set guru dari session
         $validated['id_guru'] = session('id_guru');
@@ -48,13 +91,8 @@ class PengumumanController extends Controller
         // Convert datetime-local to proper datetime format
         $validated['waktu_unggah'] = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $validated['waktu_unggah']);
 
-        // Handle file upload
-        if ($request->hasFile('media')) {
-            $file = $request->file('media');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('pengumuman', $filename, 'public');
-            $validated['media'] = $path;
-        }
+        $uploadedMedia = $this->storeUploadedMedia((array) $request->file('media', []));
+        $validated['media'] = $uploadedMedia ? json_encode($uploadedMedia) : null;
 
         Pengumuman::create($validated);
         return redirect()->route('pengumuman.index')->with('success', 'Pengumuman berhasil ditambahkan');
@@ -62,7 +100,10 @@ class PengumumanController extends Controller
 
     public function show(Pengumuman $pengumuman)
     {
-        return view('pengumuman.show', compact('pengumuman'));
+        $mediaPaths = $pengumuman->mediaPaths();
+        $mediaUrls = $pengumuman->mediaUrls();
+
+        return view('pengumuman.show', compact('pengumuman', 'mediaPaths', 'mediaUrls'));
     }
 
     public function edit(Pengumuman $pengumuman)
@@ -79,10 +120,11 @@ class PengumumanController extends Controller
 
         $validated = $request->validate([
             'judul' => 'required|string|max:150',
-            'media' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
             'waktu_unggah' => 'required|date_format:Y-m-d\TH:i',
             'deskripsi' => 'required|string',
-        ]);
+            'existing_media' => 'nullable|array',
+            'existing_media.*' => 'nullable|string',
+        ] + $this->buildMediaValidationRules(), $this->mediaValidationMessages());
 
         // Auto-set guru dari session
         $validated['id_guru'] = session('id_guru');
@@ -90,18 +132,15 @@ class PengumumanController extends Controller
         // Convert datetime-local to proper datetime format
         $validated['waktu_unggah'] = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $validated['waktu_unggah']);
 
-        // Handle file upload
-        if ($request->hasFile('media')) {
-            // Delete old file if exists
-            if ($pengumuman->media && Storage::disk('public')->exists($pengumuman->media)) {
-                Storage::disk('public')->delete($pengumuman->media);
-            }
+        $oldMediaPaths = $pengumuman->mediaPaths();
+        $keptMediaPaths = array_values(array_filter((array) $request->input('existing_media', [])));
+        $removedMediaPaths = array_values(array_diff($oldMediaPaths, $keptMediaPaths));
+        $uploadedMediaPaths = $this->storeUploadedMedia((array) $request->file('media', []));
 
-            $file = $request->file('media');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('pengumuman', $filename, 'public');
-            $validated['media'] = $path;
-        }
+        $this->deleteStoredMediaPaths($removedMediaPaths);
+
+        $finalMediaPaths = array_values(array_filter(array_merge($keptMediaPaths, $uploadedMediaPaths)));
+        $validated['media'] = $finalMediaPaths ? json_encode($finalMediaPaths) : null;
 
         $pengumuman->update($validated);
         return redirect()->route('pengumuman.index')->with('success', 'Pengumuman berhasil diperbarui');
@@ -110,9 +149,7 @@ class PengumumanController extends Controller
     public function destroy(Pengumuman $pengumuman)
     {
         // Delete media file if exists
-        if ($pengumuman->media && Storage::disk('public')->exists($pengumuman->media)) {
-            Storage::disk('public')->delete($pengumuman->media);
-        }
+        $this->deleteStoredMediaPaths($pengumuman->mediaPaths());
 
         $pengumuman->delete();
         return redirect()->route('pengumuman.index')->with('success', 'Pengumuman berhasil dihapus');
@@ -128,9 +165,7 @@ class PengumumanController extends Controller
         $pengumumanToDelete = Pengumuman::whereIn('id_pengumuman', $validated['selected_pengumuman'])->get();
         
         foreach ($pengumumanToDelete as $item) {
-            if ($item->media && Storage::disk('public')->exists($item->media)) {
-                Storage::disk('public')->delete($item->media);
-            }
+            $this->deleteStoredMediaPaths($item->mediaPaths());
         }
 
         $deletedCount = Pengumuman::whereIn('id_pengumuman', $validated['selected_pengumuman'])->delete();
