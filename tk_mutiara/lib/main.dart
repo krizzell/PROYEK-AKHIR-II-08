@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'theme/app_theme.dart';
-import 'screens/login_screen.dart';
+import 'screens/welcome_screen.dart';
 import 'services/notification_service.dart';
 
 void main() async {
@@ -31,7 +31,7 @@ class MutiaraApp extends StatelessWidget {
       title: 'TK Mutiara',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const LoginScreen(), // ini kalo mau langsung tampilan login
+      home: const WelcomeScreen(),
       // home: const MainNavigationScreen(), // uncomment ini kalau mau langsung ke main app
     );
   }

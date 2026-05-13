@@ -120,8 +120,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FC),
-      body: SafeArea(
-        child: RefreshIndicator(
+      body: RefreshIndicator(
           color: AppTheme.primary,
           onRefresh: () async {
             await Future.wait([
@@ -134,131 +133,201 @@ class _DashboardScreenState extends State<DashboardScreen> {
             physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
             child: Column(
               children: [
-                _header(),
-                const SizedBox(height: 20),
-                _menuCards(),
-                const SizedBox(height: 20),
-                _perkembangan(),
-                const SizedBox(height: 20),
-                _pengumumanUI(),
-                const SizedBox(height: 24),
+                _wrappedHeader(),
+                // Body content area that wraps 'inward' into the header
+                Transform.translate(
+                  offset: const Offset(0, -32),
+                  child: Container(
+                    padding: const EdgeInsets.only(top: 32),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF7F8FC),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(40),
+                        topRight: Radius.circular(40),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        if (_tagihan != null) ...[
+                          _tagihanCard(),
+                          const SizedBox(height: 20),
+                        ],
+                        _perkembangan(),
+                        const SizedBox(height: 20),
+                        _pengumumanUI(),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
+          ),
+        ),
+    );
+  }
+
+  // ── WRAPPED HEADER ──
+  Widget _wrappedHeader() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft, end: Alignment.bottomRight,
+          colors: [Color(0xFFFF6B1A), Color(0xFFFF8840), Color(0xFFFFA05C)],
+          stops: [0.0, 0.55, 1.0],
+        ),
+        borderRadius: BorderRadius.zero,
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 12, 22, 64),
+          child: Column(
+            children: [
+              // Profile + Notification row
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+                    ),
+                    child: CircleAvatar(
+                      radius: 26,
+                      backgroundColor: Colors.white.withOpacity(0.2),
+                      child: Text(
+                        _namaAnak.isNotEmpty ? _namaAnak[0].toUpperCase() : 'B',
+                        style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(_getGreeting(), style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w500)),
+                        const SizedBox(height: 2),
+                        InkWell(
+                          onTap: _showSwitchAccount,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(child: Text(_namaAnak, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5), overflow: TextOverflow.ellipsis)),
+                              const SizedBox(width: 4),
+                              Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white.withOpacity(0.8), size: 18),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(14)),
+                    child: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 22),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Class badge
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(25)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.school_rounded, size: 14, color: Colors.white.withOpacity(0.9)),
+                      const SizedBox(width: 8),
+                      Flexible(child: Text(_kelas, style: TextStyle(color: Colors.white.withOpacity(0.95), fontSize: 11, fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Payment & History Cards
+              Row(
+                children: [
+                  Expanded(child: _wrappedActionCard(
+                    title: 'Bayar SPP',
+                    subtitle: 'Pembayaran SPP bulanan',
+                    icon: Icons.account_balance_wallet_rounded,
+                    onTap: () {
+                      Navigator.push(context, PageRouteBuilder(
+                        pageBuilder: (_, __, ___) => PembayaranScreen(onBackPressed: () => Navigator.pop(context)),
+                        transitionDuration: Duration.zero, reverseTransitionDuration: Duration.zero,
+                      ));
+                    },
+                    badge: _tagihan == null ? 'Lunas' : 'Belum Bayar',
+                    badgeColor: _tagihan == null ? const Color(0xFF4ADE80) : const Color(0xFFF87171),
+                  )),
+                  const SizedBox(width: 14),
+                  Expanded(child: _wrappedActionCard(
+                    title: 'Riwayat',
+                    subtitle: 'Lihat riwayat pembayaran',
+                    icon: Icons.receipt_long_rounded,
+                    onTap: () {
+                      Navigator.push(context, PageRouteBuilder(
+                        pageBuilder: (_, __, ___) => HistoryScreen(onBackPressed: () => Navigator.pop(context)),
+                        transitionDuration: Duration.zero, reverseTransitionDuration: Duration.zero,
+                      ));
+                    },
+                  )),
+                ],
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // ── HEADER (ULTRA PREMIUM) ──
-  Widget _header() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft, end: Alignment.bottomRight,
-          colors: [Color(0xFFFF6B1A), Color(0xFFFF8C42), Color(0xFFFFAA60)],
-          stops: [0.0, 0.5, 1.0],
+  Widget _wrappedActionCard({required String title, required String subtitle, required IconData icon, required VoidCallback onTap, String? badge, Color? badgeColor}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, 4))],
         ),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(14)),
+                  child: Icon(icon, color: AppTheme.primary, size: 22),
+                ),
+                if (badge != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: badgeColor!.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(width: 5, height: 5, decoration: BoxDecoration(color: badgeColor, shape: BoxShape.circle)),
+                        const SizedBox(width: 4),
+                        Text(badge, style: TextStyle(color: badgeColor, fontSize: 10, fontWeight: FontWeight.w800)),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(title, style: const TextStyle(color: AppTheme.textDark, fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: -0.3)),
+            const SizedBox(height: 2),
+            Text(subtitle, style: const TextStyle(color: AppTheme.textLight, fontSize: 10, height: 1.4)),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(color: const Color(0xFFFF6B1A).withOpacity(0.35), blurRadius: 24, offset: const Offset(0, 12)),
-          BoxShadow(color: const Color(0xFFFF6B1A).withOpacity(0.15), blurRadius: 40, offset: const Offset(0, 20)),
-        ],
-      ),
-      child: Stack(
-        children: [
-          // Decorative circles
-          Positioned(right: -30, top: -30, child: Container(width: 100, height: 100,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.06)))),
-          Positioned(right: 40, bottom: -20, child: Container(width: 60, height: 60,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.04)))),
-          Positioned(left: -20, bottom: -10, child: Container(width: 80, height: 80,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.03)))),
-          // Content
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft, end: Alignment.bottomRight,
-                    colors: [Colors.white.withOpacity(0.5), Colors.white.withOpacity(0.15)],
-                  ),
-                ),
-                child: CircleAvatar(
-                  radius: 28,
-                  backgroundColor: Colors.white.withOpacity(0.2),
-                  child: Text(
-                    _namaAnak.isNotEmpty ? _namaAnak[0].toUpperCase() : 'B',
-                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(_getGreeting(),
-                      style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w500, letterSpacing: 0.2)),
-                    const SizedBox(height: 3),
-                    InkWell(
-                      borderRadius: BorderRadius.circular(8),
-                      onTap: _showSwitchAccount,
-                      child: Row(
-                        children: [
-                          Flexible(child: Text(_namaAnak, overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5))),
-                          const SizedBox(width: 4),
-                          Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(6)),
-                            child: Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white.withOpacity(0.9), size: 16),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withOpacity(0.15)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.school_rounded, size: 13, color: Colors.white.withOpacity(0.9)),
-                          const SizedBox(width: 6),
-                          Flexible(child: Text(_kelas, overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: Colors.white.withOpacity(0.95), fontSize: 11, fontWeight: FontWeight.w600))),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Frosted glass notification
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withOpacity(0.2)),
-                ),
-                child: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 22),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
@@ -362,97 +431,60 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ── MENU CARDS ──
-  Widget _menuCards() {
-    final bool lunas = _tagihan == null;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+  // ── TAGIHAN CARD ──
+  Widget _tagihanCard() {
+    if (_tagihan == null) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppTheme.danger.withOpacity(0.1)),
+        boxShadow: [
+          BoxShadow(color: AppTheme.danger.withOpacity(0.05), blurRadius: 16, offset: const Offset(0, 4)),
+        ],
+      ),
       child: Row(
         children: [
-          Expanded(child: _cardMenu(
-            title: "Bayar SPP",
-            subtitle: "Pembayaran SPP bulanan",
-            icon: Icons.account_balance_wallet_rounded,
-            badge: lunas ? "Lunas" : "Belum Bayar",
-            badgeColor: lunas ? AppTheme.success : AppTheme.danger,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PembayaranScreen(tagihan: _tagihan))),
-          )),
-          const SizedBox(width: 14),
-          Expanded(child: _cardMenu(
-            title: "Riwayat",
-            subtitle: "Lihat histori pembayaran",
-            icon: Icons.receipt_long_rounded,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen())),
-          )),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.danger.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.warning_amber_rounded, color: AppTheme.danger, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("Tagihan Belum Bayar", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppTheme.textDark)),
+                const SizedBox(height: 2),
+                Text("Segera lakukan pembayaran untuk ${_tagihan!.periode}", style: const TextStyle(color: AppTheme.textMedium, fontSize: 11)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PembayaranScreen(tagihan: _tagihan))),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.danger,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+              minimumSize: const Size(0, 36),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text("Bayar", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+          ),
         ],
       ),
     );
   }
 
-  Widget _cardMenu({required String title, required String subtitle, required IconData icon, String? badge, Color? badgeColor, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFF0F0F5), width: 1),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 6)),
-            BoxShadow(color: AppTheme.primary.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 3)),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft, end: Alignment.bottomRight,
-                      colors: [AppTheme.primary.withOpacity(0.12), AppTheme.primary.withOpacity(0.04)],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.primary.withOpacity(0.08)),
-                  ),
-                  child: Icon(icon, size: 24, color: AppTheme.primary),
-                ),
-                if (badge != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: badgeColor?.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: badgeColor?.withOpacity(0.2) ?? Colors.transparent),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(width: 6, height: 6, decoration: BoxDecoration(
-                          color: badgeColor, shape: BoxShape.circle,
-                          boxShadow: [BoxShadow(color: badgeColor?.withOpacity(0.5) ?? Colors.transparent, blurRadius: 4)],
-                        )),
-                        const SizedBox(width: 5),
-                        Text(badge, style: TextStyle(color: badgeColor, fontSize: 10, fontWeight: FontWeight.w700)),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.textDark, letterSpacing: -0.3)),
-            const SizedBox(height: 4),
-            Text(subtitle, style: const TextStyle(color: AppTheme.textMedium, fontSize: 12, height: 1.3)),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   // ── PERKEMBANGAN SECTION (ULTRA PREMIUM) ──
   Widget _perkembangan() {
@@ -472,16 +504,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top accent bar
-            Container(
-              height: 4,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [AppTheme.primary, AppTheme.primaryLight, AppTheme.primary.withOpacity(0.3)]),
-                borderRadius: const BorderRadius.only(topLeft: Radius.circular(22), topRight: Radius.circular(22)),
-              ),
-            ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -665,74 +689,61 @@ class _DashboardScreenState extends State<DashboardScreen> {
           BoxShadow(color: AppTheme.primary.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 3)),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top accent bar
-          Container(
-            height: 4,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [AppTheme.primary.withOpacity(0.3), AppTheme.primary, AppTheme.primaryLight]),
-              borderRadius: const BorderRadius.only(topLeft: Radius.circular(22), topRight: Radius.circular(22)),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(width: 4, height: 18, decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(2))),
-                        const SizedBox(width: 10),
-                        const Text("Pengumuman", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.textDark, letterSpacing: -0.3)),
-                      ],
-                    ),
-                    GestureDetector(
-                      onTap: () => Navigator.push(context, PageRouteBuilder(
-                        pageBuilder: (_, __, ___) => const PengumumanScreen(),
-                        transitionDuration: Duration.zero, reverseTransitionDuration: Duration.zero,
-                      )),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(colors: [AppTheme.primary.withOpacity(0.1), AppTheme.primary.withOpacity(0.04)]),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppTheme.primary.withOpacity(0.12)),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text("Lihat semua", style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w700)),
-                            SizedBox(width: 3),
-                            Icon(Icons.arrow_forward_ios_rounded, size: 10, color: AppTheme.primary),
-                          ],
-                        ),
-                      ),
-                    ),
+                    Container(width: 4, height: 18, decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(2))),
+                    const SizedBox(width: 10),
+                    const Text("Pengumuman", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.textDark, letterSpacing: -0.3)),
                   ],
                 ),
-                const SizedBox(height: 16),
-                if (_pengumuman.isEmpty)
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 28),
-                    child: Center(
-                      child: Column(children: [
-                        Icon(Icons.campaign_outlined, size: 36, color: AppTheme.textLight.withOpacity(0.4)),
-                        const SizedBox(height: 8),
-                        const Text('Belum ada pengumuman', style: TextStyle(color: AppTheme.textMedium, fontSize: 13)),
-                      ]),
+                GestureDetector(
+                  onTap: () => Navigator.push(context, PageRouteBuilder(
+                    pageBuilder: (_, __, ___) => const PengumumanScreen(),
+                    transitionDuration: Duration.zero, reverseTransitionDuration: Duration.zero,
+                  )),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: [AppTheme.primary.withOpacity(0.1), AppTheme.primary.withOpacity(0.04)]),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppTheme.primary.withOpacity(0.12)),
                     ),
-                  )
-                else
-                  ..._pengumuman.map((e) => _buildPengumumanItem(e)),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text("Lihat semua", style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w700)),
+                        SizedBox(width: 3),
+                        Icon(Icons.arrow_forward_ios_rounded, size: 10, color: AppTheme.primary),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            if (_pengumuman.isEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 28),
+                child: Center(
+                  child: Column(children: [
+                    Icon(Icons.campaign_outlined, size: 36, color: AppTheme.textLight.withOpacity(0.4)),
+                    const SizedBox(height: 8),
+                    const Text('Belum ada pengumuman', style: TextStyle(color: AppTheme.textMedium, fontSize: 13)),
+                  ]),
+                ),
+              )
+            else
+              ..._pengumuman.map((e) => _buildPengumumanItem(e)),
+          ],
+        ),
       ),
     );
   }
