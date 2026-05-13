@@ -150,7 +150,7 @@ Widget _buildCardBaru() {
         ),
         const SizedBox(height: 4),
         const Text(
-          'Masukkan NISN dan kata sandi',
+          'Masukkan username dan kata sandi',
           style: TextStyle(fontSize: 11, color: Color.fromARGB(255, 72, 72, 72)),
         ),
 
@@ -158,13 +158,13 @@ Widget _buildCardBaru() {
 
         const Align(
           alignment: Alignment.centerLeft,
-          child: Text('NISN', style: TextStyle(fontSize: 12)),
+          child: Text('Username', style: TextStyle(fontSize: 12)),
         ),
         const SizedBox(height: 4),
         _buildInputBaru(
           controller: _emailController,
           icon: Icons.badge,
-          hint: 'NISN',
+          hint: 'username',
         ),
 
         const SizedBox(height: 8),
@@ -194,7 +194,7 @@ Widget _buildCardBaru() {
           if (states.contains(WidgetState.disabled)) {
             return Colors.grey.shade400;
           }
-          return const Color(0xFFE57A32);
+          return AppTheme.primary;
         },
       ),
       elevation: WidgetStateProperty.all(2),
@@ -226,7 +226,7 @@ Widget _buildCardBaru() {
           'Ganti Password?',
           style: TextStyle(
             fontSize: 12,
-            color:Color(0xFFE57A32),
+            color:AppTheme.primary,
           ),
         ),
 
@@ -258,7 +258,7 @@ Widget _buildInputBaru({
         hintText: hint,
         hintStyle: const TextStyle(fontSize: 13),
         border: InputBorder.none,
-        prefixIcon: Icon(icon, color: Colors.orange, size: 18), 
+        prefixIcon: Icon(icon, color: AppTheme.primary, size: 18), 
         suffixIcon: isPassword
             ? IconButton(
                 icon: Icon(
@@ -290,11 +290,11 @@ Widget _buildInfoBox() {
     ),
     child: const Row(
       children: [
-        Icon(Icons.info_outline, color: Colors.orange, size: 18),
+        Icon(Icons.info_outline, color: AppTheme.primary, size: 18),
         SizedBox(width: 6),
         Expanded(
           child: Text(
-            'Gunakan NISN yang diberikan sekolah untuk dapat masuk ke aplikasi.',
+            'Gunakan username yang diberikan sekolah untuk dapat masuk ke aplikasi.',
             style: TextStyle(fontSize: 11),
           ),
         ),

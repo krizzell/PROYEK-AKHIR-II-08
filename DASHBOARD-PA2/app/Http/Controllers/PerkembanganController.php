@@ -6,6 +6,7 @@ use App\Models\Perkembangan;
 use App\Models\PerkembanganKategori;
 use App\Models\Siswa;
 use App\Models\Kelas;
+use App\Models\Guru;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -42,7 +43,10 @@ class PerkembanganController extends Controller
             }
         }
         
-        return view('perkembangan.index', compact('perkembangan'));
+        // Permission: Only guru biasa (is_super_admin = 0) can create/edit/delete
+        $canCreate = !session('is_super_admin');
+        
+        return view('perkembangan.index', compact('perkembangan', 'canCreate'));
     }
 
     public function create()
@@ -52,6 +56,14 @@ class PerkembanganController extends Controller
             return redirect()->route('perkembangan.index')->with('error', 
                 'Akun Anda tidak terhubung dengan data guru. ' .
                 'Hubungi super admin untuk link akun Anda dengan guru.'
+            );
+        }
+
+        // Check if user is Kepala Sekolah (is_super_admin = 1)
+        // Only guru biasa (is_super_admin = 0) can create
+        if (session('is_super_admin')) {
+            return redirect()->route('perkembangan.index')->with('error', 
+                'Kepala Sekolah hanya dapat melihat perkembangan anak. Hanya guru yang dapat membuat laporan perkembangan.'
             );
         }
 
@@ -227,6 +239,14 @@ class PerkembanganController extends Controller
 
     public function edit(Perkembangan $perkembangan)
     {
+        // Check if user is Kepala Sekolah (is_super_admin = 1)
+        // Only guru biasa (is_super_admin = 0) can edit
+        if (session('is_super_admin')) {
+            return redirect()->route('perkembangan.index')->with('error', 
+                'Kepala Sekolah hanya dapat melihat perkembangan anak. Hanya guru yang dapat mengedit laporan perkembangan.'
+            );
+        }
+
         // Super admin bisa edit semua, regular guru bisa edit:
         // 1. Perkembangan untuk siswa di kelasnya
         // 2. Perkembangan yang mereka buat sendiri
@@ -282,6 +302,14 @@ class PerkembanganController extends Controller
 
     public function update(Request $request, Perkembangan $perkembangan)
     {
+        // Check if user is Kepala Sekolah (is_super_admin = 1)
+        // Only guru biasa (is_super_admin = 0) can update
+        if (session('is_super_admin')) {
+            return redirect()->route('perkembangan.index')->with('error', 
+                'Kepala Sekolah hanya dapat melihat perkembangan anak. Hanya guru yang dapat mengedit laporan perkembangan.'
+            );
+        }
+
         // Super admin bisa edit semua, regular guru bisa edit:
         // 1. Perkembangan untuk siswa di kelasnya
         // 2. Perkembangan yang mereka buat sendiri
@@ -350,6 +378,14 @@ class PerkembanganController extends Controller
 
     public function destroy(Perkembangan $perkembangan)
     {
+        // Check if user is Kepala Sekolah (is_super_admin = 1)
+        // Only guru biasa (is_super_admin = 0) can delete
+        if (session('is_super_admin')) {
+            return redirect()->route('perkembangan.index')->with('error', 
+                'Kepala Sekolah hanya dapat melihat perkembangan anak. Hanya guru yang dapat menghapus laporan perkembangan.'
+            );
+        }
+
         // Super admin bisa hapus semua, regular guru hanya untuk:
         // 1. Perkembangan untuk siswa di kelasnya
         // 2. Perkembangan yang mereka buat sendiri
@@ -373,6 +409,14 @@ class PerkembanganController extends Controller
 
     public function bulkDestroy(Request $request)
     {
+        // Check if user is Kepala Sekolah (only Guru can delete)
+        $guru = Guru::find(session('id_guru'));
+        if ($guru && $guru->jabatan === 'Kepala Sekolah') {
+            return redirect()->route('perkembangan.index')->with('error', 
+                'Kepala Sekolah hanya dapat melihat perkembangan anak. Hanya guru yang dapat menghapus laporan perkembangan.'
+            );
+        }
+
         $validated = $request->validate([
             'selected_perkembangan' => 'required|array|min:1',
             'selected_perkembangan.*' => 'required|integer|exists:perkembangan,id_perkembangan',

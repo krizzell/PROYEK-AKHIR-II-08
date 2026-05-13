@@ -363,9 +363,9 @@ class _ProfilScreenState extends State<ProfilScreen>
             onPressed: () => Navigator.pop(context),
             icon: const Icon(
               Icons.arrow_back_ios_new_rounded,
-              color: AppTheme.textDark,
-              size: 20,
+              size: 18,
             ),
+            color: AppTheme.primary,
           ),
           const SizedBox(width: 4),
           const Column(

@@ -2,15 +2,11 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../models/perkembangan_model.dart';
 import '../services/api_services.dart';
-import 'package:fl_chart/fl_chart.dart';
 
 class PerkembanganScreen extends StatefulWidget {
   final VoidCallback? onBackPressed;
-  
-  const PerkembanganScreen({
-    super.key,
-    this.onBackPressed,
-  });
+
+  const PerkembanganScreen({super.key, this.onBackPressed});
 
   @override
   State<PerkembanganScreen> createState() => _PerkembanganScreenState();
@@ -30,320 +26,96 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> {
     _loadPerkembangan();
   }
 
-  void _loadPerkembangan() async {
+  Future<void> _loadPerkembangan() async {
     try {
-      print('Loading perkembangan...');
       final data = await ApiService.getPerkembangan();
       setState(() {
         _data = data;
         _groupDataByMonth();
-        if (_monthKeys.isNotEmpty) {
-          _selectedMonthKey = _monthKeys.last; // Pilih bulan terakhir sebagai default
-        }
+        if (_monthKeys.isNotEmpty) _selectedMonthKey = _monthKeys.last;
         _isLoading = false;
-        print('Loaded ${_data.length} perkembangan records');
-        for (var item in _data) {
-          print('Record: ${item.namaAnak}, Guru: ${item.namaGuru}, Kategori: ${item.kategoriDetails.length}');
-        }
       });
     } catch (e) {
-      print('Error loading perkembangan: $e');
-      setState(() {
-        _isLoading = false;
-        _errorMsg = '$e';
-      });
+      setState(() { _isLoading = false; _errorMsg = '$e'; });
     }
   }
 
   void _groupDataByMonth() {
     _groupedData.clear();
     _monthKeys.clear();
-
     for (var item in _data) {
       final key = '${item.tahun}-${item.bulan.toString().padLeft(2, '0')}';
-      if (!_groupedData.containsKey(key)) {
-        _groupedData[key] = [];
-      }
-      _groupedData[key]!.add(item);
+      _groupedData.putIfAbsent(key, () => []).add(item);
     }
-
-    // Sort bulan dari tertua ke terbaru
-    _monthKeys = _groupedData.keys.toList();
-    _monthKeys.sort((a, b) => a.compareTo(b));
+    _monthKeys = _groupedData.keys.toList()..sort();
   }
 
   List<PerkembanganModel> get _filteredData {
-    if (_selectedMonthKey == null || !_groupedData.containsKey(_selectedMonthKey)) {
-      return [];
-    }
+    if (_selectedMonthKey == null || !_groupedData.containsKey(_selectedMonthKey)) return [];
     return _groupedData[_selectedMonthKey]!;
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        backgroundColor: AppTheme.background,
-        body: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(context),
-              const Expanded(
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: AppTheme.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (_errorMsg != null && _data.isEmpty) {
-      return Scaffold(
-        backgroundColor: AppTheme.background,
-        body: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(context),
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline, size: 64, color: AppTheme.textLight),
-                      const SizedBox(height: 16),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Text(
-                          _errorMsg!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppTheme.textMedium,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _isLoading = true;
-                            _errorMsg = null;
-                          });
-                          _loadPerkembangan();
-                        },
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Coba Lagi'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (_data.isEmpty) {
-      return Scaffold(
-        backgroundColor: AppTheme.background,
-        body: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(context),
-              const Expanded(
-                child: Center(
-                  child: Text('Tidak ada data perkembangan'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: const Color(0xFFF7F8FC),
       body: SafeArea(
         child: Column(
           children: [
             _buildHeader(context),
-            _buildFilterSection(),
-            Expanded(
-  child: ListView(
-    padding: const EdgeInsets.all(16),
-    children: [
-      _buildChartPerkembangan(), // 
-
-      const SizedBox(height: 16),
-
-      ..._filteredData.map((e) => _buildPerkembanganCard(e)).toList(),
-    ],
-  ),
-),
+            if (_isLoading)
+              const Expanded(child: Center(child: CircularProgressIndicator(color: AppTheme.primary)))
+            else if (_errorMsg != null && _data.isEmpty)
+              _buildErrorState()
+            else if (_data.isEmpty)
+              _buildEmptyState()
+            else ...[
+              _buildFilterSection(),
+              Expanded(
+                child: RefreshIndicator(
+                  color: AppTheme.primary,
+                  onRefresh: _loadPerkembangan,
+                  child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                    itemCount: _filteredData.length,
+                    itemBuilder: (context, index) {
+                      return TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: Duration(milliseconds: 400 + (index * 80)),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, child) {
+                          return Transform.translate(
+                            offset: Offset(0, 16 * (1 - value)),
+                            child: Opacity(opacity: value, child: child),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _buildPerkembanganCard(_filteredData[index]),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  String _getMonthYearDisplay(String monthKey) {
-    // Format: "2026-04" -> "April 2026"
-    final parts = monthKey.split('-');
-    final tahun = int.parse(parts[0]);
-    final bulan = int.parse(parts[1]);
-    return '${_getMonthName(bulan)} $tahun';
-  }
-
-  Widget _buildFilterSection() {
-    if (_monthKeys.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    final currentMonth = _selectedMonthKey != null ? _getMonthYearDisplay(_selectedMonthKey!) : '';
-    final parts = _selectedMonthKey!.split('-');
-    final selectedBulan = int.parse(parts[1]);
-    final selectedTahun = int.parse(parts[0]);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      color: AppTheme.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Periode Laporan',
-            style: TextStyle(
-              color: AppTheme.textMedium,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFFE5E5E5)),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: DropdownButton<int>(
-                    value: selectedBulan,
-                    isExpanded: true,
-                    underline: const SizedBox.shrink(),
-                    items: List.generate(12, (index) {
-                      final bulan = index + 1;
-                      final key = '$selectedTahun-${bulan.toString().padLeft(2, '0')}';
-                      final hasData = _monthKeys.contains(key);
-                      return DropdownMenuItem(
-                        value: bulan,
-                        enabled: hasData,
-                        child: Text(
-                          _getMonthName(bulan),
-                          style: TextStyle(
-                            color: hasData ? AppTheme.textDark : AppTheme.textLight,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      );
-                    }),
-                    onChanged: (bulan) {
-                      if (bulan != null) {
-                        final key = '$selectedTahun-${bulan.toString().padLeft(2, '0')}';
-                        if (_monthKeys.contains(key)) {
-                          setState(() {
-                            _selectedMonthKey = key;
-                          });
-                        }
-                      }
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFFE5E5E5)),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: DropdownButton<int>(
-                    value: selectedTahun,
-                    isExpanded: true,
-                    underline: const SizedBox.shrink(),
-                    items: _getAvailableYears().map((tahun) {
-                      return DropdownMenuItem(
-                        value: tahun,
-                        child: Text(
-                          '$tahun',
-                          style: const TextStyle(
-                            color: AppTheme.textDark,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (tahun) {
-                      if (tahun != null) {
-                        final key = '$tahun-${selectedBulan.toString().padLeft(2, '0')}';
-                        if (_monthKeys.contains(key)) {
-                          setState(() {
-                            _selectedMonthKey = key;
-                          });
-                        } else {
-                          // Jika kombinasi tidak ada, ambil bulan pertama dari tahun itu
-                          final firstMonthInYear = _monthKeys.firstWhere(
-                            (k) => k.startsWith('$tahun-'),
-                            orElse: () => '',
-                          );
-                          if (firstMonthInYear.isNotEmpty) {
-                            setState(() {
-                              _selectedMonthKey = firstMonthInYear;
-                            });
-                          }
-                        }
-                      }
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
+  // ── HEADER ──
   Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 20, 16),
-      decoration: BoxDecoration(
-        color: AppTheme.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      color: AppTheme.white,
       child: Row(
         children: [
           IconButton(
             onPressed: widget.onBackPressed ?? () => Navigator.pop(context),
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 18,
-            ),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
             color: AppTheme.primary,
           ),
           const SizedBox(width: 4),
@@ -351,462 +123,290 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Detail Perkembangan Anak',
-                style: TextStyle(
-                  color: AppTheme.textDark,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                ),
+                'Perkembangan Anak',
+                style: TextStyle(color: AppTheme.textDark, fontSize: 18, fontWeight: FontWeight.w800),
               ),
-              Text(
-                '${_data.isNotEmpty ? _data[0].namaAnak : "Siswa"} · ${_data.isNotEmpty ? _data[0].kelas : ""}',
-                style: TextStyle(
-                  color: AppTheme.primary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+              if (_data.isNotEmpty)
+                Text(
+                  '${_data[0].namaAnak} · ${_data[0].kelas}',
+                  style: const TextStyle(color: AppTheme.textMedium, fontSize: 12, fontWeight: FontWeight.w500),
                 ),
-              ),
             ],
-          ),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFEDE0),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.child_care_rounded,
-              color: AppTheme.primary,
-              size: 22,
-            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildChartPerkembangan() {
-  if (_filteredData.isEmpty) {
-    return const SizedBox(
-      height: 140,
-      child: Center(child: Text("Belum ada data")),
-    );
-  }
+  // ── FILTER SECTION ──
+  Widget _buildFilterSection() {
+    if (_monthKeys.isEmpty) return const SizedBox.shrink();
+    final parts = _selectedMonthKey!.split('-');
+    final selectedBulan = int.parse(parts[1]);
+    final selectedTahun = int.parse(parts[0]);
 
-  double convertNilai(String status) {
-    switch (status) {
-      case "BB":
-        return 1;
-      case "MB":
-        return 2;
-      case "BSH":
-        return 3;
-      case "BSB":
-        return 4;
-      default:
-        return 1;
-    }
-  }
-
-  return Container(
-    padding: const EdgeInsets.all(12),
-    margin: const EdgeInsets.only(bottom: 16),
-    decoration: BoxDecoration(
-      color: const Color(0xFFFFF7F2), // 🔥 sama kayak dashboard
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Grafik Perkembangan",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-        const SizedBox(height: 6),
-        const Text(
-          "Ringkasan perkembangan bulan terpilih",
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey,
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        SizedBox(
-          height: 140,
-          child: LineChart(
-            LineChartData(
-              minY: 1,
-              maxY: 4,
-
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: false,
-                horizontalInterval: 1,
-                getDrawingHorizontalLine: (value) {
-                  return FlLine(
-                    color: Colors.orange.withOpacity(0.08),
-                    strokeWidth: 1,
-                  );
-                },
-              ),
-
-              borderData: FlBorderData(show: false),
-
-              titlesData: FlTitlesData(
-                topTitles: AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                rightTitles: AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 24,
-                    interval: 1,
-                    getTitlesWidget: (value, meta) {
-                      switch (value.toInt()) {
-                        case 1:
-                          return const Text("BB", style: TextStyle(fontSize: 9));
-                        case 2:
-                          return const Text("MB", style: TextStyle(fontSize: 9));
-                        case 3:
-                          return const Text("BSH", style: TextStyle(fontSize: 9));
-                        case 4:
-                          return const Text("BSB", style: TextStyle(fontSize: 9));
-                      }
-                      return const Text("");
-                    },
-                  ),
-                ),
-
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(showTitles: false), // 🔥 sama dashboard
-                ),
-              ),
-
-              lineTouchData: LineTouchData(
-                handleBuiltInTouches: true,
-                touchTooltipData: LineTouchTooltipData(
-                  tooltipRoundedRadius: 8,
-                  getTooltipItems: (spots) {
-                    return spots.map((spot) {
-                      return LineTooltipItem(
-                        spot.y.toInt().toString(),
-                        const TextStyle(fontWeight: FontWeight.bold),
-                      );
-                    }).toList();
-                  },
-                ),
-              ),
-
-              lineBarsData: [
-                LineChartBarData(
-                  spots: _filteredData.asMap().entries.map((entry) {
-                    int index = entry.key;
-                    var data = entry.value;
-
-                    return FlSpot(
-                      index.toDouble(),
-                      convertNilai(data.statusUtama),
-                    );
-                  }).toList(),
-
-                  isCurved: true,
-                  color: const Color(0xFFE58A45), // 🔥 sama dashboard
-                  barWidth: 3,
-
-                  dotData: FlDotData(
-                    show: true,
-                    getDotPainter: (spot, percent, bar, index) {
-                      return FlDotCirclePainter(
-                        radius: 3.5,
-                        color: const Color(0xFFE58A45),
-                        strokeWidth: 2,
-                        strokeColor: Colors.white,
-                      );
-                    },
-                  ),
-
-                  belowBarData: BarAreaData(
-                    show: true,
-                    color: const Color(0xFFE58A45).withOpacity(0.12),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-  
-  Widget _buildPerkembanganCard(PerkembanganModel data) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.white,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 2))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Row 1: Nama Anak & Kelas
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Nama Anak',
-                      style: TextStyle(
-                        color: AppTheme.textMedium,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      data.namaAnak,
-                      style: const TextStyle(
-                        color: AppTheme.textDark,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Kelas',
-                      style: TextStyle(
-                        color: AppTheme.textMedium,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      data.kelas,
-                      style: const TextStyle(
-                        color: AppTheme.textDark,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              Container(width: 4, height: 16, decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(2))),
+              const SizedBox(width: 8),
+              const Text('Periode Laporan', style: TextStyle(color: AppTheme.textDark, fontSize: 14, fontWeight: FontWeight.w800)),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(child: _buildDropdown<int>(
+                value: selectedBulan,
+                items: List.generate(12, (i) {
+                  final bulan = i + 1;
+                  final key = '$selectedTahun-${bulan.toString().padLeft(2, '0')}';
+                  final hasData = _monthKeys.contains(key);
+                  return DropdownMenuItem(value: bulan, enabled: hasData,
+                    child: Text(_getMonthName(bulan), style: TextStyle(color: hasData ? AppTheme.textDark : AppTheme.textLight, fontSize: 13, fontWeight: FontWeight.w600)));
+                }),
+                onChanged: (bulan) {
+                  if (bulan != null) {
+                    final key = '$selectedTahun-${bulan.toString().padLeft(2, '0')}';
+                    if (_monthKeys.contains(key)) setState(() => _selectedMonthKey = key);
+                  }
+                },
+                icon: Icons.calendar_month_rounded,
+              )),
+              const SizedBox(width: 12),
+              Expanded(child: _buildDropdown<int>(
+                value: selectedTahun,
+                items: _getAvailableYears().map((t) => DropdownMenuItem(value: t,
+                  child: Text('$t', style: const TextStyle(color: AppTheme.textDark, fontSize: 13, fontWeight: FontWeight.w600)))).toList(),
+                onChanged: (tahun) {
+                  if (tahun != null) {
+                    final key = '$tahun-${selectedBulan.toString().padLeft(2, '0')}';
+                    if (_monthKeys.contains(key)) {
+                      setState(() => _selectedMonthKey = key);
+                    } else {
+                      final first = _monthKeys.firstWhere((k) => k.startsWith('$tahun-'), orElse: () => '');
+                      if (first.isNotEmpty) setState(() => _selectedMonthKey = first);
+                    }
+                  }
+                },
+                icon: Icons.date_range_rounded,
+              )),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-          // Row 2: Guru
-          const Text(
-            'Guru',
-            style: TextStyle(
-              color: AppTheme.textMedium,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
+  Widget _buildDropdown<T>({required T value, required List<DropdownMenuItem<T>> items, required ValueChanged<T?> onChanged, required IconData icon}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F8FC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE8E8EE)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: AppTheme.primary.withOpacity(0.5)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: DropdownButton<T>(value: value, isExpanded: true, underline: const SizedBox.shrink(),
+              icon: Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textLight, size: 20), items: items, onChanged: onChanged),
           ),
-          const SizedBox(height: 4),
-          Text(
-            data.namaGuru.isNotEmpty ? data.namaGuru : 'N/A',
-            style: const TextStyle(
-              color: AppTheme.textDark,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
 
-          // Row 3: Periode Laporan
-          const Text(
-            'Periode Laporan',
-            style: TextStyle(
-              color: AppTheme.textMedium,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${_getMonthName(data.bulan)} ${data.tahun}',
-            style: const TextStyle(
-              color: AppTheme.textDark,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 20),
+  // ── PERKEMBANGAN CARD (PREMIUM) ──
+  Widget _buildPerkembanganCard(PerkembanganModel data) {
+    final statusColor = _getStatusColor(data.statusUtama);
+    final statusBg = _getStatusBgColor(data.statusUtama);
 
-          // Divider
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 4)),
+          BoxShadow(color: statusColor.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Top accent bar
           Container(
-            height: 1,
-            color: const Color(0xFFE5E5E5),
-          ),
-          const SizedBox(height: 20),
-
-          // Kategori Perkembangan
-          const Text(
-            'Kategori Perkembangan',
-            style: TextStyle(
-              color: AppTheme.textDark,
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // List kategori details (fallback ke field kategori untuk data lama)
-          if (data.kategoriDetails.isNotEmpty)
-            ...data.kategoriDetails.map((kategori) => _buildKategoriItem(kategori))
-          else if (data.kategori.trim().isNotEmpty)
-            ...data.kategori
-                .split(',')
-                .map((k) => k.trim())
-                .where((k) => k.isNotEmpty)
-                .map((k) => _buildKategoriFallbackItem(k)),
-
-          const SizedBox(height: 20),
-          Container(
-            height: 1,
-            color: const Color(0xFFE5E5E5),
-          ),
-          const SizedBox(height: 20),
-
-          // Deskripsi Template Indikator
-          if (data.templateDeskripsi.isNotEmpty)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Deskripsi Template Indikator',
-                  style: TextStyle(
-                    color: AppTheme.textDark,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: _getStatusBgColor(data.statusUtama).withOpacity(0.3),
-                    border: Border.all(
-                      color: _getStatusColor(data.statusUtama),
-                      width: 1.5,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    data.templateDeskripsi,
-                    style: TextStyle(
-                      color: _getStatusColor(data.statusUtama),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      height: 1.6,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  height: 1,
-                  color: const Color(0xFFE5E5E5),
-                ),
-                const SizedBox(height: 20),
-              ],
-            ),
-
-          // Catatan Tambahan
-          if (data.deskripsi.isNotEmpty)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Catatan Tambahan',
-                  style: TextStyle(
-                    color: AppTheme.textDark,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFAFAFA),
-                    border: Border.all(color: const Color(0xFFE5E5E5)),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    data.deskripsi,
-                    style: const TextStyle(
-                      color: AppTheme.textDark,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      height: 1.6,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  height: 1,
-                  color: const Color(0xFFE5E5E5),
-                ),
-                const SizedBox(height: 20),
-              ],
-            ),
-
-          // Status Pencapaian
-          const Text(
-            'Status Pencapaian',
-            style: TextStyle(
-              color: AppTheme.textMedium,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            height: 4,
             decoration: BoxDecoration(
-              color: _getStatusBgColor(data.statusUtama),
-              borderRadius: BorderRadius.circular(8),
+              gradient: LinearGradient(colors: [statusColor.withOpacity(0.8), statusColor.withOpacity(0.3)]),
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
             ),
-            child: Text(
-              _getStatusLabel(data.statusUtama),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: _getStatusColor(data.statusUtama),
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-              ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Status badge + period
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(color: statusBg, borderRadius: BorderRadius.circular(20)),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(width: 8, height: 8, decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
+                          const SizedBox(width: 6),
+                          Text(data.statusUtama, style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.w800)),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(color: const Color(0xFFF0F1F5), borderRadius: BorderRadius.circular(20)),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.calendar_today_rounded, size: 12, color: AppTheme.textMedium),
+                          const SizedBox(width: 5),
+                          Text('${_getMonthName(data.bulan)} ${data.tahun}', style: const TextStyle(color: AppTheme.textMedium, fontSize: 11, fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Info row — guru
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 16, backgroundColor: AppTheme.primary.withOpacity(0.1),
+                      child: Text((data.namaGuru.isNotEmpty ? data.namaGuru : 'G')[0].toUpperCase(),
+                        style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w800, fontSize: 13)),
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Dinilai oleh', style: TextStyle(color: AppTheme.textLight, fontSize: 10, fontWeight: FontWeight.w600)),
+                        Text(data.namaGuru.isNotEmpty ? data.namaGuru : 'N/A',
+                          style: const TextStyle(color: AppTheme.textDark, fontSize: 13, fontWeight: FontWeight.w700)),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Kategori list
+                if (data.kategoriDetails.isNotEmpty) ...[
+                  Row(
+                    children: [
+                      Container(width: 4, height: 16, decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(2))),
+                      const SizedBox(width: 8),
+                      const Text('Aspek Penilaian', style: TextStyle(color: AppTheme.textDark, fontSize: 14, fontWeight: FontWeight.w800)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ...data.kategoriDetails.map((k) => _buildKategoriItem(k)),
+                ] else if (data.kategori.trim().isNotEmpty) ...[
+                  Row(
+                    children: [
+                      Container(width: 4, height: 16, decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(2))),
+                      const SizedBox(width: 8),
+                      const Text('Kategori', style: TextStyle(color: AppTheme.textDark, fontSize: 14, fontWeight: FontWeight.w800)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ...data.kategori.split(',').map((k) => k.trim()).where((k) => k.isNotEmpty).map((k) => _buildKategoriFallbackItem(k)),
+                ],
+
+                // Template deskripsi
+                if (data.templateDeskripsi.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: statusBg.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: statusColor.withOpacity(0.2)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.format_quote_rounded, size: 16, color: statusColor),
+                            const SizedBox(width: 6),
+                            Text('Indikator Pencapaian', style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(data.templateDeskripsi, style: TextStyle(color: statusColor.withOpacity(0.9), fontSize: 12, fontWeight: FontWeight.w500, height: 1.6)),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // Catatan
+                if (data.deskripsi.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(color: const Color(0xFFF7F8FC), borderRadius: BorderRadius.circular(14)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.edit_note_rounded, size: 16, color: AppTheme.textMedium),
+                            SizedBox(width: 6),
+                            Text('Catatan Guru', style: TextStyle(color: AppTheme.textDark, fontSize: 12, fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(data.deskripsi, style: const TextStyle(color: AppTheme.textDark, fontSize: 12, fontWeight: FontWeight.w500, height: 1.6)),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // Status footer
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [statusColor.withOpacity(0.1), statusColor.withOpacity(0.05)]),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: statusColor.withOpacity(0.15)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _getStatusLabel(data.statusUtama),
+                        style: TextStyle(color: statusColor, fontSize: 13, fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -814,56 +414,49 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> {
     );
   }
 
+  // ── KATEGORI ITEM ──
   Widget _buildKategoriItem(PerkembanganKategoriModel kategori) {
+    final progress = kategori.nilai / 10.0;
+    final kColor = _getStatusColor(kategori.statusUtama);
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFAFAFA),
-        border: Border.all(color: const Color(0xFFE5E5E5)),
-        borderRadius: BorderRadius.circular(8),
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFEEEFF5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                kategori.namaKategori,
-                style: const TextStyle(
-                  color: AppTheme.textDark,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              Expanded(child: Text(kategori.namaKategori, style: const TextStyle(color: AppTheme.textDark, fontSize: 13, fontWeight: FontWeight.w700))),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.primary,
-                  borderRadius: BorderRadius.circular(4),
+                  gradient: LinearGradient(colors: [AppTheme.primary, AppTheme.primaryLight]),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text(
-                  'Nilai ${kategori.nilai}/10',
-                  style: const TextStyle(
-                    color: AppTheme.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                child: Text('${kategori.nilai}/10', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            kategori.deskripsi.isNotEmpty ? kategori.deskripsi : 'Tidak ada deskripsi',
-            style: const TextStyle(
-              color: AppTheme.textDark,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              height: 1.5,
+          const SizedBox(height: 10),
+          // Progress bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: const Color(0xFFE8E8EE),
+              color: kColor,
+              minHeight: 6,
             ),
           ),
+          if (kategori.deskripsi.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(kategori.deskripsi, style: const TextStyle(color: AppTheme.textMedium, fontSize: 11, height: 1.5)),
+          ],
         ],
       ),
     );
@@ -871,97 +464,114 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> {
 
   Widget _buildKategoriFallbackItem(String namaKategori) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFAFAFA),
-        border: Border.all(color: const Color(0xFFE5E5E5)),
-        borderRadius: BorderRadius.circular(8),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(color: const Color(0xFFF9FAFB), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFEEEFF5))),
+      child: Row(
+        children: [
+          Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle)),
+          const SizedBox(width: 10),
+          Text(namaKategori, style: const TextStyle(color: AppTheme.textDark, fontSize: 13, fontWeight: FontWeight.w600)),
+        ],
       ),
-      child: Text(
-        namaKategori,
-        style: const TextStyle(
-          color: AppTheme.textDark,
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
+    );
+  }
+
+  // ── STATES ──
+  Widget _buildErrorState() {
+    return Expanded(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: AppTheme.danger.withOpacity(0.08), shape: BoxShape.circle),
+                child: Icon(Icons.wifi_off_rounded, size: 48, color: AppTheme.danger.withOpacity(0.6))),
+              const SizedBox(height: 20),
+              const Text('Gagal Memuat', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
+              const SizedBox(height: 8),
+              Text(_errorMsg!, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.textMedium, fontSize: 13)),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: () { setState(() { _isLoading = true; _errorMsg = null; }); _loadPerkembangan(); },
+                icon: const Icon(Icons.refresh_rounded, size: 18), label: const Text('Coba Lagi'),
+                style: FilledButton.styleFrom(backgroundColor: AppTheme.primary, padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
+  Widget _buildEmptyState() {
+    return Expanded(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(padding: const EdgeInsets.all(24), decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.06), shape: BoxShape.circle),
+              child: Icon(Icons.child_care_rounded, size: 56, color: AppTheme.primary.withOpacity(0.4))),
+            const SizedBox(height: 20),
+            const Text('Belum Ada Data', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
+            const SizedBox(height: 8),
+            const Text('Data perkembangan akan muncul di sini', style: TextStyle(color: AppTheme.textMedium, fontSize: 13)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── HELPERS ──
   Color _getStatusColor(String status) {
     switch (status.toUpperCase()) {
-      case 'BB':
-        return const Color(0xFFEF4444);
-      case 'MB':
-        return const Color(0xFFF59E0B);
-      case 'BSH':
-        return const Color(0xFF22C55E);
-      case 'BSB':
-        return const Color(0xFF3B82F6);
-      default:
-        return AppTheme.textMedium;
+      case 'BB': return const Color(0xFFEF4444);
+      case 'MB': return const Color(0xFFF59E0B);
+      case 'BSH': return const Color(0xFF22C55E);
+      case 'BSB': return const Color(0xFF3B82F6);
+      default: return AppTheme.textMedium;
     }
   }
 
   Color _getStatusBgColor(String status) {
     switch (status.toUpperCase()) {
-      case 'BB':
-        return const Color(0xFFFEE2E2);
-      case 'MB':
-        return const Color(0xFFFEF3C7);
-      case 'BSH':
-        return const Color(0xFFDCFCE7);
-      case 'BSB':
-        return const Color(0xFFDEF7FF);
-      default:
-        return const Color(0xFFF3F4F6);
+      case 'BB': return const Color(0xFFFEE2E2);
+      case 'MB': return const Color(0xFFFEF3C7);
+      case 'BSH': return const Color(0xFFDCFCE7);
+      case 'BSB': return const Color(0xFFDEF7FF);
+      default: return const Color(0xFFF3F4F6);
+    }
+  }
+
+  IconData _getStatusIcon(String status) {
+    switch (status.toUpperCase()) {
+      case 'BB': return Icons.trending_down_rounded;
+      case 'MB': return Icons.trending_flat_rounded;
+      case 'BSH': return Icons.trending_up_rounded;
+      case 'BSB': return Icons.star_rounded;
+      default: return Icons.info_outline_rounded;
     }
   }
 
   String _getStatusLabel(String status) {
     switch (status.toUpperCase()) {
-      case 'BB':
-        return 'BB - Belum Berkembang';
-      case 'MB':
-        return 'MB - Mulai Berkembang';
-      case 'BSH':
-        return 'BSH - Berkembang Sesuai Harapan';
-      case 'BSB':
-        return 'BSB - Berkembang Sangat Baik';
-      default:
-        return status;
+      case 'BB': return 'Belum Berkembang';
+      case 'MB': return 'Mulai Berkembang';
+      case 'BSH': return 'Berkembang Sesuai Harapan';
+      case 'BSB': return 'Berkembang Sangat Baik';
+      default: return status;
     }
   }
 
   String _getMonthName(int month) {
-    const months = [
-      '',
-      'Januari',
-      'Februari',
-      'Maret',
-      'April',
-      'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
-      'September',
-      'Oktober',
-      'November',
-      'Desember',
-    ];
-    if (month >= 1 && month <= 12) {
-      return months[month];
-    }
-    return '';
+    const months = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    return (month >= 1 && month <= 12) ? months[month] : '';
   }
 
   List<int> _getAvailableYears() {
-    final years = _monthKeys.map((key) {
-      return int.parse(key.split('-')[0]);
-    }).toSet().toList();
-    years.sort((a, b) => a.compareTo(b));
+    final years = _monthKeys.map((k) => int.parse(k.split('-')[0])).toSet().toList()..sort();
     return years;
   }
 }
-

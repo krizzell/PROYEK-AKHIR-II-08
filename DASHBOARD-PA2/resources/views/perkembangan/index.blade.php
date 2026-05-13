@@ -290,9 +290,17 @@
 
 <div class="page-header">
     <h1><i class="bi bi-graph-up"></i> Perkembangan Siswa</h1>
-    <a href="{{ route('perkembangan.create') }}" class="btn-add">
-        <i class="bi bi-plus-lg"></i> Tambah Perkembangan
-    </a>
+    @php
+        // Show create button only for guru biasa (is_super_admin = 0)
+        // Hide for kepala sekolah (is_super_admin = 1)
+        $canCreate = !session('is_super_admin');
+    @endphp
+    
+    @if($canCreate)
+        <a href="{{ route('perkembangan.create') }}" class="btn-add">
+            <i class="bi bi-plus-lg"></i> Tambah Perkembangan
+        </a>
+    @endif
 </div>
 
 @if ($perkembangan->isEmpty())
@@ -306,33 +314,38 @@
     <div class="count-info">
         Menampilkan <strong>{{ $perkembangan->count() }}</strong> data perkembangan
     </div>
-    <form id="bulkDeleteForm" action="{{ route('perkembangan.bulkDestroy') }}" method="POST" style="display: none;">
-        @csrf
-    </form>
+    
+    @if($canCreate)
+        <form id="bulkDeleteForm" action="{{ route('perkembangan.bulkDestroy') }}" method="POST" style="display: none;">
+            @csrf
+        </form>
 
-    <div class="bulk-actions">
-        <div class="bulk-actions-info">
-            <span id="selectedPerkembanganCount" style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;"></span>
+        <div class="bulk-actions">
+            <div class="bulk-actions-info">
+                <span id="selectedPerkembanganCount" style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;"></span>
+            </div>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                <button type="button" class="btn-bulk-clear" id="clearSelectionBtn">
+                    <i class="bi bi-x-circle"></i> Batal Pilih
+                </button>
+                <button type="submit" class="btn-bulk-delete" id="bulkDeleteBtn" form="bulkDeleteForm" disabled>
+                    <i class="bi bi-trash"></i> Hapus yang Ditandai
+                </button>
+            </div>
         </div>
-        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-            <button type="button" class="btn-bulk-clear" id="clearSelectionBtn">
-                <i class="bi bi-x-circle"></i> Batal Pilih
-            </button>
-            <button type="submit" class="btn-bulk-delete" id="bulkDeleteBtn" form="bulkDeleteForm" disabled>
-                <i class="bi bi-trash"></i> Hapus yang Ditandai
-            </button>
-        </div>
-    </div>
+    @endif
 
     <div class="table-container">
         <table class="table">
             <thead>
                 <tr>
-                    <th style="width: 50px;">
-                        <div class="select-all-wrapper">
-                            <input type="checkbox" id="selectAllPerkembangan" aria-label="Pilih semua perkembangan">
-                        </div>
-                    </th>
+                    @if($canCreate)
+                        <th style="width: 50px;">
+                            <div class="select-all-wrapper">
+                                <input type="checkbox" id="selectAllPerkembangan" aria-label="Pilih semua perkembangan">
+                            </div>
+                        </th>
+                    @endif
                     <th style="width: 50px;">No</th>
                     <th>Siswa</th>
                     <th>Kelas</th>
@@ -345,11 +358,13 @@
             <tbody>
                 @foreach ($perkembangan as $item)
                 <tr>
-                    <td>
-                        <div class="row-checkbox-wrapper">
-                            <input type="checkbox" class="perkembangan-checkbox" form="bulkDeleteForm" name="selected_perkembangan[]" value="{{ $item->id_perkembangan }}" aria-label="Pilih perkembangan {{ $item->siswa->nama_siswa ?? 'Siswa Hilang' }}">
-                        </div>
-                    </td>
+                    @if($canCreate)
+                        <td>
+                            <div class="row-checkbox-wrapper">
+                                <input type="checkbox" class="perkembangan-checkbox" form="bulkDeleteForm" name="selected_perkembangan[]" value="{{ $item->id_perkembangan }}" aria-label="Pilih perkembangan {{ $item->siswa->nama_siswa ?? 'Siswa Hilang' }}">
+                            </div>
+                        </td>
+                    @endif
                     <td>{{ $loop->iteration }}</td>
                     <td>
                         @if($item->siswa)
@@ -397,16 +412,18 @@
                             <a href="{{ route('perkembangan.show', $item->id_perkembangan) }}" class="btn-action btn-view" title="Lihat">
                                 <i class="bi bi-eye"></i>
                             </a>
-                            <a href="{{ route('perkembangan.edit', $item->id_perkembangan) }}" class="btn-action btn-edit" title="Edit">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <form action="{{ route('perkembangan.destroy', $item->id_perkembangan) }}" method="POST" style="display: inline;">
-                                @csrf
-                                @method('DELETE')
-                                <button type="button" class="btn-action btn-delete" title="Hapus" data-delete-btn data-item-name="perkembangan ini">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
+                            @if($canCreate)
+                                <a href="{{ route('perkembangan.edit', $item->id_perkembangan) }}" class="btn-action btn-edit" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form action="{{ route('perkembangan.destroy', $item->id_perkembangan) }}" method="POST" style="display: inline;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="button" class="btn-action btn-delete" title="Hapus" data-delete-btn data-item-name="perkembangan ini">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            @endif
                         </div>
                     </td>
                 </tr>

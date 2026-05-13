@@ -15,14 +15,12 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
-  int _previousIndex = 0; // Track previous tab for back button
 
   // Fungsi untuk back ke tab sebelumnya atau Home
   void _goBack() {
     setState(() {
       if (_currentIndex != 0) {
-        _previousIndex = _currentIndex;
-        _currentIndex = 0; // Go back to Home
+        _currentIndex = 0;
       }
     });
   }
@@ -36,121 +34,144 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     PengumumanScreen(onBackPressed: _goBack),
   ];
 
+  // Nav items config (index 2 is the center floating button)
+  static const _navItems = [
+    _NavItem(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Beranda'),
+    _NavItem(icon: Icons.show_chart_rounded, activeIcon: Icons.show_chart_rounded, label: 'Perkembangan'),
+    _NavItem(icon: Icons.account_balance_wallet_outlined, activeIcon: Icons.account_balance_wallet_rounded, label: 'SPP'),
+    _NavItem(icon: Icons.receipt_long_outlined, activeIcon: Icons.receipt_long_rounded, label: 'Riwayat'),
+    _NavItem(icon: Icons.campaign_outlined, activeIcon: Icons.campaign_rounded, label: 'Pengumuman'),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: Container(
+      body: IndexedStack(index: _currentIndex, children: _screens),
+      extendBody: true,
+      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+      child: Container(
+        height: 80,
         decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
-            ),
+            BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 24, offset: const Offset(0, -4)),
+            BoxShadow(color: AppTheme.primary.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, -2)),
           ],
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _previousIndex = _currentIndex;
-              _currentIndex = index;
-            });
-          },
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          elevation: 0,
-          selectedItemColor: AppTheme.primary,
-          unselectedItemColor: const Color(0xFFB0BEC5),
-          selectedLabelStyle: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-          items: [
-            // Home
-            BottomNavigationBarItem(
-              icon: _buildIcon(
-                Icons.home_rounded,
-                isActive: _currentIndex == 0,
-              ),
-              activeIcon: _buildIcon(
-                Icons.home_rounded,
-                isActive: true,
-              ),
-              label: 'Home',
-            ),
-            // Perkembangan
-            BottomNavigationBarItem(
-              icon: _buildIcon(
-                Icons.trending_up_rounded,
-                isActive: _currentIndex == 1,
-              ),
-              activeIcon: _buildIcon(
-                Icons.trending_up_rounded,
-                isActive: true,
-              ),
-              label: 'Perkembangan',
-            ),
-            // SPP / Pembayaran
-            BottomNavigationBarItem(
-              icon: _buildIcon(
-                Icons.payment_rounded,
-                isActive: _currentIndex == 2,
-              ),
-              activeIcon: _buildIcon(
-                Icons.payment_rounded,
-                isActive: true,
-              ),
-              label: 'SPP',
-            ),
-            // Histori
-            BottomNavigationBarItem(
-              icon: _buildIcon(
-                Icons.receipt_long_rounded,
-                isActive: _currentIndex == 3,
-              ),
-              activeIcon: _buildIcon(
-                Icons.receipt_long_rounded,
-                isActive: true,
-              ),
-              label: 'Histori',
-            ),
-            // Pengumuman
-            BottomNavigationBarItem(
-              icon: _buildIcon(
-                Icons.notifications_rounded,
-                isActive: _currentIndex == 4,
-              ),
-              activeIcon: _buildIcon(
-                Icons.notifications_rounded,
-                isActive: true,
-              ),
-              label: 'Pengumuman',
-            ),
-          ],
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: List.generate(5, (index) {
+            if (index == 2) return _buildCenterButton();
+            return _buildNavItem(index);
+          }),
         ),
       ),
     );
   }
 
-  // Helper widget untuk icon dengan styling
-  Widget _buildIcon(IconData icon, {required bool isActive}) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: isActive ? AppTheme.primary.withOpacity(0.1) : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+  // ── Regular nav item ──
+  Widget _buildNavItem(int index) {
+    final isActive = _currentIndex == index;
+    final item = _navItems[index];
+
+    return GestureDetector(
+      onTap: () => setState(() => _currentIndex = index),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedSlide(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        offset: Offset(0, isActive ? -0.05 : 0),
+        child: SizedBox(
+          width: 72,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Animated icon
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: isActive ? AppTheme.primary.withOpacity(0.1) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  isActive ? item.activeIcon : item.icon,
+                  size: 22,
+                  color: isActive ? AppTheme.primary : const Color(0xFFB8BCC8),
+                ),
+              ),
+              const SizedBox(height: 2),
+              // Label
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 200),
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                  color: isActive ? AppTheme.primary : const Color(0xFFB8BCC8),
+                  letterSpacing: -0.2,
+                ),
+                child: Text(item.label, maxLines: 1, overflow: TextOverflow.ellipsis),
+              ),
+            ],
+          ),
+        ),
       ),
-      child: Icon(icon, size: 24),
     );
   }
+
+  // ── Floating center button (SPP) ──
+  Widget _buildCenterButton() {
+    final isActive = _currentIndex == 2;
+    return GestureDetector(
+      onTap: () => setState(() => _currentIndex = 2),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isActive
+                      ? [const Color(0xFFFF6B1A), const Color(0xFFFF8C42)]
+                      : [AppTheme.primary.withOpacity(0.8), AppTheme.primaryLight],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(color: AppTheme.primary.withOpacity(isActive ? 0.45 : 0.3), blurRadius: isActive ? 16 : 12, offset: const Offset(0, 4)),
+                  BoxShadow(color: AppTheme.primary.withOpacity(0.15), blurRadius: 24, offset: const Offset(0, 8)),
+                ],
+                border: Border.all(color: Colors.white, width: 3),
+              ),
+              child: Icon(
+                isActive ? Icons.account_balance_wallet_rounded : Icons.account_balance_wallet_outlined,
+                color: Colors.white,
+                size: 26,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  const _NavItem({required this.icon, required this.activeIcon, required this.label});
 }

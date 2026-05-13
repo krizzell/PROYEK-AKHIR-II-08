@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../models/pengumuman_model.dart';
 import '../services/api_services.dart';
+import 'dart:convert';
 
 class PengumumanScreen extends StatefulWidget {
-  final int? idPengumuman; // ID untuk detail view
+  final int? idPengumuman;
   final VoidCallback? onBackPressed;
 
   const PengumumanScreen({
@@ -23,6 +24,8 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
   bool _isLoading = true;
   String? _errorMsg;
   late AnimationController _fadeController;
+  final PageController _imagePageController = PageController();
+  int _currentImageIndex = 0;
 
   @override
   void initState() {
@@ -37,35 +40,35 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
   @override
   void dispose() {
     _fadeController.dispose();
+    _imagePageController.dispose();
     super.dispose();
   }
 
-  // Helper untuk set detail view
   void _showDetail(PengumumanModel pengumuman) {
     setState(() {
       _selectedData = pengumuman;
+      _currentImageIndex = 0;
     });
   }
 
-  // Helper untuk back ke list view
   void _backToList() {
-    setState(() {
-      _selectedData = null;
-    });
+    setState(() => _selectedData = null);
   }
 
-  void _loadPengumuman() async {
+  Future<void> _loadPengumuman() async {
     try {
-      print('Loading pengumuman...');
       final data = await ApiService.getPengumuman();
       setState(() {
         _data = data;
         _isLoading = false;
-        print('Loaded ${_data.length} pengumuman records');
+        if (widget.idPengumuman != null) {
+          try {
+            _selectedData = _data.firstWhere((p) => p.idPengumuman == widget.idPengumuman);
+          } catch (_) {}
+        }
       });
       _fadeController.forward();
     } catch (e) {
-      print('Error loading pengumuman: $e');
       setState(() {
         _isLoading = false;
         _errorMsg = '$e';
@@ -77,154 +80,146 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
     try {
       final date = DateTime.parse(dateString);
       final now = DateTime.now();
-      final difference = now.difference(date);
-      
-      if (difference.inSeconds < 60) {
-        return 'Baru saja';
-      } else if (difference.inMinutes < 60) {
-        return '${difference.inMinutes}m yang lalu';
-      } else if (difference.inHours < 24) {
-        return '${difference.inHours}j yang lalu';
-      } else if (difference.inDays < 7) {
-        return '${difference.inDays}h yang lalu';
-      } else {
-        return '${date.day}/${date.month}/${date.year}';
-      }
-    } catch (e) {
+      final diff = now.difference(date);
+      if (diff.inSeconds < 60) return 'Baru saja';
+      if (diff.inMinutes < 60) return '${diff.inMinutes}m lalu';
+      if (diff.inHours < 24) return '${diff.inHours}j lalu';
+      if (diff.inDays < 7) return '${diff.inDays}h lalu';
+      final months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+      return '${date.day} ${months[date.month - 1]} ${date.year}';
+    } catch (_) {
       return dateString;
     }
   }
 
   String _getImageUrl(String mediaPath) {
     if (mediaPath.isEmpty) return '';
-    
-    // Check if media is already full URL (starts with http)
-    if (mediaPath.startsWith('http')) {
-      print('📸 Image URL (full): $mediaPath');
-      return mediaPath;
+    if (mediaPath.startsWith('http')) return mediaPath;
+
+    String cleanPath = mediaPath;
+    if (mediaPath.trim().startsWith('[') && mediaPath.trim().endsWith(']')) {
+      try {
+        final List<dynamic> paths = jsonDecode(mediaPath);
+        if (paths.isNotEmpty) cleanPath = paths[0].toString();
+      } catch (_) {}
     }
-    
-    // If only filename/path, prepend the base URL with storage path
-    final url = '${ApiService.imageBaseUrl}/storage/$mediaPath';
-    
-    print('📸 Image URL (constructed): $url');
-    print('📸 Media Path: $mediaPath');
-    return url;
+    if (cleanPath.startsWith('storage/')) {
+      cleanPath = cleanPath.replaceFirst('storage/', '');
+    }
+    return '${ApiService.imageBaseUrl}/storage/$cleanPath';
+  }
+
+  // Build image URL from a single path (no JSON parsing needed)
+  String _getImageUrlFromPath(String path) {
+    if (path.isEmpty) return '';
+    if (path.startsWith('http')) return path;
+    String cleanPath = path;
+    if (cleanPath.startsWith('storage/')) {
+      cleanPath = cleanPath.replaceFirst('storage/', '');
+    }
+    return '${ApiService.imageBaseUrl}/storage/$cleanPath';
   }
 
   @override
   Widget build(BuildContext context) {
-    // Jika ada detail yang dipilih, tampilkan detail view
-    if (_selectedData != null) {
-      return _buildDetailView(context);
-    }
-    
-    // Jika loading, tampilkan loading indicator
-    if (_isLoading) {
-      return Scaffold(
-        backgroundColor: AppTheme.background,
-        body: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(context),
-              const Expanded(
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: AppTheme.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+    if (_selectedData != null) return _buildDetailView(context);
 
-    if (_errorMsg != null && _data.isEmpty) {
-      return Scaffold(
-        backgroundColor: AppTheme.background,
-        body: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(context),
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline, size: 64, color: AppTheme.textLight),
-                      const SizedBox(height: 16),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Text(
-                          _errorMsg!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppTheme.textMedium,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _isLoading = true;
-                            _errorMsg = null;
-                          });
-                          _loadPengumuman();
-                        },
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Coba Lagi'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (_data.isEmpty) {
-      return Scaffold(
-        backgroundColor: AppTheme.background,
-        body: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(context),
-              const Expanded(
-                child: Center(
-                  child: Text('Tidak ada pengumuman'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // List view - tampilkan semua pengumuman
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: const Color(0xFFF7F8FC),
       body: SafeArea(
         child: Column(
           children: [
             _buildHeader(context),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                itemCount: _data.length,
-                itemBuilder: (context, index) => GestureDetector(
-                  onTap: () => _showDetail(_data[index]),
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _buildPengumumanCard(_data[index]),
+            if (_isLoading)
+              const Expanded(child: Center(child: CircularProgressIndicator(color: AppTheme.primary)))
+            else if (_errorMsg != null && _data.isEmpty)
+              _buildErrorState()
+            else if (_data.isEmpty)
+              _buildEmptyState()
+            else
+              Expanded(
+                child: RefreshIndicator(
+                  color: AppTheme.primary,
+                  onRefresh: _loadPengumuman,
+                  child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                    itemCount: _data.length,
+                    itemBuilder: (context, index) {
+                      return TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: Duration(milliseconds: 400 + (index * 100)),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, child) {
+                          return Transform.translate(
+                            offset: Offset(0, 20 * (1 - value)),
+                            child: Opacity(opacity: value, child: child),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _buildPengumumanCard(_data[index]),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Expanded(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppTheme.danger.withOpacity(0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.wifi_off_rounded, size: 48, color: AppTheme.danger.withOpacity(0.6)),
+              ),
+              const SizedBox(height: 20),
+              const Text('Gagal Memuat', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
+              const SizedBox(height: 8),
+              Text(_errorMsg!, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.textMedium, fontSize: 13)),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: () { setState(() { _isLoading = true; _errorMsg = null; }); _loadPengumuman(); },
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: const Text('Coba Lagi'),
+                style: FilledButton.styleFrom(backgroundColor: AppTheme.primary, padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Expanded(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.06), shape: BoxShape.circle),
+              child: Icon(Icons.campaign_outlined, size: 56, color: AppTheme.primary.withOpacity(0.4)),
             ),
+            const SizedBox(height: 20),
+            const Text('Belum Ada Pengumuman', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
+            const SizedBox(height: 8),
+            const Text('Pengumuman baru akan muncul di sini', style: TextStyle(color: AppTheme.textMedium, fontSize: 13)),
           ],
         ),
       ),
@@ -232,372 +227,255 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
   }
 
   Widget _buildHeader(BuildContext context) {
-    final isDetailView = _selectedData != null;
+    final isDetail = _selectedData != null;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 20, 16),
-      decoration: BoxDecoration(
-        color: AppTheme.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      color: AppTheme.white,
       child: Row(
         children: [
           IconButton(
-            onPressed: isDetailView ? () => _backToList() : (widget.onBackPressed ?? () => Navigator.pop(context)),
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 18,
-            ),
+            onPressed: (isDetail && widget.idPengumuman == null)
+                ? () => _backToList()
+                : (widget.onBackPressed ?? () => Navigator.pop(context)),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
             color: AppTheme.primary,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 4),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                isDetailView ? 'Detail Pengumuman' : 'Pengumuman',
-                style: const TextStyle(
-                  color: AppTheme.textDark,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.3,
-                ),
+                isDetail ? 'Detail Pengumuman' : 'Pengumuman',
+                style: const TextStyle(color: AppTheme.textDark, fontSize: 18, fontWeight: FontWeight.w800),
               ),
-              if (!isDetailView)
+              if (!isDetail && _data.isNotEmpty)
                 Text(
                   '${_data.length} pengumuman tersedia',
-                  style: TextStyle(
-                    color: AppTheme.primary.withOpacity(0.7),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(color: AppTheme.textMedium, fontSize: 12, fontWeight: FontWeight.w500),
                 ),
             ],
-          ),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.primary.withOpacity(0.1),
-                  AppTheme.primary.withOpacity(0.05),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.notifications_rounded,
-              color: AppTheme.primary,
-              size: 22,
-            ),
           ),
         ],
       ),
     );
   }
 
+  // ── DETAIL VIEW ──
   Widget _buildDetailView(BuildContext context) {
     final data = _selectedData!;
-    
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: const Color(0xFFF7F8FC),
       body: SafeArea(
         child: Column(
           children: [
             _buildHeader(context),
             Expanded(
               child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Media jika ada - with Hero animation
-                    if (data.media.isNotEmpty) ...[
-                      Hero(
-                        tag: 'pengumuman_${data.idPengumuman}',
-                        child: Container(
-                          width: double.infinity,
-                          height: 280,
-                          margin: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF0F0F0),
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 16,
-                                offset: const Offset(0, 8),
+                    // Hero image(s) with swipe support
+                    if (data.mediaPaths.isNotEmpty)
+                      Container(
+                        width: double.infinity,
+                        height: 280,
+                        margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEEEFF5),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 8))],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              // PageView for multiple images
+                              PageView.builder(
+                                controller: _imagePageController,
+                                itemCount: data.mediaPaths.length,
+                                onPageChanged: (index) => setState(() => _currentImageIndex = index),
+                                itemBuilder: (context, index) {
+                                  final imageUrl = _getImageUrlFromPath(data.mediaPaths[index]);
+                                  return Image.network(
+                                    imageUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const Center(
+                                      child: Icon(Icons.image_not_supported_rounded, size: 48, color: AppTheme.textLight),
+                                    ),
+                                    loadingBuilder: (_, child, progress) {
+                                      if (progress == null) return child;
+                                      return Center(child: CircularProgressIndicator(strokeWidth: 2.5, color: AppTheme.primary,
+                                        value: progress.expectedTotalBytes != null ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes! : null));
+                                    },
+                                  );
+                                },
+                              ),
+                              // Bottom gradient overlay
+                              Positioned(
+                                bottom: 0, left: 0, right: 0,
+                                child: Container(
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                                      colors: [Colors.transparent, Colors.black.withOpacity(0.4)],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // Dot indicators (only if more than 1 image)
+                              if (data.mediaPaths.length > 1)
+                                Positioned(
+                                  bottom: 12, left: 0, right: 0,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: List.generate(data.mediaPaths.length, (index) {
+                                      final isActive = index == _currentImageIndex;
+                                      return AnimatedContainer(
+                                        duration: const Duration(milliseconds: 250),
+                                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                                        width: isActive ? 20 : 7,
+                                        height: 7,
+                                        decoration: BoxDecoration(
+                                          color: isActive ? Colors.white : Colors.white.withOpacity(0.5),
+                                          borderRadius: BorderRadius.circular(4),
+                                          boxShadow: isActive ? [BoxShadow(color: Colors.white.withOpacity(0.3), blurRadius: 4)] : [],
+                                        ),
+                                      );
+                                    }),
+                                  ),
+                                ),
+                              // Image counter badge
+                              if (data.mediaPaths.length > 1)
+                                Positioned(
+                                  top: 12, left: 12,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.5),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.photo_library_rounded, size: 13, color: Colors.white),
+                                        const SizedBox(width: 4),
+                                        Text('${_currentImageIndex + 1}/${data.mediaPaths.length}',
+                                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              // Time badge
+                              Positioned(
+                                top: 12, right: 12,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.92),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.access_time_rounded, size: 13, color: AppTheme.primary),
+                                      const SizedBox(width: 4),
+                                      Text(_formatDate(data.waktuUnggah), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ],
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Image.network(
-                              _getImageUrl(data.media),
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                print('❌ Image error: $error');
-                                return Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(Icons.image_not_supported, size: 56, color: AppTheme.textLight),
-                                      const SizedBox(height: 12),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                                        child: Column(
-                                          children: [
-                                            const Text(
-                                              'Gambar tidak dapat dimuat',
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                color: AppTheme.textMedium,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              'File: ${data.media}',
-                                              textAlign: TextAlign.center,
-                                              style: const TextStyle(
-                                                color: AppTheme.textLight,
-                                                fontSize: 10,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      CircularProgressIndicator(
-                                        value: loadingProgress.expectedTotalBytes != null
-                                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                            : null,
-                                        color: AppTheme.primary,
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        loadingProgress.expectedTotalBytes != null
-                                            ? '${(loadingProgress.cumulativeBytesLoaded / 1024).toStringAsFixed(0)} KB'
-                                            : 'Loading...',
-                                        style: const TextStyle(
-                                          color: AppTheme.textMedium,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
                         ),
                       ),
-                    ],
 
-                    // Content card
+                    // Title & meta
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Judul
-                          Text(
-                            data.judul,
-                            style: const TextStyle(
-                              color: AppTheme.textDark,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -0.5,
-                              height: 1.3,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Guru & Waktu - Card with gradient background
+                          Text(data.judul, style: const TextStyle(color: AppTheme.textDark, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5, height: 1.2)),
+                          const SizedBox(height: 14),
+                          // Author chip
                           Container(
-                            padding: const EdgeInsets.all(14),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppTheme.primary.withOpacity(0.08),
-                                  AppTheme.primary.withOpacity(0.03),
-                                ],
-                              ),
+                              gradient: LinearGradient(colors: [AppTheme.primary.withOpacity(0.08), AppTheme.primary.withOpacity(0.02)]),
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: AppTheme.primary.withOpacity(0.1),
-                                width: 1.5,
-                              ),
+                              border: Border.all(color: AppTheme.primary.withOpacity(0.1)),
                             ),
                             child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                // Dari Section
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: AppTheme.primary.withOpacity(0.15),
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        child: const Icon(Icons.person_rounded, size: 20, color: AppTheme.primary),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            const Text(
-                                              'Dari',
-                                              style: TextStyle(
-                                                color: AppTheme.textMedium,
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600,
-                                                letterSpacing: 0.3,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              data.namaGuru.isNotEmpty ? data.namaGuru : 'Admin',
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                color: AppTheme.textDark,
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w800,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
+                                CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor: AppTheme.primary.withOpacity(0.15),
+                                  child: Text(
+                                    (data.namaGuru.isNotEmpty ? data.namaGuru : 'A')[0].toUpperCase(),
+                                    style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w800, fontSize: 14),
                                   ),
                                 ),
-                                const SizedBox(width: 12),
-                                // Waktu Section
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: AppTheme.primary.withOpacity(0.15),
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        child: const Icon(Icons.access_time_rounded, size: 20, color: AppTheme.primary),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            const Text(
-                                              'Waktu',
-                                              style: TextStyle(
-                                                color: AppTheme.textMedium,
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600,
-                                                letterSpacing: 0.3,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              _formatDate(data.waktuUnggah),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                color: AppTheme.textDark,
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w800,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                const SizedBox(width: 10),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('Diposting oleh', style: TextStyle(color: AppTheme.textMedium, fontSize: 10, fontWeight: FontWeight.w600)),
+                                    Text(data.namaGuru.isNotEmpty ? data.namaGuru : 'Admin', style: const TextStyle(color: AppTheme.textDark, fontSize: 13, fontWeight: FontWeight.w800)),
+                                  ],
                                 ),
+                                if (data.mediaPaths.isEmpty) ...[
+                                  const Spacer(),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(20)),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.access_time_rounded, size: 12, color: AppTheme.primary),
+                                        const SizedBox(width: 4),
+                                        Text(_formatDate(data.waktuUnggah), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
                           const SizedBox(height: 20),
 
-                          // Deskripsi
+                          // Deskripsi card
                           Container(
-                            padding: const EdgeInsets.all(16),
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: AppTheme.white,
-                              borderRadius: BorderRadius.circular(14),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.04),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                              border: Border.all(
-                                color: const Color(0xFFF0F0F0),
-                                width: 1,
-                              ),
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(0, 4))],
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
                                   children: [
-                                    Container(
-                                      width: 4,
-                                      height: 20,
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.primary,
-                                        borderRadius: BorderRadius.circular(2),
-                                      ),
-                                    ),
+                                    Container(width: 4, height: 18, decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(2))),
                                     const SizedBox(width: 10),
-                                    const Text(
-                                      'Isi Pengumuman',
-                                      style: TextStyle(
-                                        color: AppTheme.textDark,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: -0.2,
-                                      ),
-                                    ),
+                                    const Text('Isi Pengumuman', style: TextStyle(color: AppTheme.textDark, fontSize: 15, fontWeight: FontWeight.w800)),
                                   ],
                                 ),
-                                const SizedBox(height: 12),
+                                const SizedBox(height: 14),
                                 Text(
                                   data.deskripsi,
                                   textAlign: TextAlign.justify,
-                                  style: const TextStyle(
-                                    color: AppTheme.textDark,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    height: 1.7,
-                                    letterSpacing: 0.2,
-                                  ),
+                                  style: const TextStyle(color: AppTheme.textDark, fontSize: 14, fontWeight: FontWeight.w500, height: 1.8, letterSpacing: 0.1),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 32),
                         ],
                       ),
                     ),
@@ -611,144 +489,149 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
     );
   }
 
+  // ── LIST CARD ──
   Widget _buildPengumumanCard(PengumumanModel data) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(
-          color: const Color(0xFFF5F5F5),
-          width: 1,
+    final hasImage = data.media.isNotEmpty;
+    return GestureDetector(
+      onTap: () => _showDetail(data),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 4)),
+            BoxShadow(color: AppTheme.primary.withOpacity(0.03), blurRadius: 8, offset: const Offset(0, 2)),
+          ],
         ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: Row(
-          children: [
-            // Image thumbnail
-            if (data.media.isNotEmpty)
-              Hero(
-                tag: 'pengumuman_${data.idPengumuman}',
-                child: Container(
-                  width: 100,
-                  height: 110,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0F0F0),
-                  ),
-                  child: Image.network(
-                    _getImageUrl(data.media),
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: const Color(0xFFF5F5F5),
-                      child: const Center(
-                        child: Icon(Icons.image_not_supported, size: 32, color: AppTheme.textLight),
-                      ),
-                    ),
-                    loadingBuilder: (_, child, progress) {
-                      if (progress == null) return child;
-                      return Center(
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          value: progress.expectedTotalBytes != null
-                              ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
-                              : null,
-                          color: AppTheme.primary,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Image section (top) — only if has media
+              if (hasImage)
+                SizedBox(
+                  height: 160,
+                  width: double.infinity,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.network(
+                        _getImageUrl(data.media),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: const Color(0xFFEEEFF5),
+                          child: const Center(child: Icon(Icons.image_outlined, size: 36, color: AppTheme.textLight)),
                         ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            
-            // Content
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Guru & Waktu
-                    Row(
-                      children: [
-                        Icon(Icons.person_rounded, size: 14, color: AppTheme.primary.withOpacity(0.7)),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            data.namaGuru.isNotEmpty ? data.namaGuru : 'Admin',
-                            style: const TextStyle(
-                              color: AppTheme.textMedium,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.2,
+                        loadingBuilder: (_, child, progress) {
+                          if (progress == null) return child;
+                          return Container(
+                            color: const Color(0xFFEEEFF5),
+                            child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary,
+                              value: progress.expectedTotalBytes != null ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes! : null)),
+                          );
+                        },
+                      ),
+                      // Gradient overlay
+                      Positioned(
+                        bottom: 0, left: 0, right: 0,
+                        child: Container(
+                          height: 60,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                              colors: [Colors.transparent, Colors.black.withOpacity(0.35)],
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Icon(Icons.access_time_rounded, size: 14, color: const Color(0xFFFFA726).withOpacity(0.7)),
-                        const SizedBox(width: 4),
-                        Text(
-                          _formatDate(data.waktuUnggah),
-                          style: const TextStyle(
-                            color: AppTheme.textMedium,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
+                      ),
+                      // Time badge on image
+                      Positioned(
+                        top: 10, right: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.92), borderRadius: BorderRadius.circular(20)),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.access_time_rounded, size: 12, color: AppTheme.primary),
+                              const SizedBox(width: 4),
+                              Text(_formatDate(data.waktuUnggah), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
+                            ],
                           ),
                         ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              // Content section
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Author row + time (if no image)
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundColor: AppTheme.primary.withOpacity(0.1),
+                          child: Text(
+                            (data.namaGuru.isNotEmpty ? data.namaGuru : 'A')[0].toUpperCase(),
+                            style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w800, fontSize: 11),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            data.namaGuru.isNotEmpty ? data.namaGuru : 'Admin',
+                            style: const TextStyle(color: AppTheme.textMedium, fontSize: 12, fontWeight: FontWeight.w700),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (!hasImage) ...[
+                          const Icon(Icons.access_time_rounded, size: 13, color: AppTheme.textLight),
+                          const SizedBox(width: 4),
+                          Text(_formatDate(data.waktuUnggah), style: const TextStyle(color: AppTheme.textLight, fontSize: 11, fontWeight: FontWeight.w600)),
+                        ],
                       ],
                     ),
-                    const SizedBox(height: 8),
-
-                    // Judul
+                    const SizedBox(height: 10),
+                    // Title
                     Text(
                       data.judul,
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppTheme.textDark,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.3,
-                      ),
+                      style: const TextStyle(color: AppTheme.textDark, fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: -0.3, height: 1.3),
                     ),
                     const SizedBox(height: 6),
-
-                    // Deskripsi preview
+                    // Description preview
                     Text(
                       data.deskripsi,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.justify,
-                      style: const TextStyle(
-                        color: AppTheme.textMedium,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        height: 1.4,
-                      ),
+                      style: TextStyle(color: AppTheme.textMedium.withOpacity(0.8), fontSize: 13, height: 1.5),
                     ),
-                    const SizedBox(height: 8),
-
-                    // Arrow indicator
+                    const SizedBox(height: 12),
+                    // Read more link
                     Row(
                       children: [
                         const Spacer(),
                         Container(
-                          padding: const EdgeInsets.all(6),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                           decoration: BoxDecoration(
-                            color: AppTheme.primary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
+                            gradient: LinearGradient(colors: [AppTheme.primary, AppTheme.primaryLight]),
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [BoxShadow(color: AppTheme.primary.withOpacity(0.25), blurRadius: 8, offset: const Offset(0, 3))],
                           ),
-                          child: Icon(
-                            Icons.arrow_forward_rounded,
-                            size: 16,
-                            color: AppTheme.primary,
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('Baca', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                              SizedBox(width: 4),
+                              Icon(Icons.arrow_forward_rounded, size: 14, color: Colors.white),
+                            ],
                           ),
                         ),
                       ],
@@ -756,8 +639,8 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

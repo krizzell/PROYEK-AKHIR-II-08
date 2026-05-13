@@ -7,11 +7,16 @@ import '../models/perkembangan_model.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class ApiService {
+  
   // Android emulator: flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8081
   // Device fisik (satu WiFi): flutter run --dart-define=API_BASE_URL=http://192.168.39.220:8081
+  // flutter run --dart-define=IMAGE_BASE_URL=http://192.168.48.220:8000  => untuk gambar
+  // php artisan serve --host=0.0.0.0 --port=8000 => untuk backend
+  // php artisan storage:link => untuk membuat link storage
+
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.39.220:8081',
+    defaultValue: 'http://192.168.48.220:8081',
   );
   static const String imageBaseUrl = String.fromEnvironment(
     'IMAGE_BASE_URL',

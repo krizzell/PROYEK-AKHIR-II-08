@@ -31,7 +31,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Future<void> _loadPayments() async {
     try {
-      if (widget.payments != null) {
+      if (widget.payments != null && _payments.isEmpty) {
         _payments = widget.payments!;
       } else {
         _payments = await ApiService.getPembayaran();
@@ -96,18 +96,22 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ),
               ),
             Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    _buildSummaryRow(),
-                    const SizedBox(height: 24),
-                    _buildFilterRow(),
-                    const SizedBox(height: 16),
-                    ..._filtered.map((p) => _buildHistoryCard(p)),
-                    const SizedBox(height: 20),
-                  ],
+              child: RefreshIndicator(
+                color: AppTheme.primary,
+                onRefresh: _loadPayments,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      _buildSummaryRow(),
+                      const SizedBox(height: 24),
+                      _buildFilterRow(),
+                      const SizedBox(height: 16),
+                      ..._filtered.map((p) => _buildHistoryCard(p)),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
               ),
             ),

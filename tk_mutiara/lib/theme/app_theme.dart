@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   // === COLOR PALETTE ===
-  static const Color primary = Color(0xFFFF6B1A);       // Vibrant orange
-  static const Color primaryLight = Color(0xFFFF8C42);  // Soft orange
-  static const Color primaryDark = Color(0xFFE85000);   // Deep orange
+  static const Color primary = Color.fromARGB(255, 255, 107, 26);       // Vibrant orange
+  static const Color primaryLight = Color.fromARGB(255, 255, 140, 66);  // Soft orange
+  static const Color primaryDark = Color.fromARGB(255, 232, 80, 0);   // Deep orange
   static const Color accent = Color(0xFFFFD166);         // Golden yellow accent
   static const Color white = Color(0xFFFFFFFF);
   static const Color background = Color(0xFFFFF8F4);    // Warm white
@@ -15,7 +15,7 @@ class AppTheme {
   static const Color success = Color(0xFF22C55E);
   static const Color warning = Color(0xFFF59E0B);
   static const Color danger = Color(0xFFEF4444);
-  static const Color cardShadow = Color(0x1AFF6B1A);
+  static const Color cardShadow = Color.fromARGB(26, 255, 107, 26);
 
   static ThemeData get lightTheme {
     return ThemeData(
@@ -79,7 +79,7 @@ class AppTheme {
       );
 
   static LinearGradient get warmGradient => const LinearGradient(
-        colors: [Color(0xFFFF6B1A), Color(0xFFFFD166)],
+        colors: [Color.fromARGB(255, 255, 107, 26), Color(0xFFFFD166)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );

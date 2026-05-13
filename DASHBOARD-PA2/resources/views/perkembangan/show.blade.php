@@ -468,16 +468,19 @@
 
                 <!-- ACTION BUTTONS -->
                 <div class="action-bar">
-                    <a href="{{ route('perkembangan.edit', $perkembangan->id_perkembangan) }}" class="btn-premium btn-edit">
-                        <i class="bi bi-pencil-square"></i> Edit Data
-                    </a>
-                    <form action="{{ route('perkembangan.destroy', $perkembangan->id_perkembangan) }}" method="POST" style="margin: 0;">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn-premium btn-delete" data-delete-btn data-item-name="Laporan Perkembangan ini">
-                            <i class="bi bi-trash3"></i> Hapus
-                        </button>
-                    </form>
+                    @if(auth()->check() && !auth()->user()->is_super_admin)
+                        <a href="{{ route('perkembangan.edit', $perkembangan->id_perkembangan) }}" class="btn-premium btn-edit">
+                            <i class="bi bi-pencil-square"></i> Edit Data
+                        </a>
+                        <form action="{{ route('perkembangan.destroy', $perkembangan->id_perkembangan) }}" method="POST" style="margin: 0;">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn-premium btn-delete" data-delete-btn data-item-name="Laporan Perkembangan ini">
+                                <i class="bi bi-trash3"></i> Hapus
+                            </button>
+                        </form>
+                    @endif
+
                     <a href="{{ route('perkembangan.index') }}" class="btn-premium btn-back">
                         <i class="bi bi-arrow-left"></i> Kembali ke Daftar
                     </a>

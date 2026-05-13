@@ -17,7 +17,6 @@ class PembayaranScreen extends StatefulWidget {
 
 class _PembayaranScreenState extends State<PembayaranScreen>
     with SingleTickerProviderStateMixin {
-  int _selectedMethod = 0;
   bool _isLoading = true;
   bool _isProcessing = false;
   bool _isDone = false;
@@ -30,27 +29,6 @@ class _PembayaranScreenState extends State<PembayaranScreen>
 
   late AnimationController _doneController;
   late Animation<double> _doneScale;
-
-  final List<Map<String, dynamic>> _methods = [
-    {
-      'label': 'Transfer Bank',
-      'sub': 'BCA / Mandiri / BRI / BNI',
-      'icon': Icons.account_balance_rounded,
-      'color': const Color(0xFF3B82F6),
-    },
-    {
-      'label': 'QRIS',
-      'sub': 'Scan QR dari aplikasi manapun',
-      'icon': Icons.qr_code_scanner_rounded,
-      'color': const Color(0xFF8B5CF6),
-    },
-    {
-      'label': 'GoPay / OVO',
-      'sub': 'E-Wallet digital',
-      'icon': Icons.account_balance_wallet_rounded,
-      'color': const Color(0xFF22C55E),
-    },
-  ];
 
   PembayaranModel? get _activeTagihan {
     if (widget.tagihan != null) return widget.tagihan;
@@ -110,8 +88,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
       );
     }
 
-    final method = (_methods[_selectedMethod]['label'] as String).toLowerCase();
-    final result = await ApiService.bayarSPP(tagihan.id, method);
+    final result = await ApiService.bayarSPP(tagihan.id, 'bank_transfer');
 
     if (!mounted) return;
 
@@ -311,21 +288,25 @@ class _PembayaranScreenState extends State<PembayaranScreen>
       children: [
         _buildHeader(context),
         Expanded(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                _buildTagihanCard(tagihan),
-                const SizedBox(height: 24),
-                if (tagihan.isLunas)
-                  _buildLunasNotice()
-                else
-                  _buildMethodSection(),
-                const SizedBox(height: 24),
-                _buildInfoBox(),
-                const SizedBox(height: 100),
-              ],
+          child: RefreshIndicator(
+            color: AppTheme.primary,
+            onRefresh: _loadTagihan,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  _buildTagihanCard(tagihan),
+                  const SizedBox(height: 24),
+                  if (tagihan.isLunas)
+                    _buildLunasNotice()
+                  else
+                    _buildMethodSection(),
+                  const SizedBox(height: 24),
+                  _buildInfoBox(),
+                  const SizedBox(height: 100),
+                ],
+              ),
             ),
           ),
         ),
@@ -475,107 +456,6 @@ class _PembayaranScreenState extends State<PembayaranScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Pilih Metode Pembayaran',
-          style: TextStyle(
-            color: AppTheme.textDark,
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 14),
-        ...List.generate(
-          _methods.length,
-          (i) => GestureDetector(
-            onTap: () {
-              setState(() => _selectedMethod = i);
-              HapticFeedback.selectionClick();
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppTheme.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: _selectedMethod == i
-                      ? AppTheme.primary
-                      : Colors.transparent,
-                  width: 2,
-                ),
-                boxShadow: _selectedMethod == i
-                    ? AppTheme.softShadow
-                    : AppTheme.cardShadowList,
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: (_methods[i]['color'] as Color).withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      _methods[i]['icon'] as IconData,
-                      color: _methods[i]['color'] as Color,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _methods[i]['label'] as String,
-                          style: const TextStyle(
-                            color: AppTheme.textDark,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          _methods[i]['sub'] as String,
-                          style: const TextStyle(
-                            color: AppTheme.textMedium,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: _selectedMethod == i
-                            ? AppTheme.primary
-                            : AppTheme.textLight,
-                        width: 2,
-                      ),
-                      color: _selectedMethod == i
-                          ? AppTheme.primary
-                          : Colors.transparent,
-                    ),
-                    child: _selectedMethod == i
-                        ? const Icon(
-                            Icons.check_rounded,
-                            color: Colors.white,
-                            size: 14,
-                          )
-                        : null,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
           height: 56,
@@ -761,10 +641,6 @@ class _PembayaranScreenState extends State<PembayaranScreen>
                 children: [
                   _successRow('Tagihan ID', _lastTagihanId),
                   _successRow('Order ID', _lastOrderId),
-                  _successRow(
-                    'Metode',
-                    _methods[_selectedMethod]['label'] as String,
-                  ),
                   _successRow('Jumlah', tagihan?.nominalFormatted ?? 'Rp 0'),
                   _successRow('Status', _paymentStateLabel),
                 ],
