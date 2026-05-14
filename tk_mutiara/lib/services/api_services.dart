@@ -171,6 +171,53 @@ class ApiService {
     }
   }
 
+  // CHANGE PASSWORD (Public)
+  static Future<Map<String, dynamic>> changePassword({
+    required String username,
+    required String oldPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      print('=== CHANGE PASSWORD REQUEST ===');
+      print('URL: $imageBaseUrl/api/change-password');
+      print('Username: $username');
+
+      final res = await http.post(
+        Uri.parse('$imageBaseUrl/api/change-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'username': username,
+          'old_password': oldPassword,
+          'new_password': newPassword,
+          'new_password_confirmation': confirmPassword,
+        }),
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => throw Exception('Request timeout'),
+      );
+
+      print('Status: ${res.statusCode}');
+      print('Body: ${res.body}');
+
+      final data = jsonDecode(res.body);
+      if (res.statusCode == 200 && _isSuccess(data)) {
+        return {
+          'success': true,
+          'message': _extractMessage(data, fallback: 'Password berhasil diubah'),
+        };
+      } else {
+        return {
+          'success': false,
+          'message': _extractMessage(data, fallback: 'Gagal mengubah password'),
+        };
+      }
+    } catch (e) {
+      print('✗ Exception: $e');
+      return {'success': false, 'message': 'Koneksi error: $e'};
+    }
+  }
+
   // LOGOUT
   static void logout() {
     _token = null;

@@ -4,6 +4,9 @@ import '../models/pembayaran_model.dart';
 import '../models/pengumuman_model.dart';
 import '../models/perkembangan_model.dart';
 import '../services/api_services.dart';
+import 'main_navigation_screen.dart';
+import 'change_password_screen.dart';
+import 'welcome_screen.dart';
 import 'perkembangan_screen.dart';
 import 'pembayaran_screen.dart';
 import 'pengumuman_screen.dart';
@@ -122,6 +125,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       backgroundColor: const Color(0xFFF7F8FC),
       body: RefreshIndicator(
           color: AppTheme.primary,
+          edgeOffset: 80, // Spinner muncul di bawah profil agar tidak menutupi wajah/nama
           onRefresh: () async {
             await Future.wait([
               ApiService.getPembayaran().then((p) { if (mounted) setState(() => _payments = p); }),
@@ -130,7 +134,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ]);
           },
           child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
             child: Column(
               children: [
                 _wrappedHeader(),
@@ -332,102 +336,344 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ── SWITCH ACCOUNT SHEET ──
+  // ── PROFILE OPTIONS SHEET (UBAR PASSWORD & LOGOUT) ──
   void _showSwitchAccount() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
           decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(width: 40, height: 4, decoration: BoxDecoration(color: AppTheme.textLight, borderRadius: BorderRadius.circular(4))),
-              const SizedBox(height: 16),
-              const Text("Pilih Anak", style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
-              const SizedBox(height: 6),
-              const Text("Pilih akun anak untuk melihat informasi", style: TextStyle(fontSize: 12, color: AppTheme.textMedium)),
-              const SizedBox(height: 18),
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [AppTheme.primary.withOpacity(0.06), AppTheme.primary.withOpacity(0.02)]),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 22, backgroundColor: AppTheme.primary.withOpacity(0.1),
-                        child: Text(_namaAnak.isNotEmpty ? _namaAnak[0].toUpperCase() : 'B',
-                          style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w800, fontSize: 16)),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(_namaAnak, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.textDark)),
-                            const SizedBox(height: 3),
-                            Row(children: [
-                              const Icon(Icons.school_rounded, size: 13, color: AppTheme.primary),
-                              const SizedBox(width: 4),
-                              Text(_kelas, style: const TextStyle(fontSize: 11, color: AppTheme.primary)),
-                            ]),
-                          ],
-                        ),
-                      ),
-                      const Icon(Icons.check_circle_rounded, color: AppTheme.primary, size: 22),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              GestureDetector(
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: AppTheme.textLight.withOpacity(0.3), borderRadius: BorderRadius.circular(4))),
+              const SizedBox(height: 24),
+              const Text("Pengaturan Akun", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.textDark, letterSpacing: -0.5)),
+              const SizedBox(height: 8),
+              Text("Kelola keamanan dan sesi akun Anda", style: TextStyle(fontSize: 13, color: AppTheme.textMedium.withOpacity(0.8))),
+              const SizedBox(height: 32),
+              
+              // 1. Change Password Option
+              _buildOptionItem(
+                title: "Ubah Password",
+                subtitle: "Ganti kata sandi akun Anda",
+                icon: Icons.lock_reset_rounded,
+                color: AppTheme.primary,
                 onTap: () {
                   Navigator.pop(context);
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
                 },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF7F8FC),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE8E8EE)),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.add_rounded, size: 18, color: AppTheme.primary),
-                      SizedBox(width: 6),
-                      Text("Tambah Akun Anak Baru", style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w700, fontSize: 13)),
-                    ],
-                  ),
-                ),
               ),
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: const Color(0xFFF7F8FC), borderRadius: BorderRadius.circular(12)),
-                child: const Row(
-                  children: [
-                    Icon(Icons.verified_user_rounded, size: 16, color: AppTheme.textLight),
-                    SizedBox(width: 8),
-                    Expanded(child: Text("Data setiap anak terpisah dan aman.", style: TextStyle(fontSize: 11, color: AppTheme.textMedium))),
-                  ],
-                ),
+              const SizedBox(height: 12),
+              
+              // 2. Logout Option
+              _buildOptionItem(
+                title: "Keluar Aplikasi",
+                subtitle: "Akhiri sesi dan keluar",
+                icon: Icons.logout_rounded,
+                color: AppTheme.danger,
+                onTap: () {
+                  Navigator.pop(context);
+                  ApiService.logout();
+                  Navigator.pushAndRemoveUntil(
+                    context, 
+                    MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                    (route) => false,
+                  );
+                },
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildOptionItem({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.04),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withOpacity(0.08)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.textDark)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: TextStyle(fontSize: 12, color: AppTheme.textMedium.withOpacity(0.7))),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textLight.withOpacity(0.4)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── PENGUMUMAN SECTION (PREMIUM FEED) ──
+  Widget _pengumumanUI() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Text(
+                    "Pengumuman",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      color: AppTheme.textDark,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
+              ),
+              GestureDetector(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PengumumanScreen())),
+                child: const Row(
+                  children: [
+                    Text(
+                      "Lihat semua",
+                      style: TextStyle(
+                        color: AppTheme.primary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(Icons.arrow_forward_rounded, size: 14, color: AppTheme.primary),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (_pengumuman.isEmpty)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFFF1F5F9)),
+            ),
+            child: Column(
+              children: [
+                Icon(Icons.campaign_outlined, size: 48, color: AppTheme.textLight.withOpacity(0.3)),
+                const SizedBox(height: 12),
+                const Text('Belum ada pengumuman', style: TextStyle(color: AppTheme.textMedium, fontSize: 13, fontWeight: FontWeight.w500)),
+              ],
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              children: [
+                // 1. Featured Item
+                _buildFeaturedPengumuman(_pengumuman[0]),
+                
+                // 2. Secondary Items
+                if (_pengumuman.length > 1) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20, offset: const Offset(0, 4)),
+                      ],
+                    ),
+                    child: Column(
+                      children: _pengumuman.sublist(1).asMap().entries.map((entry) {
+                        final isLast = entry.key == _pengumuman.length - 2;
+                        return Column(
+                          children: [
+                            _buildSecondaryPengumuman(entry.value),
+                            if (!isLast)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                child: Divider(height: 1, color: Colors.black.withOpacity(0.05)),
+                              ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildFeaturedPengumuman(PengumumanModel e) {
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PengumumanScreen(idPengumuman: e.idPengumuman))),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppTheme.primary.withOpacity(0.08),
+              AppTheme.primary.withOpacity(0.03),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppTheme.primary.withOpacity(0.12)),
+          boxShadow: [
+            BoxShadow(color: AppTheme.primary.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 8)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    "TERBARU",
+                    style: TextStyle(
+                      color: AppTheme.primary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.primary.withOpacity(0.5)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              e.judul,
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+                color: AppTheme.textDark,
+                letterSpacing: -0.4,
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              e.deskripsi,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                color: AppTheme.textDark.withOpacity(0.7),
+                height: 1.6,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Icon(Icons.calendar_today_rounded, size: 12, color: AppTheme.textLight.withOpacity(0.8)),
+                const SizedBox(width: 6),
+                Text(
+                  e.waktuUnggah,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textLight.withOpacity(0.9),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSecondaryPengumuman(PengumumanModel e) {
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PengumumanScreen(idPengumuman: e.idPengumuman))),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        color: Colors.transparent, // For hit testing
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    e.judul,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: AppTheme.textDark,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    e.waktuUnggah,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.textLight.withOpacity(0.7),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppTheme.textLight.withOpacity(0.4)),
+          ],
+        ),
+      ),
     );
   }
 
@@ -484,28 +730,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-
-
   // ── PERKEMBANGAN SECTION (ULTRA PREMIUM) ──
   Widget _perkembangan() {
+    final data = _getDataPerTahun();
+    final latestStatus = data.isNotEmpty ? data.last.statusUtama : '-';
+    
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PerkembanganScreen())),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFF0F0F5)),
+          borderRadius: BorderRadius.circular(28),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 6)),
-            BoxShadow(color: AppTheme.primary.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 3)),
+            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 30, offset: const Offset(0, 10)),
+            BoxShadow(color: AppTheme.primary.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 5)),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -514,40 +760,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     children: [
                       Row(
                         children: [
-                          Container(width: 4, height: 18, decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(2))),
-                          const SizedBox(width: 10),
-                          const Text("Perkembangan Anak", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.textDark, letterSpacing: -0.3)),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.analytics_rounded, color: AppTheme.primary, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Perkembangan", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.textDark, letterSpacing: -0.5)),
+                              Text("Statistik pencapaian anak", style: TextStyle(fontSize: 11, color: AppTheme.textMedium, fontWeight: FontWeight.w500)),
+                            ],
+                          ),
                         ],
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    height: 180,
+                    width: double.infinity,
+                    padding: const EdgeInsets.only(right: 16, top: 10),
+                    child: _buildChart(),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(colors: [AppTheme.primary.withOpacity(0.1), AppTheme.primary.withOpacity(0.04)]),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppTheme.primary.withOpacity(0.12)),
+                          color: const Color(0xFFF7F8FC),
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
+                        child: Row(
                           children: [
-                            Text("Detail", style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w700)),
-                            SizedBox(width: 3),
-                            Icon(Icons.arrow_forward_ios_rounded, size: 10, color: AppTheme.primary),
+                            const Text("Lihat Laporan Detail", style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w700)),
+                            const SizedBox(width: 6),
+                            Icon(Icons.arrow_forward_rounded, size: 14, color: AppTheme.primary.withOpacity(0.8)),
                           ],
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 4),
-                  const Text("Ringkasan perkembangan anak", style: TextStyle(fontSize: 12, color: AppTheme.textMedium)),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF7F8FC),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFEEEFF5)),
-                    ),
-                    child: _buildChart(),
                   ),
                 ],
               ),
@@ -558,20 +816,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case "BSB": return const Color(0xFF3B82F6);
+      case "BSH": return const Color(0xFF10B981);
+      case "MB": return const Color(0xFFF59E0B);
+      case "BB": return const Color(0xFFEF4444);
+      default: return AppTheme.textMedium;
+    }
+  }
+
   Widget _buildChart() {
     final data = _getDataPerTahun();
     if (data.isEmpty) {
-      return SizedBox(
-        height: 140,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.show_chart_rounded, size: 40, color: AppTheme.textLight.withOpacity(0.5)),
-              const SizedBox(height: 8),
-              const Text("Belum ada data", style: TextStyle(color: AppTheme.textMedium, fontSize: 13)),
-            ],
-          ),
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.bubble_chart_rounded, size: 48, color: AppTheme.textLight.withOpacity(0.3)),
+            const SizedBox(height: 12),
+            const Text("Belum ada statistik tersedia", style: TextStyle(color: AppTheme.textLight, fontSize: 13, fontWeight: FontWeight.w500)),
+          ],
         ),
       );
     }
@@ -586,225 +851,124 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     }
 
-    String convertLabel(double value) {
-      switch (value.toInt()) {
-        case 1: return "BB";
-        case 2: return "MB";
-        case 3: return "BSH";
-        case 4: return "BSB";
-        default: return "-";
-      }
-    }
-
     const namaBulan = ["", "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 
-    return SizedBox(
-      height: 170,
-      child: LineChart(
-        LineChartData(
-          minY: 1,
-          maxY: 4,
-          gridData: FlGridData(
-            show: true, drawVerticalLine: false, horizontalInterval: 1,
-            getDrawingHorizontalLine: (value) => FlLine(color: AppTheme.primary.withOpacity(0.06), strokeWidth: 1),
+    return LineChart(
+      LineChartData(
+        minY: 0.8,
+        maxY: 4.2,
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: 1,
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: Colors.black.withOpacity(0.04),
+            strokeWidth: 1,
+            dashArray: [5, 5],
           ),
-          borderData: FlBorderData(show: false),
-          titlesData: FlTitlesData(
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(showTitles: true, interval: 1, reservedSize: 45,
-                getTitlesWidget: (value, meta) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: Text(convertLabel(value), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppTheme.textMedium)),
-                ),
-              ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(showTitles: true, interval: 1, reservedSize: 30,
-                getTitlesWidget: (value, meta) {
-                  final bulan = value.toInt() + 1;
-                  if (bulan >= 1 && bulan <= 12) {
-                    return Padding(padding: const EdgeInsets.only(top: 6),
-                      child: Text(namaBulan[bulan], style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppTheme.textMedium)));
-                  }
-                  return const Text("");
-                },
-              ),
-            ),
-          ),
-          lineTouchData: LineTouchData(
-            handleBuiltInTouches: true,
-            touchTooltipData: LineTouchTooltipData(
-              tooltipRoundedRadius: 12, tooltipPadding: const EdgeInsets.all(10), tooltipMargin: 8,
-              getTooltipColor: (touchedSpot) => Colors.white,
-              getTooltipItems: (spots) {
-                final latest = data.last;
-                return spots.map((spot) {
-                  final index = spot.x.toInt();
-                  final item = data[index];
-                  final isCurrentMonth = item.bulan == latest.bulan && item.tahun == latest.tahun;
-                  String label;
-                  switch (item.statusUtama) {
-                    case "BB": label = "BB (Belum Berkembang)"; break;
-                    case "MB": label = "MB (Mulai Berkembang)"; break;
-                    case "BSH": label = "BSH (Sesuai Harapan)"; break;
-                    case "BSB": label = "BSB (Sangat Baik)"; break;
-                    default: label = item.statusUtama;
-                  }
-                  if (isCurrentMonth) {
-                    return LineTooltipItem("${namaBulan[item.bulan]} ${item.tahun}\n$label",
-                      const TextStyle(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 12));
-                  }
-                  return LineTooltipItem(item.statusUtama, const TextStyle(color: Colors.black, fontWeight: FontWeight.bold));
-                }).toList();
+        ),
+        borderData: FlBorderData(show: false),
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              interval: 1,
+              reservedSize: 35,
+              getTitlesWidget: (value, meta) {
+                if (value % 1 != 0) return const SizedBox.shrink();
+                String label = "";
+                switch (value.toInt()) {
+                  case 1: label = "BB"; break;
+                  case 2: label = "MB"; break;
+                  case 3: label = "BSH"; break;
+                  case 4: label = "BSB"; break;
+                  default: return const SizedBox.shrink();
+                }
+                return SideTitleWidget(
+                  axisSide: meta.axisSide,
+                  child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.textLight.withOpacity(0.8))),
+                );
               },
             ),
           ),
-          lineBarsData: [
-            LineChartBarData(
-              spots: data.map((e) => FlSpot((e.bulan - 1).toDouble(), convertNilai(e.statusUtama))).toList(),
-              isCurved: true, color: AppTheme.primary, barWidth: 3,
-              dotData: FlDotData(show: true, checkToShowDot: (spot, barData) => true,
-                getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(radius: 5, color: AppTheme.primary, strokeWidth: 2.5, strokeColor: Colors.white),
-              ),
-              belowBarData: BarAreaData(show: true, color: AppTheme.primary.withOpacity(0.08)),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              interval: 1,
+              reservedSize: 22,
+              getTitlesWidget: (value, meta) {
+                final index = value.toInt();
+                if (index >= 0 && index < data.length) {
+                  final bulanIndex = data[index].bulan;
+                  if (bulanIndex >= 1 && bulanIndex <= 12) {
+                    return SideTitleWidget(
+                      axisSide: meta.axisSide,
+                      child: Text(namaBulan[bulanIndex], style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.textLight.withOpacity(0.8))),
+                    );
+                  }
+                }
+                return const Text("");
+              },
             ),
-          ],
+          ),
         ),
-      ),
-    );
-  }
-
-  // ── PENGUMUMAN SECTION (ULTRA PREMIUM) ──
-  Widget _pengumumanUI() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFF0F0F5)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 6)),
-          BoxShadow(color: AppTheme.primary.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 3)),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(width: 4, height: 18, decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(2))),
-                    const SizedBox(width: 10),
-                    const Text("Pengumuman", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.textDark, letterSpacing: -0.3)),
-                  ],
-                ),
-                GestureDetector(
-                  onTap: () => Navigator.push(context, PageRouteBuilder(
-                    pageBuilder: (_, __, ___) => const PengumumanScreen(),
-                    transitionDuration: Duration.zero, reverseTransitionDuration: Duration.zero,
-                  )),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: [AppTheme.primary.withOpacity(0.1), AppTheme.primary.withOpacity(0.04)]),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppTheme.primary.withOpacity(0.12)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text("Lihat semua", style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w700)),
-                        SizedBox(width: 3),
-                        Icon(Icons.arrow_forward_ios_rounded, size: 10, color: AppTheme.primary),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (_pengumuman.isEmpty)
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 28),
-                child: Center(
-                  child: Column(children: [
-                    Icon(Icons.campaign_outlined, size: 36, color: AppTheme.textLight.withOpacity(0.4)),
-                    const SizedBox(height: 8),
-                    const Text('Belum ada pengumuman', style: TextStyle(color: AppTheme.textMedium, fontSize: 13)),
-                  ]),
-                ),
-              )
-            else
-              ..._pengumuman.map((e) => _buildPengumumanItem(e)),
-          ],
+        lineTouchData: LineTouchData(
+          handleBuiltInTouches: true,
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipColor: (spot) => Colors.white,
+            tooltipRoundedRadius: 12,
+            tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            tooltipBorder: BorderSide(color: AppTheme.primary.withOpacity(0.1), width: 1),
+            getTooltipItems: (spots) {
+              return spots.map((spot) {
+                final item = data[spot.x.toInt()];
+                String longStatus = "";
+                switch (item.statusUtama) {
+                  case "BB": longStatus = "Belum Berkembang"; break;
+                  case "MB": longStatus = "Mulai Berkembang"; break;
+                  case "BSH": longStatus = "Sesuai Harapan"; break;
+                  case "BSB": longStatus = "Sangat Baik"; break;
+                }
+                return LineTooltipItem(
+                  "${namaBulan[item.bulan]}\n$longStatus",
+                  const TextStyle(color: AppTheme.textDark, fontWeight: FontWeight.w800, fontSize: 11),
+                );
+              }).toList();
+            },
+          ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildPengumumanItem(PengumumanModel e) {
-    return GestureDetector(
-      onTap: () => Navigator.push(context, PageRouteBuilder(
-        pageBuilder: (_, __, ___) => PengumumanScreen(idPengumuman: e.idPengumuman),
-        transitionDuration: Duration.zero, reverseTransitionDuration: Duration.zero,
-      )),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFEEEFF5)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Glowing dot indicator
-            Container(
-              margin: const EdgeInsets.only(top: 5),
-              width: 8, height: 8,
-              decoration: BoxDecoration(
-                color: AppTheme.primary, shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: AppTheme.primary.withOpacity(0.4), blurRadius: 6)],
+        lineBarsData: [
+          LineChartBarData(
+            spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), convertNilai(e.value.statusUtama))).toList(),
+            isCurved: true,
+            curveSmoothness: 0.35,
+            color: AppTheme.primary,
+            barWidth: 3.5,
+            isStrokeCapRound: true,
+            dotData: FlDotData(
+              show: true,
+              getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
+                radius: 4,
+                color: Colors.white,
+                strokeWidth: 2,
+                strokeColor: AppTheme.primary,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(e.judul, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.textDark, letterSpacing: -0.2)),
-                  const SizedBox(height: 5),
-                  Text(e.deskripsi, maxLines: 2, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12, color: AppTheme.textMedium, height: 1.5)),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(Icons.access_time_rounded, size: 12, color: AppTheme.textLight.withOpacity(0.6)),
-                      const SizedBox(width: 4),
-                      Text(e.waktuUnggah, style: TextStyle(fontSize: 10, color: AppTheme.textLight.withOpacity(0.8), fontWeight: FontWeight.w600)),
-                    ],
-                  ),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.primary.withOpacity(0.2),
+                  AppTheme.primary.withOpacity(0.0),
                 ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
             ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: AppTheme.primary.withOpacity(0.06),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppTheme.primary),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

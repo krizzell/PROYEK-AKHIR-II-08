@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\PembayaranApiController;
 
 // Public Auth Route (no middleware required)
 Route::post('/login', [AuthApiController::class, 'login']);
+Route::post('/change-password', [AuthApiController::class, 'changePassword']);
 
 Route::middleware('api')->group(function () {
     // Perkembangan APIs

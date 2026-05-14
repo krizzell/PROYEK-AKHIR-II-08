@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../services/api_services.dart';
 import 'main_navigation_screen.dart';
+import 'change_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -166,13 +167,15 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
+                      },
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
                         minimumSize: const Size(0, 32),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Text('Lupa kata sandi?', style: TextStyle(
+                      child: const Text('Ubah password?', style: TextStyle(
                         color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w700,
                       )),
                     ),
@@ -186,8 +189,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _login,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1A1A2E),
-                        disabledBackgroundColor: const Color(0xFF1A1A2E).withOpacity(0.6),
+                        backgroundColor: AppTheme.primary,
+                        disabledBackgroundColor: AppTheme.primary.withOpacity(0.6),
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -195,14 +198,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       child: _isLoading
                           ? const SizedBox(width: 22, height: 22,
                               child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                          : const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text('Masuk', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-                                SizedBox(width: 8),
-                                Icon(Icons.arrow_forward_rounded, size: 20),
-                              ],
-                            ),
+                          : const Text('Masuk', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                     ),
                   ),
                   const SizedBox(height: 32),

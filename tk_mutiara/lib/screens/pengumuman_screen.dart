@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../models/pengumuman_model.dart';
 import '../services/api_services.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:convert';
 
 class PengumumanScreen extends StatefulWidget {
@@ -106,7 +107,7 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
     if (cleanPath.startsWith('storage/')) {
       cleanPath = cleanPath.replaceFirst('storage/', '');
     }
-    return '${ApiService.imageBaseUrl}/storage/$cleanPath';
+    return Uri.encodeFull('${ApiService.imageBaseUrl}/storage/$cleanPath');
   }
 
   // Build image URL from a single path (no JSON parsing needed)
@@ -117,7 +118,7 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
     if (cleanPath.startsWith('storage/')) {
       cleanPath = cleanPath.replaceFirst('storage/', '');
     }
-    return '${ApiService.imageBaseUrl}/storage/$cleanPath';
+    return Uri.encodeFull('${ApiService.imageBaseUrl}/storage/$cleanPath');
   }
 
   @override
@@ -140,9 +141,10 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
               Expanded(
                 child: RefreshIndicator(
                   color: AppTheme.primary,
+                  edgeOffset: 20,
                   onRefresh: _loadPengumuman,
                   child: ListView.builder(
-                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                     itemCount: _data.length,
                     itemBuilder: (context, index) {
@@ -271,7 +273,7 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
             _buildHeader(context),
             Expanded(
               child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
+                physics: const ClampingScrollPhysics(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -298,17 +300,19 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                                 onPageChanged: (index) => setState(() => _currentImageIndex = index),
                                 itemBuilder: (context, index) {
                                   final imageUrl = _getImageUrlFromPath(data.mediaPaths[index]);
-                                  return Image.network(
-                                    imageUrl,
+                                  return CachedNetworkImage(
+                                    imageUrl: imageUrl,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => const Center(
+                                    memCacheHeight: 800, // Optimasi memori untuk gambar besar
+                                    placeholder: (context, url) => Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        color: AppTheme.primary,
+                                      ),
+                                    ),
+                                    errorWidget: (context, url, error) => const Center(
                                       child: Icon(Icons.image_not_supported_rounded, size: 48, color: AppTheme.textLight),
                                     ),
-                                    loadingBuilder: (_, child, progress) {
-                                      if (progress == null) return child;
-                                      return Center(child: CircularProgressIndicator(strokeWidth: 2.5, color: AppTheme.primary,
-                                        value: progress.expectedTotalBytes != null ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes! : null));
-                                    },
                                   );
                                 },
                               ),
@@ -516,21 +520,25 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.network(
-                        _getImageUrl(data.media),
+                      CachedNetworkImage(
+                        imageUrl: _getImageUrl(data.media),
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                        memCacheHeight: 400, // Optimasi: jangan decode gambar 1MB full untuk list kecil
+                        placeholder: (context, url) => Container(
                           color: const Color(0xFFEEEFF5),
-                          child: const Center(child: Icon(Icons.image_outlined, size: 36, color: AppTheme.textLight)),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppTheme.primary,
+                            ),
+                          ),
                         ),
-                        loadingBuilder: (_, child, progress) {
-                          if (progress == null) return child;
-                          return Container(
-                            color: const Color(0xFFEEEFF5),
-                            child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary,
-                              value: progress.expectedTotalBytes != null ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes! : null)),
-                          );
-                        },
+                        errorWidget: (context, url, error) => Container(
+                          color: const Color(0xFFEEEFF5),
+                          child: const Center(
+                            child: Icon(Icons.image_outlined, size: 36, color: AppTheme.textLight),
+                          ),
+                        ),
                       ),
                       // Gradient overlay
                       Positioned(

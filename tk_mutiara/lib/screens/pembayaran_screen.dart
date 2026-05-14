@@ -290,9 +290,10 @@ class _PembayaranScreenState extends State<PembayaranScreen>
         Expanded(
           child: RefreshIndicator(
             color: AppTheme.primary,
+            edgeOffset: 20,
             onRefresh: _loadTagihan,
             child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
+              physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [

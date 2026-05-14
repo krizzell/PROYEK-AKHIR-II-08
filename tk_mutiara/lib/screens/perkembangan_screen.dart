@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import '../theme/app_theme.dart';
 import '../models/perkembangan_model.dart';
 import '../services/api_services.dart';
@@ -12,7 +13,16 @@ class PerkembanganScreen extends StatefulWidget {
   State<PerkembanganScreen> createState() => _PerkembanganScreenState();
 }
 
-class _PerkembanganScreenState extends State<PerkembanganScreen> {
+class _PerkembanganScreenState extends State<PerkembanganScreen> with TickerProviderStateMixin {
+  // --- MODERN COLOR SYSTEM (Orange Aesthetic) ---
+  static const Color kPrimary = AppTheme.primary; 
+  static const Color kSecondary = AppTheme.primaryLight;
+  static const Color kBackground = Color(0xFFF8FAFC);
+  static const Color kCardBackground = Colors.white;
+  static const Color kTextMain = Color(0xFF1E293B);
+  static const Color kTextMuted = Color(0xFF64748B);
+  static const Color kSuccess = Color(0xFF10B981);
+
   List<PerkembanganModel> _data = [];
   bool _isLoading = true;
   String? _errorMsg;
@@ -20,23 +30,45 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> {
   List<String> _monthKeys = [];
   String? _selectedMonthKey;
 
+  late AnimationController _progressController;
+
   @override
   void initState() {
     super.initState();
+    _progressController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
     _loadPerkembangan();
+  }
+
+  @override
+  void dispose() {
+    _progressController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadPerkembangan() async {
     try {
       final data = await ApiService.getPerkembangan();
-      setState(() {
-        _data = data;
-        _groupDataByMonth();
-        if (_monthKeys.isNotEmpty) _selectedMonthKey = _monthKeys.last;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _data = data;
+          _groupDataByMonth();
+          if (_monthKeys.isNotEmpty) {
+            _selectedMonthKey = _monthKeys.last;
+          }
+          _isLoading = false;
+        });
+        _progressController.forward(from: 0.0);
+      }
     } catch (e) {
-      setState(() { _isLoading = false; _errorMsg = '$e'; });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMsg = '$e';
+        });
+      }
     }
   }
 
@@ -51,361 +83,115 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> {
   }
 
   List<PerkembanganModel> get _filteredData {
-    if (_selectedMonthKey == null || !_groupedData.containsKey(_selectedMonthKey)) return [];
+    if (_selectedMonthKey == null || !_groupedData.containsKey(_selectedMonthKey)) {
+      return [];
+    }
     return _groupedData[_selectedMonthKey]!;
+  }
+
+  String _getMonthName(int month) {
+    const names = [
+      '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    return month > 0 && month <= 12 ? names[month] : '';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FC),
+      backgroundColor: kBackground,
       body: SafeArea(
         child: Column(
           children: [
             _buildHeader(context),
             if (_isLoading)
-              const Expanded(child: Center(child: CircularProgressIndicator(color: AppTheme.primary)))
+              const Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: kPrimary,
+                    strokeWidth: 3,
+                  ),
+                ),
+              )
             else if (_errorMsg != null && _data.isEmpty)
               _buildErrorState()
             else if (_data.isEmpty)
               _buildEmptyState()
-            else ...[
-              _buildFilterSection(),
+            else
               Expanded(
                 child: RefreshIndicator(
-                  color: AppTheme.primary,
+                  color: kPrimary,
                   onRefresh: _loadPerkembangan,
-                  child: ListView.builder(
-                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                    itemCount: _filteredData.length,
-                    itemBuilder: (context, index) {
-                      return TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        duration: Duration(milliseconds: 400 + (index * 80)),
-                        curve: Curves.easeOutCubic,
-                        builder: (context, value, child) {
-                          return Transform.translate(
-                            offset: Offset(0, 16 * (1 - value)),
-                            child: Opacity(opacity: value, child: child),
-                          );
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: _buildPerkembanganCard(_filteredData[index]),
-                        ),
-                      );
-                    },
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    children: [
+                      _buildDateSelector(),
+                      const SizedBox(height: 24),
+                      if (_filteredData.isNotEmpty) ...[
+                        _buildHeroSummaryCard(_filteredData[0]),
+                        const SizedBox(height: 24),
+                        _buildGuruAssessor(_filteredData[0]),
+                        const SizedBox(height: 32),
+                        _buildSectionTitle("Aspek Penilaian"),
+                        const SizedBox(height: 16),
+                        ..._filteredData[0].kategoriDetails.map((k) => _buildCategoryCard(k)),
+                        const SizedBox(height: 24),
+                        if (_filteredData[0].templateDeskripsi.isNotEmpty)
+                          _buildIndicatorCard(_filteredData[0].templateDeskripsi),
+                        const SizedBox(height: 16),
+                        if (_filteredData[0].deskripsi.isNotEmpty)
+                          _buildTeacherNoteCard(_filteredData[0].deskripsi),
+                        const SizedBox(height: 32),
+                      ],
+                    ],
                   ),
                 ),
               ),
-            ],
           ],
         ),
       ),
     );
   }
 
-  // ── HEADER ──
+  // --- 1. HEADER (CONSISTENT WITH OTHER SCREENS) ---
   Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 20, 16),
-      color: AppTheme.white,
+      color: kBackground,
       child: Row(
         children: [
           IconButton(
             onPressed: widget.onBackPressed ?? () => Navigator.pop(context),
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-            color: AppTheme.primary,
+            color: kPrimary,
           ),
           const SizedBox(width: 4),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Perkembangan Anak',
-                style: TextStyle(color: AppTheme.textDark, fontSize: 18, fontWeight: FontWeight.w800),
-              ),
-              if (_data.isNotEmpty)
-                Text(
-                  '${_data[0].namaAnak} · ${_data[0].kelas}',
-                  style: const TextStyle(color: AppTheme.textMedium, fontSize: 12, fontWeight: FontWeight.w500),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── FILTER SECTION ──
-  Widget _buildFilterSection() {
-    if (_monthKeys.isEmpty) return const SizedBox.shrink();
-    final parts = _selectedMonthKey!.split('-');
-    final selectedBulan = int.parse(parts[1]);
-    final selectedTahun = int.parse(parts[0]);
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 12, 20, 4),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 2))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(width: 4, height: 16, decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(2))),
-              const SizedBox(width: 8),
-              const Text('Periode Laporan', style: TextStyle(color: AppTheme.textDark, fontSize: 14, fontWeight: FontWeight.w800)),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(child: _buildDropdown<int>(
-                value: selectedBulan,
-                items: List.generate(12, (i) {
-                  final bulan = i + 1;
-                  final key = '$selectedTahun-${bulan.toString().padLeft(2, '0')}';
-                  final hasData = _monthKeys.contains(key);
-                  return DropdownMenuItem(value: bulan, enabled: hasData,
-                    child: Text(_getMonthName(bulan), style: TextStyle(color: hasData ? AppTheme.textDark : AppTheme.textLight, fontSize: 13, fontWeight: FontWeight.w600)));
-                }),
-                onChanged: (bulan) {
-                  if (bulan != null) {
-                    final key = '$selectedTahun-${bulan.toString().padLeft(2, '0')}';
-                    if (_monthKeys.contains(key)) setState(() => _selectedMonthKey = key);
-                  }
-                },
-                icon: Icons.calendar_month_rounded,
-              )),
-              const SizedBox(width: 12),
-              Expanded(child: _buildDropdown<int>(
-                value: selectedTahun,
-                items: _getAvailableYears().map((t) => DropdownMenuItem(value: t,
-                  child: Text('$t', style: const TextStyle(color: AppTheme.textDark, fontSize: 13, fontWeight: FontWeight.w600)))).toList(),
-                onChanged: (tahun) {
-                  if (tahun != null) {
-                    final key = '$tahun-${selectedBulan.toString().padLeft(2, '0')}';
-                    if (_monthKeys.contains(key)) {
-                      setState(() => _selectedMonthKey = key);
-                    } else {
-                      final first = _monthKeys.firstWhere((k) => k.startsWith('$tahun-'), orElse: () => '');
-                      if (first.isNotEmpty) setState(() => _selectedMonthKey = first);
-                    }
-                  }
-                },
-                icon: Icons.date_range_rounded,
-              )),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDropdown<T>({required T value, required List<DropdownMenuItem<T>> items, required ValueChanged<T?> onChanged, required IconData icon}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F8FC),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE8E8EE)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: AppTheme.primary.withOpacity(0.5)),
-          const SizedBox(width: 8),
           Expanded(
-            child: DropdownButton<T>(value: value, isExpanded: true, underline: const SizedBox.shrink(),
-              icon: Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textLight, size: 20), items: items, onChanged: onChanged),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── PERKEMBANGAN CARD (PREMIUM) ──
-  Widget _buildPerkembanganCard(PerkembanganModel data) {
-    final statusColor = _getStatusColor(data.statusUtama);
-    final statusBg = _getStatusBgColor(data.statusUtama);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 4)),
-          BoxShadow(color: statusColor.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 2)),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Top accent bar
-          Container(
-            height: 4,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [statusColor.withOpacity(0.8), statusColor.withOpacity(0.3)]),
-              borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Status badge + period
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(color: statusBg, borderRadius: BorderRadius.circular(20)),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(width: 8, height: 8, decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
-                          const SizedBox(width: 6),
-                          Text(data.statusUtama, style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.w800)),
-                        ],
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(color: const Color(0xFFF0F1F5), borderRadius: BorderRadius.circular(20)),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.calendar_today_rounded, size: 12, color: AppTheme.textMedium),
-                          const SizedBox(width: 5),
-                          Text('${_getMonthName(data.bulan)} ${data.tahun}', style: const TextStyle(color: AppTheme.textMedium, fontSize: 11, fontWeight: FontWeight.w600)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Info row — guru
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 16, backgroundColor: AppTheme.primary.withOpacity(0.1),
-                      child: Text((data.namaGuru.isNotEmpty ? data.namaGuru : 'G')[0].toUpperCase(),
-                        style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w800, fontSize: 13)),
-                    ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Dinilai oleh', style: TextStyle(color: AppTheme.textLight, fontSize: 10, fontWeight: FontWeight.w600)),
-                        Text(data.namaGuru.isNotEmpty ? data.namaGuru : 'N/A',
-                          style: const TextStyle(color: AppTheme.textDark, fontSize: 13, fontWeight: FontWeight.w700)),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Kategori list
-                if (data.kategoriDetails.isNotEmpty) ...[
-                  Row(
-                    children: [
-                      Container(width: 4, height: 16, decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(2))),
-                      const SizedBox(width: 8),
-                      const Text('Aspek Penilaian', style: TextStyle(color: AppTheme.textDark, fontSize: 14, fontWeight: FontWeight.w800)),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  ...data.kategoriDetails.map((k) => _buildKategoriItem(k)),
-                ] else if (data.kategori.trim().isNotEmpty) ...[
-                  Row(
-                    children: [
-                      Container(width: 4, height: 16, decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(2))),
-                      const SizedBox(width: 8),
-                      const Text('Kategori', style: TextStyle(color: AppTheme.textDark, fontSize: 14, fontWeight: FontWeight.w800)),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  ...data.kategori.split(',').map((k) => k.trim()).where((k) => k.isNotEmpty).map((k) => _buildKategoriFallbackItem(k)),
-                ],
-
-                // Template deskripsi
-                if (data.templateDeskripsi.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: statusBg.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: statusColor.withOpacity(0.2)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.format_quote_rounded, size: 16, color: statusColor),
-                            const SizedBox(width: 6),
-                            Text('Indikator Pencapaian', style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.w700)),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(data.templateDeskripsi, style: TextStyle(color: statusColor.withOpacity(0.9), fontSize: 12, fontWeight: FontWeight.w500, height: 1.6)),
-                      ],
-                    ),
-                  ),
-                ],
-
-                // Catatan
-                if (data.deskripsi.isNotEmpty) ...[
-                  const SizedBox(height: 14),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(color: const Color(0xFFF7F8FC), borderRadius: BorderRadius.circular(14)),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Row(
-                          children: [
-                            Icon(Icons.edit_note_rounded, size: 16, color: AppTheme.textMedium),
-                            SizedBox(width: 6),
-                            Text('Catatan Guru', style: TextStyle(color: AppTheme.textDark, fontSize: 12, fontWeight: FontWeight.w700)),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(data.deskripsi, style: const TextStyle(color: AppTheme.textDark, fontSize: 12, fontWeight: FontWeight.w500, height: 1.6)),
-                      ],
-                    ),
-                  ),
-                ],
-
-                // Status footer
-                const SizedBox(height: 16),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [statusColor.withOpacity(0.1), statusColor.withOpacity(0.05)]),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: statusColor.withOpacity(0.15)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _getStatusLabel(data.statusUtama),
-                        style: TextStyle(color: statusColor, fontSize: 13, fontWeight: FontWeight.w700),
-                      ),
-                    ],
+                const Text(
+                  'Detail Perkembangan',
+                  style: TextStyle(
+                    color: kTextMain,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
                   ),
                 ),
+                if (_data.isNotEmpty)
+                  Text(
+                    _data[0].namaAnak,
+                    style: const TextStyle(
+                      color: kTextMuted,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -414,97 +200,439 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> {
     );
   }
 
-  // ── KATEGORI ITEM ──
-  Widget _buildKategoriItem(PerkembanganKategoriModel kategori) {
-    final progress = kategori.nilai / 10.0;
-    final kColor = _getStatusColor(kategori.statusUtama);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFEEEFF5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(child: Text(kategori.namaKategori, style: const TextStyle(color: AppTheme.textDark, fontSize: 13, fontWeight: FontWeight.w700))),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [AppTheme.primary, AppTheme.primaryLight]),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text('${kategori.nilai}/10', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+  // --- 2. DATE SELECTOR ---
+  Widget _buildDateSelector() {
+    if (_monthKeys.isEmpty) return const SizedBox.shrink();
+
+    final parts = _selectedMonthKey!.split('-');
+    final month = int.parse(parts[1]);
+    final year = parts[0];
+    final label = "${_getMonthName(month)} $year";
+
+    return Center(
+      child: PopupMenuButton<String>(
+        onSelected: (String value) {
+          setState(() {
+            _selectedMonthKey = value;
+          });
+          _progressController.forward(from: 0.0);
+        },
+        offset: const Offset(0, 45),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        itemBuilder: (BuildContext context) {
+          return _monthKeys.map((String key) {
+            final p = key.split('-');
+            final m = int.parse(p[1]);
+            final y = p[0];
+            return PopupMenuItem<String>(
+              value: key,
+              child: Text("${_getMonthName(m)} $y"),
+            );
+          }).toList();
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          // Progress bar
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: const Color(0xFFE8E8EE),
-              color: kColor,
-              minHeight: 6,
-            ),
-          ),
-          if (kategori.deskripsi.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(kategori.deskripsi, style: const TextStyle(color: AppTheme.textMedium, fontSize: 11, height: 1.5)),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildKategoriFallbackItem(String namaKategori) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(color: const Color(0xFFF9FAFB), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFEEEFF5))),
-      child: Row(
-        children: [
-          Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle)),
-          const SizedBox(width: 10),
-          Text(namaKategori, style: const TextStyle(color: AppTheme.textDark, fontSize: 13, fontWeight: FontWeight.w600)),
-        ],
-      ),
-    );
-  }
-
-  // ── STATES ──
-  Widget _buildErrorState() {
-    return Expanded(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: AppTheme.danger.withOpacity(0.08), shape: BoxShape.circle),
-                child: Icon(Icons.wifi_off_rounded, size: 48, color: AppTheme.danger.withOpacity(0.6))),
-              const SizedBox(height: 20),
-              const Text('Gagal Memuat', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
-              const SizedBox(height: 8),
-              Text(_errorMsg!, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.textMedium, fontSize: 13)),
-              const SizedBox(height: 24),
-              FilledButton.icon(
-                onPressed: () { setState(() { _isLoading = true; _errorMsg = null; }); _loadPerkembangan(); },
-                icon: const Icon(Icons.refresh_rounded, size: 18), label: const Text('Coba Lagi'),
-                style: FilledButton.styleFrom(backgroundColor: AppTheme.primary, padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: kTextMain,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
+              const SizedBox(width: 8),
+              const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: kTextMuted),
             ],
           ),
         ),
       ),
     );
   }
+
+  // --- 3. HERO SUMMARY CARD ---
+  Widget _buildHeroSummaryCard(PerkembanganModel data) {
+    double avg = 0;
+    if (data.kategoriDetails.isNotEmpty) {
+      avg = data.kategoriDetails.map((e) => e.nilai).reduce((a, b) => a + b) / data.kategoriDetails.length;
+    } else {
+      avg = data.nilaiChart.toDouble() * 2.5;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: kCardBackground,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: kPrimary.withOpacity(0.08),
+            blurRadius: 30,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              // Perfect Circle Background
+              Container(
+                width: 140,
+                height: 140,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFF1F5F9), width: 12),
+                ),
+              ),
+              // Perfect Circular Progress Ring
+              SizedBox(
+                width: 140,
+                height: 140,
+                child: AnimatedBuilder(
+                  animation: _progressController,
+                  builder: (context, child) {
+                    return CustomPaint(
+                      painter: _GradientCircularPainter(
+                        progress: (avg / 10.0) * _progressController.value,
+                        primaryColor: kPrimary,
+                        secondaryColor: kSecondary,
+                        strokeWidth: 12,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    avg.toStringAsFixed(1),
+                    style: const TextStyle(
+                      color: kTextMain,
+                      fontSize: 40,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const Text(
+                    "Score",
+                    style: TextStyle(
+                      color: kTextMuted,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              color: kPrimary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              _getStatusLabel(data.statusUtama),
+              style: const TextStyle(
+                color: kPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- 4. TEACHER INFO ---
+  Widget _buildGuruAssessor(PerkembanganModel data) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: AppTheme.primaryGradient,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(Icons.person_outline_rounded, color: Colors.white),
+          ),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Dinilai oleh",
+                style: TextStyle(color: kTextMuted, fontSize: 12, fontWeight: FontWeight.w500),
+              ),
+              Text(
+                data.namaGuru.isNotEmpty ? data.namaGuru : "Guru Sekolah",
+                style: const TextStyle(color: kTextMain, fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- 5. CATEGORY CARDS ---
+  Widget _buildCategoryCard(PerkembanganKategoriModel k) {
+    final progress = k.nilai / 10.0;
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: kCardBackground,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                k.namaKategori,
+                style: const TextStyle(
+                  color: kTextMain,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                k.nilai.toStringAsFixed(1),
+                style: const TextStyle(
+                  color: kTextMain,
+                  fontSize: 18, // Matches header size
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Stack(
+            children: [
+              Container(
+                height: 8,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              AnimatedBuilder(
+                animation: _progressController,
+                builder: (context, child) {
+                  return FractionallySizedBox(
+                    widthFactor: (progress * _progressController.value).clamp(0.0, 1.0),
+                    child: Container(
+                      height: 8,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [kPrimary, kSecondary],
+                        ),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          if (k.deskripsi.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              "${k.nilai}. ${_getShortDescription(k.namaKategori, k.nilai)}",
+              style: const TextStyle(
+                color: kTextMuted,
+                fontSize: 13,
+                height: 1.5,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _getShortDescription(String kategori, int nilai) {
+    int n = nilai;
+    String k = kategori.toLowerCase();
+
+    final map = {
+      'akademik': {
+        1: 'Belum mengenali materi dasar',
+        2: 'Mulai mengenali materi dengan bantuan',
+        3: 'Mulai mencoba memahami materi',
+        4: 'Cukup memahami materi sederhana',
+        5: 'Mulai berkembang dalam pembelajaran',
+        6: 'Memahami materi cukup baik',
+        7: 'Mampu belajar mandiri',
+        8: 'Memahami materi dengan baik dan konsisten',
+        9: 'Sangat aktif dalam pembelajaran',
+        10: 'Sangat optimal dan melampaui target belajar'
+      },
+      'sosial': {
+        1: 'Kesulitan berinteraksi',
+        2: 'Mulai mengenali interaksi sosial',
+        3: 'Mulai berinteraksi sederhana',
+        4: 'Cukup mampu berinteraksi',
+        5: 'Mulai berkembang dalam kerja sama',
+        6: 'Berinteraksi cukup baik',
+        7: 'Mampu bekerja sama mandiri',
+        8: 'Sangat baik dan konsisten bersosialisasi',
+        9: 'Sangat aktif dan percaya diri',
+        10: 'Menjadi contoh positif bagi teman'
+      },
+      'emosional': {
+        1: 'Belum mampu mengontrol emosi',
+        2: 'Mulai mengenali emosi',
+        3: 'Mulai mencoba mengendalikan emosi',
+        4: 'Cukup mampu mengontrol emosi',
+        5: 'Mulai berkembang secara emosional',
+        6: 'Emosi cukup stabil',
+        7: 'Mampu mengendalikan emosi mandiri',
+        8: 'Stabil dan konsisten dalam pengendalian diri',
+        9: 'Sangat baik dalam regulasi emosi',
+        10: 'Sangat matang dan positif secara emosional'
+      }
+    };
+
+    if (k.contains('akademik')) return map['akademik']?[n] ?? 'Perkembangan Akademik';
+    if (k.contains('sosial')) return map['sosial']?[n] ?? 'Perkembangan Sosial';
+    if (k.contains('emosional')) return map['emosional']?[n] ?? 'Perkembangan Emosional';
+
+    return map[k]?[n] ?? "Perkembangan $kategori";
+  }
+
+  // --- 6. ADDITIONAL DESCRIPTION CARDS ---
+  Widget _buildIndicatorCard(String text) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFFFEDD5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              // Icon(Icons.auto_awesome_rounded, size: 18, color: kPrimary),
+              // SizedBox(width: 8),
+              Text(
+                "Indikator Pencapaian",
+                style: TextStyle(color: kPrimary, fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            text,
+            style: const TextStyle(color: Color(0xFF92400E), fontSize: 13, height: 1.6),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTeacherNoteCard(String text) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.chat_bubble_outline_rounded, size: 18, color: kTextMuted),
+              SizedBox(width: 8),
+              Text(
+                "Catatan Tambahan Guru",
+                style: TextStyle(color: kTextMuted, fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            text,
+            style: const TextStyle(
+              color: kTextMain,
+              fontSize: 14,
+              height: 1.6,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        color: kTextMain,
+        fontSize: 18,
+        fontWeight: FontWeight.w800,
+      ),
+    );
+  }
+
+  String _getStatusLabel(String status) {
+    switch (status.toUpperCase()) {
+      case "BSB": return "Berkembang Sangat Baik";
+      case "BSH": return "Berkembang Sesuai Harapan";
+      case "MB": return "Mulai Berkembang";
+      case "BB": return "Belum Berkembang";
+      default: return "Berkembang Sangat Baik";
+    }
+  }
+
+  // --- HELPERS & STATES ---
 
   Widget _buildEmptyState() {
     return Expanded(
@@ -512,66 +640,90 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(padding: const EdgeInsets.all(24), decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.06), shape: BoxShape.circle),
-              child: Icon(Icons.child_care_rounded, size: 56, color: AppTheme.primary.withOpacity(0.4))),
-            const SizedBox(height: 20),
-            const Text('Belum Ada Data', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
-            const SizedBox(height: 8),
-            const Text('Data perkembangan akan muncul di sini', style: TextStyle(color: AppTheme.textMedium, fontSize: 13)),
+            Icon(Icons.analytics_outlined, size: 80, color: kTextMuted.withOpacity(0.2)),
+            const SizedBox(height: 16),
+            const Text(
+              "Belum ada data perkembangan",
+              style: TextStyle(color: kTextMuted, fontSize: 16, fontWeight: FontWeight.w600),
+            ),
           ],
         ),
       ),
     );
   }
 
-  // ── HELPERS ──
-  Color _getStatusColor(String status) {
-    switch (status.toUpperCase()) {
-      case 'BB': return const Color(0xFFEF4444);
-      case 'MB': return const Color(0xFFF59E0B);
-      case 'BSH': return const Color(0xFF22C55E);
-      case 'BSB': return const Color(0xFF3B82F6);
-      default: return AppTheme.textMedium;
-    }
+  Widget _buildErrorState() {
+    return Expanded(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline_rounded, size: 60, color: Colors.redAccent),
+            const SizedBox(height: 16),
+            const Text(
+              "Gagal memuat data",
+              style: TextStyle(color: kTextMain, fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(_errorMsg ?? "Terjadi kesalahan", style: const TextStyle(color: kTextMuted)),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _loadPerkembangan,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kPrimary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text("Coba Lagi"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GradientCircularPainter extends CustomPainter {
+  final double progress;
+  final Color primaryColor;
+  final Color secondaryColor;
+  final double strokeWidth;
+
+  _GradientCircularPainter({
+    required this.progress,
+    required this.primaryColor,
+    required this.secondaryColor,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - strokeWidth) / 2;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+
+    final paint = Paint()
+      ..shader = LinearGradient(
+        colors: [primaryColor, secondaryColor],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(rect)
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawArc(
+      rect,
+      -3.141592653589793 / 2, // Start at top
+      2 * 3.141592653589793 * progress.clamp(0.0, 1.0),
+      false,
+      paint,
+    );
   }
 
-  Color _getStatusBgColor(String status) {
-    switch (status.toUpperCase()) {
-      case 'BB': return const Color(0xFFFEE2E2);
-      case 'MB': return const Color(0xFFFEF3C7);
-      case 'BSH': return const Color(0xFFDCFCE7);
-      case 'BSB': return const Color(0xFFDEF7FF);
-      default: return const Color(0xFFF3F4F6);
-    }
-  }
-
-  IconData _getStatusIcon(String status) {
-    switch (status.toUpperCase()) {
-      case 'BB': return Icons.trending_down_rounded;
-      case 'MB': return Icons.trending_flat_rounded;
-      case 'BSH': return Icons.trending_up_rounded;
-      case 'BSB': return Icons.star_rounded;
-      default: return Icons.info_outline_rounded;
-    }
-  }
-
-  String _getStatusLabel(String status) {
-    switch (status.toUpperCase()) {
-      case 'BB': return 'Belum Berkembang';
-      case 'MB': return 'Mulai Berkembang';
-      case 'BSH': return 'Berkembang Sesuai Harapan';
-      case 'BSB': return 'Berkembang Sangat Baik';
-      default: return status;
-    }
-  }
-
-  String _getMonthName(int month) {
-    const months = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    return (month >= 1 && month <= 12) ? months[month] : '';
-  }
-
-  List<int> _getAvailableYears() {
-    final years = _monthKeys.map((k) => int.parse(k.split('-')[0])).toSet().toList()..sort();
-    return years;
+  @override
+  bool shouldRepaint(covariant _GradientCircularPainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }

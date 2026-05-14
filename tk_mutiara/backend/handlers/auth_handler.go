@@ -146,3 +146,85 @@ func LoginHandler(c *gin.Context) {
 		"user":  userPayload,
 	})
 }
+
+// ChangePasswordHandler handles password updates
+func ChangePasswordHandler(c *gin.Context) {
+	var req struct {
+		Username                 string `json:"username" binding:"required"`
+		OldPassword             string `json:"old_password" binding:"required"`
+		NewPassword             string `json:"new_password" binding:"required"`
+		NewPasswordConfirmation string `json:"new_password_confirmation" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, models.ApiResponse{
+			Success: false,
+			Message: "Semua data harus diisi dengan benar",
+		})
+		return
+	}
+
+	if req.NewPassword != req.NewPasswordConfirmation {
+		c.JSON(http.StatusBadRequest, models.ApiResponse{
+			Success: false,
+			Message: "Konfirmasi password tidak cocok",
+		})
+		return
+	}
+
+	// Cek user dan password lama
+	var passwordHash string
+	var userID int
+	query := "SELECT id_akun, password FROM akun WHERE username = ?"
+	err := config.DB.QueryRow(query, req.Username).Scan(&userID, &passwordHash)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusUnauthorized, models.ApiResponse{
+				Success: false,
+				Message: "Username atau password lama salah",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, models.ApiResponse{
+			Success: false,
+			Message: "Terjadi kesalahan server",
+		})
+		return
+	}
+
+	// Verify old password
+	err = bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(req.OldPassword))
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, models.ApiResponse{
+			Success: false,
+			Message: "Username atau password lama salah",
+		})
+		return
+	}
+
+	// Hash new password
+	newHash, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ApiResponse{
+			Success: false,
+			Message: "Gagal memproses password baru",
+		})
+		return
+	}
+
+	// Update password
+	updateQuery := "UPDATE akun SET password = ? WHERE id_akun = ?"
+	_, err = config.DB.Exec(updateQuery, string(newHash), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ApiResponse{
+			Success: false,
+			Message: "Gagal memperbarui password di database",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, models.ApiResponse{
+		Success: true,
+		Message: "Password berhasil diubah",
+	})
+}

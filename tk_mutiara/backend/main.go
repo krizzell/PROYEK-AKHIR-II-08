@@ -49,6 +49,7 @@ func main() {
 	})
 
 	r.POST("/login", handlers.LoginHandler)
+	r.POST("/change-password", handlers.ChangePasswordHandler)
 	r.POST("/api/payment/webhook/midtrans", handlers.MidtransWebhookHandler)
 
 	// ==============================

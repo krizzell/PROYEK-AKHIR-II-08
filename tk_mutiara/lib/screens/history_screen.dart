@@ -98,9 +98,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
             Expanded(
               child: RefreshIndicator(
                 color: AppTheme.primary,
+                edgeOffset: 20,
                 onRefresh: _loadPayments,
                 child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
