@@ -118,6 +118,13 @@
         align-items: start;
     }
 
+    .dashboard-main {
+        background: #FFFFFF;
+        border-radius: 16px;
+        padding: 32px;
+        border: 1px solid #E5E7EB;
+    }
+
     @media (max-width: 1100px) {
         .dashboard-layout {
             grid-template-columns: 1fr;
@@ -175,7 +182,7 @@
     .stat-card-title {
         font-size: 13px;
         font-weight: 600;
-        color: #000000;
+        color: #6B7280;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         margin-bottom: 8px;
@@ -183,8 +190,8 @@
 
     .stat-card-value {
         font-size: 36px;
-        font-weight: 800;
-        color: #000000;
+        font-weight: 700;
+        color: #111827;
         margin: 0;
         line-height: 1.2;
         letter-spacing: -1px;
@@ -203,15 +210,15 @@
 
     .icon-emerald { background: rgba(34, 197, 94, 0.1); color: #22C55E; }
     .icon-blue { background: rgba(59, 130, 246, 0.1); color: #3B82F6; }
-    .icon-orange { background: rgba(249, 115, 22, 0.1); color: #F97316; }
-    .icon-yellow { background: rgba(255, 209, 102, 0.2); color: #E85000; }
+    .icon-orange { background: rgba(255, 122, 0, 0.1); color: #FF7A00; }
+    .icon-yellow { background: rgba(255, 122, 0, 0.1); color: #FF7A00; }
 
     /* Activities Sidebar */
     .activities-wrapper {
         background: #FFFFFF;
-        border-radius: 20px;
+        border-radius: 12px;
         padding: 24px;
-        border: 1px solid rgba(226, 232, 240, 0.6);
+        border: 1px solid #E5E7EB;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
         position: sticky;
         top: 100px;
@@ -225,15 +232,15 @@
     }
 
     .activities-title {
-        font-size: 20px;
+        font-size: 18px;
         font-weight: 700;
-        color: #000000;
+        color: #111827;
         margin: 0;
     }
 
     .activities-badge {
-        background: #F1F5F9;
-        color: #000000;
+        background: #F3F4F6;
+        color: #6B7280;
         font-size: 11px;
         font-weight: 600;
         padding: 4px 8px;
@@ -266,7 +273,7 @@
         left: -4px;
         width: 8px;
         height: 8px;
-        background-color: #F97316;
+        background-color: #FF7A00;
         border-radius: 50%;
         box-shadow: 0 0 8px rgba(249, 115, 22, 0.6);
         animation: pulse-glow 2s infinite;
@@ -325,7 +332,7 @@
     .activity-class {
         font-size: 12px;
         font-weight: 600;
-        color: #F97316;
+        color: #FF7A00;
         background: rgba(249, 115, 22, 0.1);
         padding: 2px 6px;
         border-radius: 4px;

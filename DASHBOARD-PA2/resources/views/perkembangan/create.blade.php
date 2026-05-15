@@ -6,7 +6,7 @@
 <style>
     :root {
         --primary-color: #F97316;
-        --primary-light: #FFEDE3;
+        --primary-light: #FEF3C7;
         --primary-dark: #F97316;
         --success-color: #10B981;
         --warning-color: #F59E0B;

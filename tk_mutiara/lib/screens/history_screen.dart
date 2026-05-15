@@ -354,7 +354,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         const SizedBox(height: 2),
                         Text(
                           p.isLunas
-                              ? 'Dibayar: ${p.tanggalBayar}'
+                              ? _formatPaymentDateTime(p.paymentDate)
                               : 'Jatuh tempo: 10 ${p.bulan} ${p.tahun}',
                           style: const TextStyle(
                             color: AppTheme.textMedium,
@@ -462,4 +462,30 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
     return 'Rp ${buffer.toString().split('').reversed.join('')}';
   }
+
+  String _formatPaymentDateTime(String dateTimeString) {
+    if (dateTimeString.isEmpty) return 'Dibayar: -';
+    
+    try {
+      // Parse datetime string (format: YYYY-MM-DD HH:MM:SS)
+      final DateTime dt = DateTime.parse(dateTimeString);
+      
+      // Format: Dibayar: 15 Mei 2026, 14:30
+      final Map<int, String> bulanNama = {
+        1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'Mei', 6: 'Jun',
+        7: 'Jul', 8: 'Agu', 9: 'Sep', 10: 'Okt', 11: 'Nov', 12: 'Des',
+      };
+      
+      final tanggal = dt.day.toString().padLeft(2, '0');
+      final bulan = bulanNama[dt.month] ?? '';
+      final tahun = dt.year;
+      final jam = dt.hour.toString().padLeft(2, '0');
+      final menit = dt.minute.toString().padLeft(2, '0');
+      
+      return 'Dibayar: $tanggal $bulan $tahun, $jam:$menit';
+    } catch (e) {
+      return 'Dibayar: ${dateTimeString.split(' ').first}';
+    }
+  }
 }
+

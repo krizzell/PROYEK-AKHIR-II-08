@@ -30,7 +30,7 @@
     }
 
     .btn-add {
-        background: #F97316;
+        background: #FF7A00;
         color: white;
         padding: 0.75rem 1.5rem;
         border-radius: 0.75rem;
@@ -45,15 +45,16 @@
     }
 
     .btn-add:hover {
-        background: #E85000;
+        background: #E65E00;
         transform: translateY(-2px);
     }
 
     .filter-section {
+        background: #FFFFFF;
         margin-bottom: 1.5rem;
         padding: 1.5rem;
         border: 1px solid var(--border-color);
-        border-radius: 0.75rem;
+        border-radius: 12px;
     }
 
     .filter-title {
@@ -96,8 +97,17 @@
     .filter-group input:focus,
     .filter-group select:focus {
         outline: none;
-        border-color: var(--button-gray);
-        box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.1);
+        border-color: #FF7A00;
+        background-color: white;
+        box-shadow: 0 0 0 2px rgba(255, 122, 0, 0.1);
+    }
+
+    .filter-group select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23111827' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.5rem center;
+        padding-right: 2rem;
     }
 
     .filter-actions {
@@ -107,10 +117,10 @@
 
     .btn-filter {
         padding: 0.625rem 1.25rem;
-        background: var(--button-gray);
+        background: #FF7A00;
         color: white;
         border: none;
-        border-radius: 0.5rem;
+        border-radius: 8px;
         cursor: pointer;
         font-weight: 600;
         font-size: 0.9rem;
@@ -121,7 +131,7 @@
     }
 
     .btn-filter:hover {
-        background: #4B5563;
+        background: #E65E00;
         transform: translateY(-1px);
     }
 
@@ -146,9 +156,11 @@
     }
 
     .table-container {
+        background: #FFFFFF;
         border: 1px solid var(--border-color);
-        border-radius: 0.75rem;
+        border-radius: 12px;
         overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
     }
 
     .table {
@@ -266,95 +278,13 @@
     .count-info strong {
         color: var(--text-primary);
     }
-
-    .bulk-actions {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        margin-bottom: 1rem;
-        padding: 1rem 1.25rem;
-        border: 1px solid var(--border-color);
-        border-radius: 0.75rem;
-        background: #fff;
-    }
-
-    .bulk-actions.hidden {
-        display: none;
-    }
-
-    .bulk-actions-info {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-
-    .btn-bulk-delete {
-        background: #EF4444;
-        color: white;
-        padding: 0.75rem 1.25rem;
-        border-radius: 0.75rem;
-        border: none;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .btn-bulk-delete:hover {
-        background: #DC2626;
-        transform: translateY(-1px);
-    }
-
-    .btn-bulk-delete:disabled {
-        background: #FCA5A5;
-        cursor: not-allowed;
-        transform: none;
-        opacity: 0.8;
-    }
-
-    .btn-bulk-clear {
-        background: white;
-        color: var(--button-gray);
-        padding: 0.75rem 1.25rem;
-        border-radius: 0.75rem;
-        border: 1px solid var(--border-color);
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .btn-bulk-clear:hover {
-        background: var(--hover-bg);
-        border-color: var(--button-gray);
-    }
-
-    .select-all-wrapper,
-    .row-checkbox-wrapper {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .siswa-checkbox,
-    #selectAllSiswa {
-        width: 18px;
-        height: 18px;
-        accent-color: #EF4444;
-        cursor: pointer;
-    }
 </style>
 
 <div class="page-header">
     <h1><i class="bi bi-people"></i> Data Siswa</h1>
     <div style="display: flex; gap: 0.75rem;">
         <a href="{{ route('siswa.importForm') }}" class="btn-add" style="background: #06B6D4;">
-            <i class="bi bi-download"></i> Import Excel
+            <i class="bi bi-upload"></i> Import Excel
         </a>
         <a href="{{ route('siswa.create') }}" class="btn-add">
             <i class="bi bi-plus-lg"></i> Tambah Siswa
@@ -363,29 +293,6 @@
 </div>
 
 <!-- Filter Section -->
-@if(session('success') || session('error') || session('warning') || session('import_errors'))
-    <div style="margin-bottom: 1rem;">
-        @if(session('success'))
-            <div style="background:#ECFDF5;border-left:4px solid #10B981;padding:0.75rem;border-radius:0.5rem;margin-bottom:0.5rem;color:#065F46;">{{ session('success') }}</div>
-        @endif
-        @if(session('error'))
-            <div style="background:#FEE2E2;border-left:4px solid #EF4444;padding:0.75rem;border-radius:0.5rem;margin-bottom:0.5rem;color:#7F1D1D;">{{ session('error') }}</div>
-        @endif
-        @if(session('warning'))
-            <div style="background:#FEF3C7;border-left:4px solid #F59E0B;padding:0.75rem;border-radius:0.5rem;margin-bottom:0.5rem;color:#92400E;">{{ session('warning') }}</div>
-        @endif
-        @if(session('import_errors'))
-            <div style="background:#FEE2E2;border-left:4px solid #EF4444;padding:0.75rem;border-radius:0.5rem;color:#7F1D1D;">
-                <strong>Baris gagal diimpor:</strong>
-                <ul style="margin:0.5rem 0 0 1.25rem;">
-                    @foreach(session('import_errors') as $ie)
-                        <li>{{ $ie }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-    </div>
-@endif
 <div class="filter-section">
     <div class="filter-title">
         <i class="bi bi-funnel"></i> Filter Data
@@ -450,33 +357,10 @@
     <div class="count-info">
         Menampilkan <strong>{{ $siswa->count() }}</strong> dari total data siswa
     </div>
-    <form id="bulkDeleteForm" action="{{ route('siswa.bulkDestroy') }}" method="POST" style="display: none;">
-        @csrf
-    </form>
-
-    <div class="bulk-actions">
-        <div class="bulk-actions-info">
-            <span id="selectedSiswaCount" style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;"></span>
-        </div>
-        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-            <button type="button" class="btn-bulk-clear" id="clearSelectionBtn">
-                <i class="bi bi-x-circle"></i> Batal Pilih
-            </button>
-            <button type="submit" class="btn-bulk-delete" id="bulkDeleteBtn" form="bulkDeleteForm" disabled>
-                <i class="bi bi-trash"></i> Hapus yang Ditandai
-            </button>
-        </div>
-    </div>
-
     <div class="table-container">
         <table class="table">
             <thead>
                 <tr>
-                    <th style="width: 50px;">
-                        <div class="select-all-wrapper">
-                            <input type="checkbox" id="selectAllSiswa" aria-label="Pilih semua siswa">
-                        </div>
-                    </th>
                     <th style="width: 50px;">No</th>
                     <th>NISN</th>
                     <th>Nama Siswa</th>
@@ -490,11 +374,6 @@
             <tbody>
                 @foreach ($siswa as $item)
                 <tr>
-                    <td>
-                        <div class="row-checkbox-wrapper">
-                            <input type="checkbox" class="siswa-checkbox" form="bulkDeleteForm" name="selected_siswa[]" value="{{ $item->nomor_induk_siswa }}" aria-label="Pilih siswa {{ $item->nama_siswa }}">
-                        </div>
-                    </td>
                     <td>{{ $loop->iteration }}</td>
                     <td><strong>{{ $item->nomor_induk_siswa ?? '-' }}</strong></td>
                     <td>{{ $item->nama_siswa }}</td>
@@ -527,99 +406,3 @@
 @endif
 
 @endsection
-
-@section('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const selectAllCheckbox = document.getElementById('selectAllSiswa');
-        const rowCheckboxes = Array.from(document.querySelectorAll('.siswa-checkbox'));
-        const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
-        const bulkDeleteForm = document.getElementById('bulkDeleteForm');
-        const selectedSiswaCount = document.getElementById('selectedSiswaCount');
-        const clearSelectionBtn = document.getElementById('clearSelectionBtn');
-        const bulkActionsContainer = document.querySelector('.bulk-actions');
-
-        if (!selectAllCheckbox || !bulkDeleteBtn || !bulkDeleteForm || !selectedSiswaCount || !clearSelectionBtn || !bulkActionsContainer) {
-            return;
-        }
-
-        bulkActionsContainer.classList.add('hidden');
-
-        const syncButtonState = () => {
-            const selectedCount = rowCheckboxes.filter((checkbox) => checkbox.checked).length;
-            
-            if (selectedCount > 0) {
-                bulkActionsContainer.classList.remove('hidden');
-            } else {
-                bulkActionsContainer.classList.add('hidden');
-            }
-            
-            bulkDeleteBtn.disabled = selectedCount === 0;
-            bulkDeleteBtn.innerHTML = selectedCount > 0
-                ? `<i class="bi bi-trash"></i> Hapus yang Ditandai (${selectedCount})`
-                : '<i class="bi bi-trash"></i> Hapus yang Ditandai';
-
-            selectedSiswaCount.innerHTML = selectedCount > 0
-                ? `<i class="bi bi-check-circle-fill" style="color: #10B981; margin-right: 0.5rem;"></i> ${selectedCount} siswa dipilih`
-                : '';
-
-            selectAllCheckbox.checked = selectedCount > 0 && selectedCount === rowCheckboxes.length;
-            selectAllCheckbox.indeterminate = selectedCount > 0 && selectedCount < rowCheckboxes.length;
-        };
-
-        selectAllCheckbox.addEventListener('change', function () {
-            rowCheckboxes.forEach((checkbox) => {
-                checkbox.checked = this.checked;
-            });
-            syncButtonState();
-        });
-
-        clearSelectionBtn.addEventListener('click', function () {
-            rowCheckboxes.forEach((checkbox) => {
-                checkbox.checked = false;
-            });
-            syncButtonState();
-        });
-
-        rowCheckboxes.forEach((checkbox) => {
-            checkbox.addEventListener('change', syncButtonState);
-        });
-
-        bulkDeleteForm.addEventListener('submit', function (event) {
-            event.preventDefault();
-
-            const selectedCount = rowCheckboxes.filter((checkbox) => checkbox.checked).length;
-            if (selectedCount === 0) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Belum ada siswa dipilih',
-                    text: 'Centang minimal satu siswa terlebih dahulu.',
-                });
-                return;
-            }
-
-            Swal.fire({
-                title: 'Hapus ' + selectedCount + ' siswa?',
-                text: 'Data yang dihapus tidak dapat dipulihkan',
-                icon: 'error',
-                showCancelButton: true,
-                confirmButtonColor: '#EF4444',
-                cancelButtonColor: '#6B7280',
-                confirmButtonText: 'Ya, Hapus',
-                cancelButtonText: 'Batal',
-                backdrop: true,
-                allowOutsideClick: true,
-                allowEscapeKey: true,
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    bulkDeleteForm.submit();
-                }
-            });
-        });
-
-        syncButtonState();
-    });
-</script>
-@endsection
-
-

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // === COLOR PALETTE ===
@@ -17,10 +18,56 @@ class AppTheme {
   static const Color danger = Color(0xFFEF4444);
   static const Color cardShadow = Color.fromARGB(26, 255, 107, 26);
 
+  // === TYPOGRAPHY ===
+  static TextStyle get heading1 => GoogleFonts.montserrat(
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+    color: textDark,
+    letterSpacing: -0.5,
+  );
+
+  static TextStyle get heading2 => GoogleFonts.montserrat(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: textDark,
+    letterSpacing: -0.3,
+  );
+
+  static TextStyle get heading3 => GoogleFonts.montserrat(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: textDark,
+    letterSpacing: -0.2,
+  );
+
+  static TextStyle get heading4 => GoogleFonts.montserrat(
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    color: textDark,
+  );
+
+  static TextStyle get bodyLarge => GoogleFonts.montserrat(
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+    color: textDark,
+  );
+
+  static TextStyle get bodyMedium => GoogleFonts.montserrat(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: textMedium,
+  );
+
+  static TextStyle get bodySmall => GoogleFonts.montserrat(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    color: textLight,
+  );
+
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      fontFamily: 'Nunito',
+      fontFamily: GoogleFonts.montserrat().fontFamily,
       colorScheme: ColorScheme.light(
         primary: primary,
         secondary: primaryLight,
@@ -32,17 +79,16 @@ class AppTheme {
         onBackground: textDark,
       ),
       scaffoldBackgroundColor: background,
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        iconTheme: IconThemeData(color: textDark),
-        titleTextStyle: TextStyle(
+        iconTheme: const IconThemeData(color: textDark),
+        titleTextStyle: GoogleFonts.montserrat(
           color: textDark,
           fontSize: 20,
-          fontWeight: FontWeight.w800,
-          fontFamily: 'Nunito',
+          fontWeight: FontWeight.bold,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -54,8 +100,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: const TextStyle(
-            fontFamily: 'Nunito',
+          textStyle: GoogleFonts.montserrat(
             fontWeight: FontWeight.w700,
             fontSize: 16,
           ),

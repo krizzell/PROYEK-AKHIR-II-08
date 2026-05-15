@@ -24,6 +24,7 @@ Route::middleware('api')->group(function () {
     // Tagihan APIs
     Route::get('/tagihan', [TagihanApiController::class, 'index']);
     Route::get('/tagihan/{id}', [TagihanApiController::class, 'show']);
+    Route::get('/tagihan/check-duplikat', [TagihanApiController::class, 'checkDuplikat']);
     
     // Pembayaran APIs
     Route::post('/create-payment', [PembayaranApiController::class, 'create']);

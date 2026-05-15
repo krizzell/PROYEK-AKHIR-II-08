@@ -5,8 +5,8 @@
 @section('content')
 <style>
     :root {
-        --primary-color: #F97316;
-        --primary-light: #FFEDE3;
+        --primary-color: #FF7A00;
+        --primary-light: #FEF3C7;
         --primary-dark: #EA580C;
         --success-color: #10B981;
         --danger-color: #EF4444;
@@ -228,6 +228,17 @@
             <p class="breadcrumb-text">Isi form di bawah untuk membuat tagihan SPP baru</p>
         </div>
 
+        <!-- ERROR ALERT DISPLAY -->
+        @if (session('error'))
+            <div style="padding: 1rem; border-radius: 0.5rem; background: #FEE2E2; border: 1px solid #FECACA; margin-bottom: 1.5rem; color: #991B1B; font-weight: 500; font-size: 0.95rem;">
+                {!! session('error') !!}
+            </div>
+        @elseif ($errors->any())
+            <div style="padding: 1rem; border-radius: 0.5rem; background: #FEE2E2; border: 1px solid #FECACA; margin-bottom: 1.5rem; color: #991B1B; font-weight: 500; font-size: 0.95rem;">
+                {{ $errors->first() }}
+            </div>
+        @endif
+
         <!-- MAIN FORM -->
         <form action="{{ route('tagihan.store') }}" method="POST">
             @csrf
@@ -287,6 +298,7 @@
                                 <i class="bi bi-info-circle-fill"></i> Informasi Penting
                             </p>
                             <p class="info-box-text">
+                                ⚠️ <strong>Satu siswa hanya dapat memiliki satu tagihan per periode.</strong> Jika Anda mencoba membuat tagihan untuk siswa yang sudah memiliki tagihan di periode yang sama, sistem akan menolak dan menampilkan pesan error.<br><br>
                                 Status pembayaran akan berubah otomatis menjadi "Lunas" ketika orangtua melakukan pembayaran melalui aplikasi mobile. Anda tidak dapat mengubah status pembayaran secara manual dari sini.
                             </p>
                         </div>
@@ -304,5 +316,47 @@
         </form>
     </div>
 </div>
+
+<script>
+    // Live check untuk duplikat tagihan
+    document.getElementById('nomor_induk_siswa').addEventListener('change', async function() {
+        const siswaId = this.value;
+        const periodeInput = document.querySelector('input[name="periode"]');
+        const periode = periodeInput.value;
+        const duplikatWarning = document.getElementById('duplikat-warning');
+
+        if (!siswaId || !periode) return;
+
+        try {
+            // Check apakah sudah ada tagihan untuk siswa + periode ini
+            const response = await fetch(`/api/tagihan/check-duplikat?siswa=${siswaId}&periode=${encodeURIComponent(periode)}`);
+            const data = await response.json();
+
+            if (data.exists) {
+                // Tampilkan warning jika sudah ada
+                if (!duplikatWarning) {
+                    const warningDiv = document.createElement('div');
+                    warningDiv.id = 'duplikat-warning';
+                    warningDiv.style.cssText = 'padding: 1rem; background: #FEF3C7; border: 1px solid #FCD34D; border-radius: 0.5rem; margin-bottom: 1.5rem; color: #92400E; font-weight: 500; display: flex; align-items: center; gap: 0.5rem;';
+                    warningDiv.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> <span>⚠️ Siswa ini sudah memiliki tagihan untuk periode <strong>' + periode + '</strong>. Tidak dapat membuat tagihan duplikat.</span>';
+                    const formSection = document.querySelector('.form-section');
+                    formSection.parentNode.insertBefore(warningDiv, formSection);
+                }
+                document.querySelector('button[type="submit"]').disabled = true;
+                document.querySelector('button[type="submit"]').style.opacity = '0.5';
+            } else {
+                // Hapus warning jika tidak ada duplikat
+                const duplikatWarning = document.getElementById('duplikat-warning');
+                if (duplikatWarning) {
+                    duplikatWarning.remove();
+                }
+                document.querySelector('button[type="submit"]').disabled = false;
+                document.querySelector('button[type="submit"]').style.opacity = '1';
+            }
+        } catch (error) {
+            console.error('Error checking duplikat:', error);
+        }
+    });
+</script>
 
 @endsection

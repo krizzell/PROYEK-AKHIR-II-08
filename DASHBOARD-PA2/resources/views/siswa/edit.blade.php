@@ -5,8 +5,8 @@
 @section('content')
 <style>
     :root {
-        --primary-color: #F97316;
-        --primary-light: #FFEDE3;
+        --primary-color: #FF7A00;
+        --primary-light: #FEF3C7;
         --primary-dark: #EA580C;
         --success-color: #10B981;
         --danger-color: #EF4444;
@@ -160,6 +160,14 @@
 
     .form-control::placeholder {
         color: #6B7280;
+    }
+
+    select.form-control {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23111827' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        padding-right: 2.5rem;
     }
 
     textarea.form-control {

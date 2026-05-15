@@ -30,7 +30,7 @@
     }
 
     .btn-add {
-        background: #F97316;
+        background: #FF7A00;
         color: white;
         padding: 0.75rem 1.5rem;
         border-radius: 0.75rem;
@@ -45,7 +45,7 @@
     }
 
     .btn-add:hover {
-        background: #E85000;
+        background: #E65E00;
         transform: translateY(-2px);
     }
 
@@ -82,9 +82,11 @@
     }
 
     .table-container {
+        background: #FFFFFF;
         border: 1px solid var(--border-color);
-        border-radius: 0.75rem;
+        border-radius: 12px;
         overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
     }
 
     .table {

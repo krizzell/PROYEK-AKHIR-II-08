@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/pembayaran_model.dart';
 import '../models/pengumuman_model.dart';
 import '../models/perkembangan_model.dart';
@@ -159,7 +161,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         _perkembangan(),
                         const SizedBox(height: 20),
                         _pengumumanUI(),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 100),
                       ],
                     ),
                   ),
@@ -212,14 +214,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(_getGreeting(), style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w500)),
+                        Text(_getGreeting(), style: GoogleFonts.montserrat(color: Colors.white.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w500)),
                         const SizedBox(height: 2),
                         InkWell(
                           onTap: _showSwitchAccount,
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Flexible(child: Text(_namaAnak, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5), overflow: TextOverflow.ellipsis)),
+                              Flexible(child: Text(_namaAnak, style: GoogleFonts.montserrat(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.5), overflow: TextOverflow.ellipsis)),
                               const SizedBox(width: 4),
                               Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white.withOpacity(0.8), size: 18),
                             ],
@@ -320,16 +322,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       children: [
                         Container(width: 5, height: 5, decoration: BoxDecoration(color: badgeColor, shape: BoxShape.circle)),
                         const SizedBox(width: 4),
-                        Text(badge, style: TextStyle(color: badgeColor, fontSize: 10, fontWeight: FontWeight.w800)),
+                        Text(badge, style: GoogleFonts.montserrat(color: badgeColor, fontSize: 10, fontWeight: FontWeight.w800)),
                       ],
                     ),
                   ),
               ],
             ),
             const SizedBox(height: 16),
-            Text(title, style: const TextStyle(color: AppTheme.textDark, fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: -0.3)),
+            Text(title, style: GoogleFonts.montserrat(color: AppTheme.textDark, fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: -0.3)),
             const SizedBox(height: 2),
-            Text(subtitle, style: const TextStyle(color: AppTheme.textLight, fontSize: 10, height: 1.4)),
+            Text(subtitle, style: GoogleFonts.montserrat(color: AppTheme.textLight, fontSize: 10, fontWeight: FontWeight.w400, height: 1.4)),
           ],
         ),
       ),
@@ -353,9 +355,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Container(width: 40, height: 4, decoration: BoxDecoration(color: AppTheme.textLight.withOpacity(0.3), borderRadius: BorderRadius.circular(4))),
               const SizedBox(height: 24),
-              const Text("Pengaturan Akun", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.textDark, letterSpacing: -0.5)),
+              Text("Pengaturan Akun", style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
               const SizedBox(height: 8),
-              Text("Kelola keamanan dan sesi akun Anda", style: TextStyle(fontSize: 13, color: AppTheme.textMedium.withOpacity(0.8))),
+              Text("Kelola keamanan dan sesi akun Anda", style: GoogleFonts.montserrat(fontSize: 13, fontWeight: FontWeight.w500, color: AppTheme.textMedium.withOpacity(0.8))),
               const SizedBox(height: 32),
               
               // 1. Change Password Option
@@ -425,20 +427,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.textDark)),
+                  Text(title, style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.textDark)),
                   const SizedBox(height: 2),
-                  Text(subtitle, style: TextStyle(fontSize: 12, color: AppTheme.textMedium.withOpacity(0.7))),
+                  Text(subtitle, style: GoogleFonts.montserrat(fontSize: 12, fontWeight: FontWeight.w500, color: AppTheme.textMedium.withOpacity(0.7))),
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.textLight.withOpacity(0.4)),
+            Icon(Icons.arrow_forward_rounded, size: 16, color: AppTheme.textLight.withOpacity(0.5)),
           ],
         ),
       ),
     );
   }
 
-  // ── PENGUMUMAN SECTION (PREMIUM FEED) ──
+  // ── PENGUMUMAN SECTION (HORIZONTAL SCROLLABLE) ──
   Widget _pengumumanUI() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -448,94 +450,66 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
-                children: [
-                  Text(
-                    "Pengumuman",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 18,
-                      color: AppTheme.textDark,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                ],
+              Text(
+                "Pengumuman",
+                style: GoogleFonts.montserrat(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: AppTheme.textDark,
+                  letterSpacing: -0.5,
+                ),
               ),
               GestureDetector(
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PengumumanScreen())),
-                child: const Row(
+                child: Row(
                   children: [
                     Text(
                       "Lihat semua",
-                      style: TextStyle(
+                      style: GoogleFonts.montserrat(
                         color: AppTheme.primary,
                         fontSize: 13,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    SizedBox(width: 4),
-                    Icon(Icons.arrow_forward_rounded, size: 14, color: AppTheme.primary),
+                    const SizedBox(width: 6),
+                    Icon(Icons.arrow_forward_rounded, size: 16, color: AppTheme.primary),
                   ],
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         if (_pengumuman.isEmpty)
           Container(
             width: double.infinity,
             margin: const EdgeInsets.symmetric(horizontal: 20),
-            padding: const EdgeInsets.symmetric(vertical: 40),
+            padding: const EdgeInsets.symmetric(vertical: 32),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(color: const Color(0xFFF1F5F9)),
             ),
             child: Column(
               children: [
-                Icon(Icons.campaign_outlined, size: 48, color: AppTheme.textLight.withOpacity(0.3)),
-                const SizedBox(height: 12),
-                const Text('Belum ada pengumuman', style: TextStyle(color: AppTheme.textMedium, fontSize: 13, fontWeight: FontWeight.w500)),
+                Icon(Icons.campaign_outlined, size: 40, color: AppTheme.textLight.withOpacity(0.3)),
+                const SizedBox(height: 8),
+                const Text('Belum ada pengumuman', style: TextStyle(color: AppTheme.textMedium, fontSize: 12, fontWeight: FontWeight.w500)),
               ],
             ),
           )
         else
-          Padding(
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
+            child: Row(
               children: [
-                // 1. Featured Item
-                _buildFeaturedPengumuman(_pengumuman[0]),
-                
-                // 2. Secondary Items
-                if (_pengumuman.length > 1) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20, offset: const Offset(0, 4)),
-                      ],
-                    ),
-                    child: Column(
-                      children: _pengumuman.sublist(1).asMap().entries.map((entry) {
-                        final isLast = entry.key == _pengumuman.length - 2;
-                        return Column(
-                          children: [
-                            _buildSecondaryPengumuman(entry.value),
-                            if (!isLast)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 20),
-                                child: Divider(height: 1, color: Colors.black.withOpacity(0.05)),
-                              ),
-                          ],
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ],
+                ..._pengumuman.asMap().entries.map((entry) {
+                  return Padding(
+                    padding: EdgeInsets.only(right: entry.key == _pengumuman.length - 1 ? 20 : 12),
+                    child: _buildHorizontalPengumuman(entry.value),
+                  );
+                }).toList(),
               ],
             ),
           ),
@@ -543,134 +517,128 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildFeaturedPengumuman(PengumumanModel e) {
+  Widget _buildHorizontalPengumuman(PengumumanModel e) {
+    final imageUrl = PengumumanModel.getImageUrl(e.media);
+    
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PengumumanScreen(idPengumuman: e.idPengumuman))),
       child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
+        width: 280,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.primary.withOpacity(0.08),
-              AppTheme.primary.withOpacity(0.03),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppTheme.primary.withOpacity(0.12)),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFF1F5F9), width: 1),
           boxShadow: [
-            BoxShadow(color: AppTheme.primary.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 8)),
+            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 2)),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primary.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    "TERBARU",
-                    style: TextStyle(
-                      color: AppTheme.primary,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.5,
+            // Image Header dengan CachedNetworkImage
+            if (imageUrl.isNotEmpty)
+              ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(15),
+                  topRight: Radius.circular(15),
+                ),
+                child: Container(
+                  height: 140,
+                  width: double.infinity,
+                  color: const Color(0xFFF9FAFB),
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    fit: BoxFit.cover,
+                    memCacheHeight: 400,
+                    memCacheWidth: 400,
+                    placeholder: (context, url) => Container(
+                      color: Colors.grey.withOpacity(0.1),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(AppTheme.primary)),
+                        ),
+                      ),
                     ),
+                    errorWidget: (context, url, error) {
+                      print('❌ Image load error: $url, Error: $error');
+                      return Container(
+                        color: AppTheme.primary.withOpacity(0.08),
+                        child: Icon(
+                          Icons.image_not_supported_rounded,
+                          color: AppTheme.textLight.withOpacity(0.3),
+                          size: 32,
+                        ),
+                      );
+                    },
                   ),
                 ),
-                const Spacer(),
-                Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.primary.withOpacity(0.5)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              e.judul,
-              style: const TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 18,
-                color: AppTheme.textDark,
-                letterSpacing: -0.4,
-                height: 1.3,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              e.deskripsi,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 13,
-                color: AppTheme.textDark.withOpacity(0.7),
-                height: 1.6,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Icon(Icons.calendar_today_rounded, size: 12, color: AppTheme.textLight.withOpacity(0.8)),
-                const SizedBox(width: 6),
-                Text(
-                  e.waktuUnggah,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppTheme.textLight.withOpacity(0.9),
-                    fontWeight: FontWeight.w600,
+              )
+            else
+              Container(
+                height: 140,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withOpacity(0.08),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(15),
+                    topRight: Radius.circular(15),
                   ),
                 ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSecondaryPengumuman(PengumumanModel e) {
-    return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PengumumanScreen(idPengumuman: e.idPengumuman))),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        color: Colors.transparent, // For hit testing
-        child: Row(
-          children: [
-            Expanded(
+                child: Icon(Icons.campaign_rounded, color: AppTheme.primary.withOpacity(0.5), size: 40),
+              ),
+            
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     e.judul,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: GoogleFonts.montserrat(
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                       color: AppTheme.textDark,
-                      letterSpacing: -0.2,
+                      letterSpacing: -0.3,
+                      height: 1.3,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   Text(
-                    e.waktuUnggah,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppTheme.textLight.withOpacity(0.7),
-                      fontWeight: FontWeight.w500,
+                    e.deskripsi,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.montserrat(
+                      fontSize: 12,
+                      color: AppTheme.textDark.withOpacity(0.65),
+                      height: 1.4,
+                      fontWeight: FontWeight.w400,
                     ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Baca Selengkapnya
+                  Row(
+                    children: [
+                      Text(
+                        "Baca Selengkapnya",
+                        style: GoogleFonts.montserrat(
+                          fontSize: 12,
+                          color: AppTheme.primary,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(Icons.arrow_forward_rounded, size: 12, color: AppTheme.primary),
+                    ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
-            Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppTheme.textLight.withOpacity(0.4)),
           ],
         ),
       ),
@@ -801,7 +769,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           children: [
                             const Text("Lihat Laporan Detail", style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w700)),
                             const SizedBox(width: 6),
-                            Icon(Icons.arrow_forward_rounded, size: 14, color: AppTheme.primary.withOpacity(0.8)),
+                            Icon(Icons.arrow_forward_rounded, size: 16, color: AppTheme.primary.withOpacity(0.8)),
                           ],
                         ),
                       ),

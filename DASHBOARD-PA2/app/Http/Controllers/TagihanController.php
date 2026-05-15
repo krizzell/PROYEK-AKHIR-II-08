@@ -96,6 +96,17 @@ class TagihanController extends Controller
             return redirect()->route('tagihan.index')->with('error', 'Anda tidak berwenang membuat tagihan. Hanya admin yang dapat membuat tagihan.');
         }
         
+        // Check duplikat tagihan SEBELUM validasi Laravel
+        $duplikatCheck = Tagihan::where('nomor_induk_siswa', $request->nomor_induk_siswa)
+            ->where('periode', $request->periode)
+            ->first();
+        
+        if ($duplikatCheck) {
+            return redirect()->route('tagihan.create')
+                ->with('error', 'Tagihan duplikat! Siswa ini sudah memiliki tagihan untuk periode ' . $request->periode . '. Satu siswa hanya bisa memiliki satu tagihan per periode.')
+                ->withInput();
+        }
+        
         $validated = $request->validate([
             'nomor_induk_siswa' => 'required|exists:siswa,nomor_induk_siswa',
             'jumlah_tagihan' => 'required|numeric|min:0',
@@ -107,7 +118,7 @@ class TagihanController extends Controller
         $validated['status'] = 'belum_bayar';
         
         Tagihan::create($validated);
-        return redirect()->route('tagihan.index')->with('success', 'Tagihan berhasil ditambahkan');
+        return redirect()->route('tagihan.index')->with('success', '✅ Tagihan berhasil ditambahkan');
     }
 
     public function show(Tagihan $tagihan)

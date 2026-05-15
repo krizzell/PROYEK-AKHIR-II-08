@@ -31,6 +31,16 @@ class TagihanApiController extends Controller
                 ->get()
                 ->map(function ($item) {
                     $normalizedStatus = $item->payment_status ?: ($item->status ?: 'belum_bayar');
+                    
+                    // Format payment_date dengan error handling
+                    $paymentDateFormatted = '';
+                    if ($item->payment_date) {
+                        try {
+                            $paymentDateFormatted = $item->payment_date->format('Y-m-d H:i:s');
+                        } catch (\Exception $e) {
+                            $paymentDateFormatted = '';
+                        }
+                    }
 
                     return [
                         'id_tagihan' => $item->id_tagihan,
@@ -43,7 +53,7 @@ class TagihanApiController extends Controller
                         'payment_status' => $normalizedStatus,
                         'transaction_id' => $item->transaction_id,
                         'payment_method' => $item->payment_method,
-                        'payment_date' => optional($item->payment_date)->format('Y-m-d H:i:s'),
+                        'payment_date' => $paymentDateFormatted,
                         'created_at' => $item->created_at->format('Y-m-d H:i:s'),
                     ];
                 });
@@ -88,6 +98,42 @@ class TagihanApiController extends Controller
                 'status' => 'error',
                 'message' => 'Tagihan tidak ditemukan',
             ], 404);
+        }
+    }
+
+    /**
+     * Check apakah sudah ada tagihan untuk siswa + periode tertentu
+     * Digunakan untuk live validation di form create tagihan
+     */
+    public function checkDuplikat(Request $request)
+    {
+        try {
+            $siswa = $request->query('siswa');
+            $periode = $request->query('periode');
+
+            if (!$siswa || !$periode) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Parameter siswa dan periode diperlukan',
+                    'exists' => false,
+                ], 400);
+            }
+
+            $exists = Tagihan::where('nomor_induk_siswa', $siswa)
+                ->where('periode', $periode)
+                ->exists();
+
+            return response()->json([
+                'status' => 'success',
+                'exists' => $exists,
+                'message' => $exists ? 'Tagihan sudah ada' : 'Tagihan belum ada',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage(),
+                'exists' => false,
+            ], 500);
         }
     }
 }

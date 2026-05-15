@@ -6,7 +6,7 @@
 <style>
     /* SaaS Dashboard Styling */
     :root {
-        --primary-color: #F97316;
+        --primary-color: #FF7A00;
         --primary-light: #FFF7ED;
         --secondary-color: #111827;
         --neutral-50: #F9FAFB;
