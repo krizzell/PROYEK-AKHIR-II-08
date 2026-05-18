@@ -275,9 +275,11 @@
             <a href="{{ route('siswa.index') }}" class="btn-premium btn-back">
                 <i class="bi bi-arrow-left"></i> Kembali ke Daftar
             </a>
+            @if(session('is_super_admin'))
             <a href="{{ route('siswa.edit', ['nomor_induk_siswa' => $siswa->nomor_induk_siswa]) }}" class="btn-premium btn-edit">
                 <i class="bi bi-pencil-square"></i> Edit Siswa
             </a>
+            @endif
         </div>
     </div>
 
@@ -286,7 +288,7 @@
         <div class="sidebar-column">
             <div class="premium-card">
                 <div class="card-body profile-sidebar">
-                    <div class="profile-avatar" style="{{ $siswa->foto_siswa ? 'background: transparent; border: none; padding: 0;' : '' }}">
+                    <div class="profile-avatar">
                         @if($siswa->foto_siswa)
                             <img src="{{ asset('storage/' . $siswa->foto_siswa) }}" alt="Foto Siswa" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 4px solid #FFF; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
                         @else

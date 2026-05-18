@@ -12,6 +12,17 @@ use Carbon\Carbon;
 
 class PerkembanganController extends Controller
 {
+    private function getGuruKelasArray(): array
+    {
+        $guru = Guru::with('kelasAmpuan')->find(session('id_guru'));
+
+        if (!$guru) {
+            return [];
+        }
+
+        return $guru->kelasAmpuan->pluck('id_kelas')->toArray();
+    }
+
     public function index()
     {
         // Super admin bisa melihat SEMUA perkembangan, 
@@ -23,9 +34,7 @@ class PerkembanganController extends Controller
                 ->get();
         } else {
             // Filter perkembangan berdasarkan siswa di kelas guru
-            $kelasGuruArray = Kelas::where('id_guru', session('id_guru'))
-                ->pluck('id_kelas')
-                ->toArray();
+            $kelasGuruArray = $this->getGuruKelasArray();
             
             if (empty($kelasGuruArray)) {
                 // Guru belum punya kelas, tampilkan kosong
@@ -74,9 +83,7 @@ class PerkembanganController extends Controller
             $filterType = 'semua';
         } else {
             // Guru regular hanya bisa lihat siswa di kelasnya
-            $kelasGuruArray = Kelas::where('id_guru', session('id_guru'))
-                ->pluck('id_kelas')
-                ->toArray();
+            $kelasGuruArray = $this->getGuruKelasArray();
             
             if (empty($kelasGuruArray)) {
                 return redirect()->route('perkembangan.index')->with('error', 
@@ -105,9 +112,7 @@ class PerkembanganController extends Controller
 
         // Authorize: Regular guru hanya bisa input untuk siswa di kelasnya
         if (!session('is_super_admin')) {
-            $kelasGuruArray = Kelas::where('id_guru', session('id_guru'))
-                ->pluck('id_kelas')
-                ->toArray();
+            $kelasGuruArray = $this->getGuruKelasArray();
             $siswaGuruArray = !empty($kelasGuruArray) 
                 ? Siswa::whereIn('id_kelas', $kelasGuruArray)->pluck('nomor_induk_siswa')->toArray() 
                 : [];
@@ -251,7 +256,7 @@ class PerkembanganController extends Controller
         // 1. Perkembangan untuk siswa di kelasnya
         // 2. Perkembangan yang mereka buat sendiri
         if (!session('is_super_admin')) {
-            $kelasGuruArray = Kelas::where('id_guru', session('id_guru'))->pluck('id_kelas')->toArray();
+            $kelasGuruArray = $this->getGuruKelasArray();
             $siswaGuruArray = !empty($kelasGuruArray) ? Siswa::whereIn('id_kelas', $kelasGuruArray)->pluck('nomor_induk_siswa')->toArray() : [];
             
             $isOwnCreation = $perkembangan->id_guru == session('id_guru');
@@ -314,7 +319,7 @@ class PerkembanganController extends Controller
         // 1. Perkembangan untuk siswa di kelasnya
         // 2. Perkembangan yang mereka buat sendiri
         if (!session('is_super_admin')) {
-            $kelasGuruArray = Kelas::where('id_guru', session('id_guru'))->pluck('id_kelas')->toArray();
+            $kelasGuruArray = $this->getGuruKelasArray();
             $siswaGuruArray = !empty($kelasGuruArray) ? Siswa::whereIn('id_kelas', $kelasGuruArray)->pluck('nomor_induk_siswa')->toArray() : [];
             
             $isOwnCreation = $perkembangan->id_guru == session('id_guru');
@@ -390,7 +395,7 @@ class PerkembanganController extends Controller
         // 1. Perkembangan untuk siswa di kelasnya
         // 2. Perkembangan yang mereka buat sendiri
         if (!session('is_super_admin')) {
-            $kelasGuruArray = Kelas::where('id_guru', session('id_guru'))->pluck('id_kelas')->toArray();
+            $kelasGuruArray = $this->getGuruKelasArray();
             $siswaGuruArray = !empty($kelasGuruArray) ? Siswa::whereIn('id_kelas', $kelasGuruArray)->pluck('nomor_induk_siswa')->toArray() : [];
             
             $isOwnCreation = $perkembangan->id_guru == session('id_guru');

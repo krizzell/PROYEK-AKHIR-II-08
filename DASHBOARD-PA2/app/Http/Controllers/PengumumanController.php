@@ -60,12 +60,17 @@ class PengumumanController extends Controller
 
     public function create()
     {
-        // Debug: Cek apakah guru_id ada di session
-        if (!session('id_guru')) {
+        // Hanya SuperAdmin dan guru yang bisa membuat pengumuman
+        // SuperAdmin: bisa membuat pengumuman untuk sekolah
+        // Guru regular: harus punya id_guru di session
+        
+        $isSuperAdmin = session('is_super_admin', false);
+        $idGuru = session('id_guru');
+        
+        if (!$isSuperAdmin && !$idGuru) {
             return redirect()->route('pengumuman.index')->with('error', 
                 'Akun Anda tidak terhubung dengan data guru. ' .
-                'Hubungi super admin untuk link akun Anda dengan guru. ' 
-                // '(Super Admin: Kelola Akun → Edit akun Anda → Pilih Guru)'
+                'Hubungi super admin untuk link akun Anda dengan guru.'
             );
         }
         
@@ -74,9 +79,12 @@ class PengumumanController extends Controller
 
     public function store(Request $request)
     {
-        // Pastikan user adalah guru dan punya id_guru
-        if (!session('id_guru')) {
-            return redirect()->route('pengumuman.index')->with('error', 'Anda tidak berwenang membuat pengumuman. Hanya guru yang dapat membuat pengumuman.');
+        // SuperAdmin atau guru yang punya id_guru bisa membuat pengumuman
+        $isSuperAdmin = session('is_super_admin', false);
+        $idGuru = session('id_guru');
+        
+        if (!$isSuperAdmin && !$idGuru) {
+            return redirect()->route('pengumuman.index')->with('error', 'Anda tidak berwenang membuat pengumuman. Hanya guru dan admin yang dapat membuat pengumuman.');
         }
 
         $validated = $request->validate([
@@ -113,9 +121,15 @@ class PengumumanController extends Controller
 
     public function update(Request $request, Pengumuman $pengumuman)
     {
-        // Pastikan user adalah guru dan punya id_guru
-        if (!session('id_guru')) {
-            return redirect()->route('pengumuman.index')->with('error', 'Anda tidak berwenang mengedit pengumuman.');
+        // SuperAdmin bisa edit semua, guru regular hanya bisa edit milik mereka
+        $isSuperAdmin = session('is_super_admin', false);
+        $idGuru = session('id_guru');
+        
+        if (!$isSuperAdmin) {
+            // Guru regular harus punya id_guru dan hanya bisa edit pengumuman mereka
+            if (!$idGuru || $pengumuman->id_guru != $idGuru) {
+                return redirect()->route('pengumuman.index')->with('error', 'Anda tidak berwenang mengedit pengumuman ini.');
+            }
         }
 
         $validated = $request->validate([
@@ -126,8 +140,10 @@ class PengumumanController extends Controller
             'existing_media.*' => 'nullable|string',
         ] + $this->buildMediaValidationRules(), $this->mediaValidationMessages());
 
-        // Auto-set guru dari session
-        $validated['id_guru'] = session('id_guru');
+        // Keep id_guru jika user bukan SuperAdmin
+        if (!$isSuperAdmin) {
+            $validated['id_guru'] = session('id_guru');
+        }
 
         // Convert datetime-local to proper datetime format
         $validated['waktu_unggah'] = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $validated['waktu_unggah']);
@@ -148,6 +164,14 @@ class PengumumanController extends Controller
 
     public function destroy(Pengumuman $pengumuman)
     {
+        // SuperAdmin bisa delete semua, guru regular hanya bisa delete milik mereka
+        $isSuperAdmin = session('is_super_admin', false);
+        $idGuru = session('id_guru');
+        
+        if (!$isSuperAdmin && (!$idGuru || $pengumuman->id_guru != $idGuru)) {
+            return redirect()->route('pengumuman.index')->with('error', 'Anda tidak berwenang menghapus pengumuman ini.');
+        }
+        
         // Delete media file if exists
         $this->deleteStoredMediaPaths($pengumuman->mediaPaths());
 
@@ -162,13 +186,31 @@ class PengumumanController extends Controller
             'selected_pengumuman.*' => 'required|integer|exists:pengumuman,id_pengumuman',
         ]);
 
-        $pengumumanToDelete = Pengumuman::whereIn('id_pengumuman', $validated['selected_pengumuman'])->get();
+        // SuperAdmin bisa delete semua, guru regular hanya milik mereka
+        $isSuperAdmin = session('is_super_admin', false);
+        $idGuru = session('id_guru');
+        
+        $query = Pengumuman::whereIn('id_pengumuman', $validated['selected_pengumuman']);
+        
+        if (!$isSuperAdmin && $idGuru) {
+            // Guru regular hanya bisa delete pengumuman milik mereka
+            $query->where('id_guru', $idGuru);
+        } elseif (!$isSuperAdmin) {
+            return redirect()->route('pengumuman.index')->with('error', 'Anda tidak berwenang menghapus pengumuman.');
+        }
+        
+        $pengumumanToDelete = $query->get();
         
         foreach ($pengumumanToDelete as $item) {
             $this->deleteStoredMediaPaths($item->mediaPaths());
         }
 
-        $deletedCount = Pengumuman::whereIn('id_pengumuman', $validated['selected_pengumuman'])->delete();
-        return redirect()->route('pengumuman.index')->with('success', $deletedCount . ' pengumuman berhasil dihapus');
+        $deletedCount = $pengumumanToDelete->count();
+        if ($deletedCount > 0) {
+            Pengumuman::whereIn('id_pengumuman', $pengumumanToDelete->pluck('id_pengumuman'))->delete();
+            return redirect()->route('pengumuman.index')->with('success', $deletedCount . ' pengumuman berhasil dihapus');
+        }
+        
+        return redirect()->route('pengumuman.index')->with('error', 'Tidak ada pengumuman yang dapat dihapus.');
     }
 }

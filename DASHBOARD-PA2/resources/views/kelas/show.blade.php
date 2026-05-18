@@ -269,9 +269,11 @@
             <a href="{{ route('kelas.index') }}" class="btn-premium btn-back">
                 <i class="bi bi-arrow-left"></i> Kembali ke Daftar
             </a>
+            @if(session('is_super_admin'))
             <a href="{{ route('kelas.edit', $kelas->id_kelas) }}" class="btn-premium btn-edit">
                 <i class="bi bi-pencil-square"></i> Edit Kelas
             </a>
+            @endif
         </div>
     </div>
 
@@ -342,15 +344,17 @@
                                     @foreach($kelas->siswa as $siswa)
                                         <tr>
                                             <td style="padding-left: 2rem;">
-                                                <div class="student-item">
-                                                    <div class="student-avatar">
-                                                        {{ substr($siswa->nama_siswa, 0, 1) }}
+                                                <a href="{{ route('siswa.show', $siswa->nomor_induk_siswa) }}" style="text-decoration: none; color: inherit; display: block;">
+                                                    <div class="student-item" style="transition: transform 0.2s ease;">
+                                                        <div class="student-avatar">
+                                                            {{ substr($siswa->nama_siswa, 0, 1) }}
+                                                        </div>
+                                                        <div class="student-info">
+                                                            <span class="student-name">{{ $siswa->nama_siswa }}</span>
+                                                            <span class="student-id">NIS: {{ $siswa->nomor_induk_siswa }}</span>
+                                                        </div>
                                                     </div>
-                                                    <div class="student-info">
-                                                        <span class="student-name">{{ $siswa->nama_siswa }}</span>
-                                                        <span class="student-id">NIS: {{ $siswa->nomor_induk_siswa }}</span>
-                                                    </div>
-                                                </div>
+                                                </a>
                                             </td>
                                             <td>
                                                 @if($siswa->jenis_kelamin == 'Laki-laki' || $siswa->jenis_kelamin == 'L')

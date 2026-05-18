@@ -282,14 +282,16 @@
 
 <div class="page-header">
     <h1><i class="bi bi-people"></i> Data Siswa</h1>
-    <div style="display: flex; gap: 0.75rem;">
-        <a href="{{ route('siswa.importForm') }}" class="btn-add" style="background: #06B6D4;">
-            <i class="bi bi-upload"></i> Import Excel
-        </a>
-        <a href="{{ route('siswa.create') }}" class="btn-add">
-            <i class="bi bi-plus-lg"></i> Tambah Siswa
-        </a>
-    </div>
+    @if(session('is_super_admin'))
+        <div style="display: flex; gap: 0.75rem;">
+            <a href="{{ route('siswa.importForm') }}" class="btn-add" style="background: #06B6D4;">
+                <i class="bi bi-upload"></i> Import Excel
+            </a>
+            <a href="{{ route('siswa.create') }}" class="btn-add">
+                <i class="bi bi-plus-lg"></i> Tambah Siswa
+            </a>
+        </div>
+    @endif
 </div>
 
 <!-- Filter Section -->
@@ -386,6 +388,7 @@
                             <a href="{{ route('siswa.show', $item->nomor_induk_siswa) }}" class="btn-action btn-view" title="Lihat">
                                 <i class="bi bi-eye"></i>
                             </a>
+                            @if(session('is_super_admin'))
                             <a href="{{ route('siswa.edit', $item->nomor_induk_siswa) }}" class="btn-action btn-edit" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </a>
@@ -396,6 +399,7 @@
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
+                            @endif
                         </div>
                     </td>
                 </tr>

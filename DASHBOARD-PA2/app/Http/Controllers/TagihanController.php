@@ -5,10 +5,22 @@ namespace App\Http\Controllers;
 use App\Models\Tagihan;
 use App\Models\Siswa;
 use App\Models\Kelas;
+use App\Models\Guru;
 use Illuminate\Http\Request;
 
 class TagihanController extends Controller
 {
+    private function getGuruKelasArray(): array
+    {
+        $guru = Guru::with('kelasAmpuan')->find(session('id_guru'));
+
+        if (!$guru) {
+            return [];
+        }
+
+        return $guru->kelasAmpuan->pluck('id_kelas')->toArray();
+    }
+
     public function index()
     {
         $idGuru = session('id_guru');
@@ -19,7 +31,7 @@ class TagihanController extends Controller
 
         // Filter untuk guru biasa: hanya lihat tagihan siswa dari kelas mereka
         if ($idGuru && !$isSuperAdmin) {
-            $guruKelas = Kelas::where('id_guru', $idGuru)->pluck('id_kelas')->toArray();
+            $guruKelas = $this->getGuruKelasArray();
             $query->whereHas('siswa', function ($q) use ($guruKelas) {
                 $q->whereIn('id_kelas', $guruKelas);
             });
@@ -61,7 +73,7 @@ class TagihanController extends Controller
         
         // Get filter options - untuk guru biasa, hanya kelas mereka sendiri
         if ($idGuru && !$isSuperAdmin) {
-            $guruKelas = Kelas::where('id_guru', $idGuru)->pluck('id_kelas')->toArray();
+            $guruKelas = $this->getGuruKelasArray();
             $kelas = Kelas::whereIn('id_kelas', $guruKelas)->get();
         } else {
             $kelas = Kelas::all();
@@ -128,7 +140,7 @@ class TagihanController extends Controller
         
         // Guru biasa hanya bisa lihat tagihan siswa kelasnya
         if ($idGuru && !$isSuperAdmin) {
-            $guruKelas = Kelas::where('id_guru', $idGuru)->pluck('id_kelas')->toArray();
+            $guruKelas = $this->getGuruKelasArray();
             if (!in_array($tagihan->siswa->id_kelas, $guruKelas)) {
                 return redirect()->route('tagihan.index')->with('error', 'Anda tidak berwenang melihat tagihan ini');
             }
@@ -234,8 +246,8 @@ class TagihanController extends Controller
         
         // Guru biasa hanya bisa update tagihan untuk kelasnya
         if ($idGuru && !$isSuperAdmin) {
-            $guruKelas = Kelas::where('id_guru', $idGuru)->pluck('id_kelas');
-            $kelas = Kelas::where('id_guru', $idGuru)->get();
+            $guruKelas = $this->getGuruKelasArray();
+            $kelas = Kelas::whereIn('id_kelas', $guruKelas)->get();
             $periode = Tagihan::whereHas('siswa', function($q) use ($guruKelas) {
                 $q->whereIn('id_kelas', $guruKelas);
             })->distinct()->pluck('periode');

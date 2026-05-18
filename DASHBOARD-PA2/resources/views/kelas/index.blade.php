@@ -258,9 +258,11 @@
 
 <div class="page-header">
     <h1><i class="bi bi-collection"></i> Data Kelas</h1>
-    <a href="{{ route('kelas.create') }}" class="btn-add">
-        <i class="bi bi-plus-lg"></i> Tambah Kelas
-    </a>
+    @if(session('is_super_admin'))
+        <a href="{{ route('kelas.create') }}" class="btn-add">
+            <i class="bi bi-plus-lg"></i> Tambah Kelas
+        </a>
+    @endif
 </div>
 
 @if ($kelas->isEmpty())
@@ -274,33 +276,37 @@
     <div class="count-info">
         Menampilkan <strong>{{ $kelas->count() }}</strong> data kelas
     </div>
-    <form id="bulkDeleteForm" action="{{ route('kelas.bulkDestroy') }}" method="POST" style="display: none;">
-        @csrf
-    </form>
+    @if(session('is_super_admin'))
+        <form id="bulkDeleteForm" action="{{ route('kelas.bulkDestroy') }}" method="POST" style="display: none;">
+            @csrf
+        </form>
 
-    <div class="bulk-actions">
-        <div class="bulk-actions-info">
-            <span id="selectedKelasCount" style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;"></span>
+        <div class="bulk-actions">
+            <div class="bulk-actions-info">
+                <span id="selectedKelasCount" style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;"></span>
+            </div>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                <button type="button" class="btn-bulk-clear" id="clearSelectionBtn">
+                    <i class="bi bi-x-circle"></i> Batal Pilih
+                </button>
+                <button type="submit" class="btn-bulk-delete" id="bulkDeleteBtn" form="bulkDeleteForm" disabled>
+                    <i class="bi bi-trash"></i> Hapus yang Ditandai
+                </button>
+            </div>
         </div>
-        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-            <button type="button" class="btn-bulk-clear" id="clearSelectionBtn">
-                <i class="bi bi-x-circle"></i> Batal Pilih
-            </button>
-            <button type="submit" class="btn-bulk-delete" id="bulkDeleteBtn" form="bulkDeleteForm" disabled>
-                <i class="bi bi-trash"></i> Hapus yang Ditandai
-            </button>
-        </div>
-    </div>
+    @endif
 
     <div class="table-container">
         <table class="table">
             <thead>
                 <tr>
+                    @if(session('is_super_admin'))
                     <th style="width: 50px;">
                         <div class="select-all-wrapper">
                             <input type="checkbox" id="selectAllKelas" aria-label="Pilih semua kelas">
                         </div>
                     </th>
+                    @endif
                     <th style="width: 50px;">No</th>
                     <th>Nama Kelas</th>
                     <th>Jumlah Siswa</th>
@@ -311,11 +317,13 @@
             <tbody>
                 @foreach ($kelas as $item)
                 <tr>
+                    @if(session('is_super_admin'))
                     <td>
                         <div class="row-checkbox-wrapper">
                             <input type="checkbox" class="kelas-checkbox" form="bulkDeleteForm" name="selected_kelas[]" value="{{ $item->id_kelas }}" aria-label="Pilih kelas {{ $item->nama_kelas }}">
                         </div>
                     </td>
+                    @endif
                     <td>{{ $loop->iteration }}</td>
                     <td><strong>{{ $item->nama_kelas }}</strong></td>
                     <td>
@@ -340,6 +348,7 @@
                             <a href="{{ route('kelas.show', $item->id_kelas) }}" class="btn-action btn-view" title="Lihat">
                                 <i class="bi bi-eye"></i>
                             </a>
+                            @if(session('is_super_admin'))
                             <a href="{{ route('kelas.edit', $item->id_kelas) }}" class="btn-action btn-edit" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </a>
@@ -350,6 +359,7 @@
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
+                            @endif
                         </div>
                     </td>
                 </tr>
