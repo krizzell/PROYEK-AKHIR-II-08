@@ -437,10 +437,10 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> with TickerProv
                 ),
               ),
               Text(
-                k.nilai.toStringAsFixed(1),
+                '${k.nilai.toStringAsFixed(0)}/10',
                 style: const TextStyle(
-                  color: kTextMain,
-                  fontSize: 18, // Matches header size
+                  color: kPrimary,
+                  fontSize: 18,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -479,7 +479,7 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> with TickerProv
           if (k.deskripsi.isNotEmpty) ...[
             const SizedBox(height: 16),
             Text(
-              "${k.nilai}. ${_getShortDescription(k.namaKategori, k.nilai)}",
+              _getShortDescription(k.namaKategori, k.nilai),
               style: const TextStyle(
                 color: kTextMuted,
                 fontSize: 13,

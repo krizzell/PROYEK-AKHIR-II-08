@@ -12,6 +12,7 @@ use App\Http\Controllers\PengumumanController;
 use App\Http\Controllers\PerkembanganController;
 use App\Http\Controllers\TagihanController;
 use App\Http\Controllers\PembayaranController;
+use App\Http\Controllers\TransferSiswaController;
 
 // Public Routes
 Route::get('/', function () {
@@ -96,4 +97,11 @@ Route::middleware('check.guru')->group(function () {
     
     // Routes untuk Pembayaran
     Route::resource('pembayaran', PembayaranController::class);
+});
+
+// Routes untuk Transfer Siswa (SuperAdmin only)
+Route::middleware(['check.guru', 'check.super.admin'])->group(function () {
+    Route::get('/transfer-siswa', [TransferSiswaController::class, 'index'])->name('transfer-siswa.index');
+    Route::get('/transfer-siswa/{nomor_induk_siswa}', [TransferSiswaController::class, 'transfer'])->name('transfer-siswa.transfer')->where('nomor_induk_siswa', '[0-9]+');
+    Route::post('/transfer-siswa/{nomor_induk_siswa}/proses', [TransferSiswaController::class, 'proses'])->name('transfer-siswa.proses')->where('nomor_induk_siswa', '[0-9]+');
 });

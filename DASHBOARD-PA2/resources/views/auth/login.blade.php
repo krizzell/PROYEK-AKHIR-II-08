@@ -7,6 +7,9 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         * {
@@ -18,7 +21,7 @@
 /* ===== BODY ===== */
 body {
     min-height: 100vh;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
     background: linear-gradient(135deg, #eaf0fb 0%, #f8fbff 100%);
     display: flex;
     align-items: center;
@@ -274,9 +277,9 @@ body {
         <section class="login-right">
             <div class="login-card">
                 <div class="brand">
-                    <div class="logo-icon">
+                    <!-- <div class="logo-icon">
                         <i class="bi bi-mortarboard"></i>
-                    </div>
+                    </div> -->
                     <h1>TK Swasta Mutiara Balige</h1>
                     <p>Masuk ke Admin Dashboard PA-2</p>
                 </div>

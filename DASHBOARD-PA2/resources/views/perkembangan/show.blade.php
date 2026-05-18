@@ -33,7 +33,7 @@
         background: transparent;
         min-height: 100vh;
         padding: 2rem 0;
-        font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
+        font-family: 'Montserrat', sans-serif;
     }
 
     .container-lg {
@@ -402,7 +402,7 @@
                                 </div>
                                 <div class="category-info">
                                     <h4 class="category-name">{{ $detail->nama_kategori }}</h4>
-                                    <p class="category-desc"><strong>{{ $nilai }}.</strong> {{ $deskripsiText }}</p>
+                                    <p class="category-desc">{{ $deskripsiText }}</p>
                                 </div>
                                 <div class="category-score">
                                     {{ $detail->nilai }}<span style="font-size: 0.8em; font-weight: 500; opacity: 0.8;">/10</span>

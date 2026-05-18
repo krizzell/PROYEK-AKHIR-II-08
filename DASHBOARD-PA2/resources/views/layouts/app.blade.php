@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -17,7 +17,7 @@
 
         body {
             background-color: #F8FAFC;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
             color: #1F2937;
             overflow-y: scroll;
         }
@@ -31,13 +31,15 @@
         .sidebar {
             width: 260px;
             background-color: #FAFBFC;
-            padding: 30px 0;
+            padding: 30px 0 150px 0;
             position: fixed;
             height: 100vh;
             overflow-y: auto;
             box-shadow: -2px 0 8px rgba(0, 0, 0, 0.03);
             border-right: 1px solid #E5E7EB;
             z-index: 100;
+            display: flex;
+            flex-direction: column;
         }
 
         .sidebar-header {
@@ -160,6 +162,49 @@
             color: #DC2626;
         }
 
+        .sidebar-footer-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sidebar-footer-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            text-decoration: none;
+            background-color: transparent;
+        }
+
+        .sidebar-footer-btn.change-password {
+            color: #2196F3;
+            border-color: #BFDBFE;
+        }
+
+        .sidebar-footer-btn.change-password:hover {
+            background-color: #EFF6FF;
+            color: #1976D2;
+        }
+
+        .sidebar-footer-btn.logout {
+            color: #DC2626;
+            border-color: #FEE2E2;
+        }
+
+        .sidebar-footer-btn.logout:hover {
+            background-color: #FEE2E2;
+            color: #B91C1C;
+        }
+
         /* ===== MAIN CONTENT STYLING ===== */
         .main-content {
             flex: 1;
@@ -231,35 +276,6 @@
             font-size: 11px;
             color: #6B7280;
             font-weight: 500;
-        }
-
-        .user-dropdown-menu {
-            animation: slideDown 0.2s ease-out;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .dropdown-item-link {
-            font-size: 14px;
-            transition: all 0.2s ease;
-        }
-
-        .dropdown-item-link:hover {
-            background-color: #F3F4F6 !important;
-            padding-left: 20px;
-        }
-
-        .dropdown-item-link:last-child:hover {
-            background-color: rgba(239, 68, 68, 0.05) !important;
         }
 
         /* ===== PAGE CONTENT ===== */
@@ -510,7 +526,30 @@
                         </a>
                     </li>
                 @endif
+
+                @if (session('role') === 'guru' && session('is_super_admin'))
+                    <li class="nav-item">
+                        <a href="{{ route('transfer-siswa.index') }}" class="nav-link {{ Route::currentRouteName() == 'transfer-siswa.index' ? 'active' : '' }}">
+                            <i class="bi bi-arrow-left-right"></i> Perpindahan Kelas
+                        </a>
+                    </li>
+                @endif
             </ul>
+
+            <!-- Sidebar Footer -->
+            <div class="sidebar-footer">
+                <div class="sidebar-footer-buttons">
+                    <a href="{{ route('profile.edit-password') }}" class="sidebar-footer-btn change-password">
+                        <i class="bi bi-key"></i> Ubah Password
+                    </a>
+                    <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
+                        @csrf
+                        <button type="submit" class="sidebar-footer-btn logout">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
         </nav>
 
         <!-- Main Content -->
@@ -520,27 +559,12 @@
                 <div class="navbar-right" style="margin-left: auto;">
 
                     <div class="user-profile-menu" style="position: relative;">
-                        <div class="user-profile" onclick="toggleUserMenu()" style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 8px 12px; border-radius: 8px; transition: all 0.3s ease;">
+                        <div class="user-profile" style="display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 8px;">
                             <div class="user-avatar">{{ strtoupper(substr(session('username'), 0, 1)) }}</div>
                             <div class="user-info-text">
                                 <div class="user-name">{{ session('username') }}</div>
                                 <div class="user-role">{{ ucfirst(session('role_display', session('role'))) }}</div>
                             </div>
-                            <i class="bi bi-chevron-down" style="margin-left: 5px; font-size: 12px;"></i>
-                        </div>
-
-                        <!-- Dropdown Menu -->
-                        <div id="userDropdown" class="user-dropdown-menu" style="position: absolute; top: 100%; right: 0; background: white; border-radius: 8px; min-width: 220px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; display: none; margin-top: 5px;">
-                            <a href="{{ route('profile.edit-password') }}" class="dropdown-item-link" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; color: #6B7280; text-decoration: none; transition: all 0.3s ease;">
-                                <i class="bi bi-key" style="color: #2196F3;"></i> Ubah Password
-                            </a>
-                            
-                            <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
-                                @csrf
-                                <button type="submit" class="dropdown-item-link" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; color: #EF4444; text-decoration: none; width: 100%; border: none; background: none; cursor: pointer; transition: all 0.3s ease;">
-                                    <i class="bi bi-box-arrow-right"></i> Logout
-                                </button>
-                            </form>
                         </div>
                     </div>
                 </div>
@@ -571,35 +595,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
     
     <script>
-        // Toggle user dropdown menu
-        function toggleUserMenu() {
-            const dropdown = document.getElementById('userDropdown');
-            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-        }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(event) {
-            const userDropdown = document.getElementById('userDropdown');
-            const userProfile = event.target.closest('.user-profile');
-            
-            if (!userProfile && userDropdown.style.display === 'block') {
-                userDropdown.style.display = 'none';
-            }
-        });
-
-        // Add hover effect to dropdown items
-        document.addEventListener('DOMContentLoaded', function() {
-            const dropdownItems = document.querySelectorAll('.dropdown-item-link');
-            dropdownItems.forEach(item => {
-                item.addEventListener('mouseover', function() {
-                    this.style.backgroundColor = '#F3F4F6';
-                });
-                item.addEventListener('mouseout', function() {
-                    this.style.backgroundColor = 'transparent';
-                });
-            });
-        });
-
         // Handle delete confirmation with SweetAlert2
         document.addEventListener('DOMContentLoaded', function() {
             const deleteButtons = document.querySelectorAll('[data-delete-btn]');
