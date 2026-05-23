@@ -393,7 +393,7 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> with TickerProv
               ),
               Text(
                 data.namaGuru.isNotEmpty ? data.namaGuru : "Guru Sekolah",
-                style: const TextStyle(color: kTextMain, fontSize: 16, fontWeight: FontWeight.w700),
+                style: const TextStyle(color: kTextMain, fontSize: 14, fontWeight: FontWeight.w700),
               ),
             ],
           ),
@@ -432,7 +432,7 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> with TickerProv
                 k.namaKategori,
                 style: const TextStyle(
                   color: kTextMain,
-                  fontSize: 15,
+                  fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -440,7 +440,7 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> with TickerProv
                 '${k.nilai.toStringAsFixed(0)}/10',
                 style: const TextStyle(
                   color: kPrimary,
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -482,7 +482,7 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> with TickerProv
               _getShortDescription(k.namaKategori, k.nilai),
               style: const TextStyle(
                 color: kTextMuted,
-                fontSize: 13,
+                fontSize: 12,
                 height: 1.5,
                 fontWeight: FontWeight.w400,
               ),
@@ -616,7 +616,7 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> with TickerProv
       title,
       style: const TextStyle(
         color: kTextMain,
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: FontWeight.w800,
       ),
     );

@@ -226,6 +226,112 @@
     .count-info strong {
         color: var(--text-primary);
     }
+
+    .filter-section {
+        background: #FFFFFF;
+        margin-bottom: 1.5rem;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+    }
+
+    .filter-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .filter-group label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        width: 100%;
+        padding: 0.625rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        font-size: 0.95rem;
+        color: var(--text-primary);
+        background: white;
+        transition: all 0.3s ease;
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus {
+        outline: none;
+        border-color: #FF7A00;
+        background-color: white;
+        box-shadow: 0 0 0 2px rgba(255, 122, 0, 0.1);
+    }
+
+    .filter-group select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23111827' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.5rem center;
+        padding-right: 2rem;
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-filter {
+        padding: 0.625rem 1.25rem;
+        background: #FF7A00;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-filter:hover {
+        background: #E65E00;
+        transform: translateY(-1px);
+    }
+
+    .btn-reset {
+        padding: 0.625rem 1.25rem;
+        background: white;
+        color: var(--button-gray);
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-reset:hover {
+        background: var(--hover-bg);
+        border-color: var(--button-gray);
+    }
 </style>
 
 <div class="page-header">
@@ -242,6 +348,71 @@
     @endif
 </div>
 
+<!-- Filter Section -->
+<div class="filter-section">
+    <div class="filter-title">
+        <i class="bi bi-funnel"></i> Filter Data
+    </div>
+    <form action="{{ route('tagihan.index') }}" method="GET">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label for="nis">NIS</label>
+                <input type="text" id="nis" name="nis" value="{{ request('nis') }}" placeholder="Cari NIS...">
+            </div>
+
+            <div class="filter-group">
+                <label for="nama">Nama Siswa</label>
+                <input type="text" id="nama" name="nama" value="{{ request('nama') }}" placeholder="Cari nama...">
+            </div>
+
+            <div class="filter-group">
+                <label for="kelas">Kelas</label>
+                <select id="kelas" name="kelas">
+                    <option value="">-- Semua Kelas --</option>
+                    @foreach($kelas as $k)
+                        <option value="{{ $k->id_kelas }}" {{ request('kelas') == $k->id_kelas ? 'selected' : '' }}>
+                            {{ $k->nama_kelas }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="periode">Periode</label>
+                <select id="periode" name="periode">
+                    <option value="">-- Semua Periode --</option>
+                    @foreach($periode as $p)
+                        <option value="{{ $p }}" {{ request('periode') == $p ? 'selected' : '' }}>
+                            {{ $p }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="status">Status</label>
+                <select id="status" name="status">
+                    <option value="">-- Semua Status --</option>
+                    @foreach($statuses as $key => $label)
+                        <option value="{{ $key }}" {{ request('status') == $key ? 'selected' : '' }}>
+                            {{ $label }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+
+        <div class="filter-actions">
+            <button type="submit" class="btn-filter">
+                <i class="bi bi-search"></i> Cari
+            </button>
+            <a href="{{ route('tagihan.index') }}" class="btn-reset">
+                <i class="bi bi-arrow-clockwise"></i> Reset
+            </a>
+        </div>
+    </form>
+</div>
+
 <!-- Info Box -->
 <div class="info-section">
     <i class="bi bi-info-circle"></i> <strong>Perhatian:</strong> Status pembayaran berubah otomatis menjadi "Lunas" ketika orangtua melakukan pembayaran melalui aplikasi mobile.
@@ -256,7 +427,7 @@
     </div>
 @else
     <div class="count-info">
-        Menampilkan <strong>{{ $tagihan->count() }}</strong> data tagihan
+        Menampilkan <strong>{{ $tagihan->count() }}</strong> dari total data tagihan
     </div>
     <div class="table-container">
         <table class="table">

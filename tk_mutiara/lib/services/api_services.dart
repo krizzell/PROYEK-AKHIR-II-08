@@ -9,14 +9,14 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 class ApiService {
   
   // Android emulator: flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8081
-  // Device fisik (satu WiFi): flutter run --dart-define=API_BASE_URL=http://192.168.109.220:8081
-  // flutter run --dart-define=IMAGE_BASE_URL=http://192.168.109.220:8000  => untuk gambar
+  // Device fisik (satu WiFi): flutter run --dart-define=API_BASE_URL=http://192.168.83.220:8081
+  // flutter run --dart-define=IMAGE_BASE_URL=http://192.168.83.220:8000  => untuk gambar
   // php artisan serve --host=0.0.0.0 --port=8000 => untuk backend
   // php artisan storage:link => untuk membuat link storage
 
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.109.220:8081',
+    defaultValue: 'http://192.168.83.220:8081',
   );
   static const String imageBaseUrl = String.fromEnvironment(
     'IMAGE_BASE_URL',
@@ -150,9 +150,16 @@ class ApiService {
         print('✓ User saved: $_user');
         print('✓ Nomor Induk Siswa saved: $_nomorIndukSiswa');
 
+        // Save FCM token with retry logic
         final fcmToken = await FirebaseMessaging.instance.getToken();
         if (fcmToken != null) {
-          await saveFcmToken(fcmToken);
+          print('✓ FCM Token dari Firebase: $fcmToken');
+          // Jangan await di sini, lakukan di background untuk tidak block login
+          Future.delayed(Duration.zero, () => saveFcmToken(fcmToken)).catchError(
+            (e) => print('⚠ Background FCM save error: $e'),
+          );
+        } else {
+          print('⚠ Gagal dapat FCM token dari Firebase');
         }
         return {
           'success': true,
@@ -225,15 +232,20 @@ class ApiService {
     _nomorIndukSiswa = null;
   }
 
-  static Future<void> saveFcmToken(String fcmToken) async {
+  static Future<void> saveFcmToken(String fcmToken, {int retryCount = 0}) async {
     try {
-      print('=== SAVE FCM TOKEN ===');
+      print('=== SAVE FCM TOKEN (Attempt ${retryCount + 1}/3) ===');
       print('URL: $baseUrl/api/user/fcm-token');
       print('FCM Token: $fcmToken');
-      print('Auth Token saat ini: $_token');
+      print('Auth Token: ${_token?.substring(0, 20)}...');
 
       if (_token == null) {
-        print('✗ Tidak bisa simpan FCM token: user belum login');
+        print('⚠ User belum login, FCM token tidak disimpan');
+        // Retry setelah 2 detik
+        if (retryCount < 3) {
+          await Future.delayed(const Duration(seconds: 2));
+          return saveFcmToken(fcmToken, retryCount: retryCount + 1);
+        }
         return;
       }
 
@@ -248,16 +260,29 @@ class ApiService {
           )
           .timeout(const Duration(seconds: 10));
 
-      print('Status: ${res.statusCode}');
-      print('Body: ${res.body}');
+      print('✓ Response Status: ${res.statusCode}');
+      print('Response Body: ${res.body}');
 
-      if (res.statusCode == 200) {
-        print('✓ FCM token saved successfully');
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        print('✓ FCM token berhasil disimpan ke server');
+      } else if (res.statusCode == 401 || res.statusCode == 403) {
+        print('✗ Unauthorized (401/403) - Session mungkin expired');
       } else {
-        print('✗ Failed to save FCM token: ${res.statusCode}');
+        print('⚠ Failed to save FCM token: ${res.statusCode}');
+        // Retry untuk error 5xx
+        if (res.statusCode >= 500 && retryCount < 2) {
+          await Future.delayed(const Duration(seconds: 3));
+          return saveFcmToken(fcmToken, retryCount: retryCount + 1);
+        }
       }
     } catch (e) {
-      print('✗ Error saving FCM token: $e');
+      print('✗ Exception saat save FCM: $e');
+      // Retry untuk timeout/connection error
+      if (retryCount < 2) {
+        print('↻ Retry dalam 3 detik...');
+        await Future.delayed(const Duration(seconds: 3));
+        return saveFcmToken(fcmToken, retryCount: retryCount + 1);
+      }
     }
   }
 

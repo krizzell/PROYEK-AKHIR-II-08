@@ -17,6 +17,9 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 2rem;
+        width: 100%;
+        flex-wrap: nowrap;
+        gap: 1.5rem;
     }
 
     .page-header h1 {
@@ -27,10 +30,13 @@
         display: flex;
         align-items: center;
         gap: 0.75rem;
+        min-width: 0;
+        flex-shrink: 0;
+        white-space: nowrap;
     }
 
     .btn-add {
-        background: #F97316;
+        background: #FF7A00;
         color: white;
         padding: 0.75rem 1.5rem;
         border-radius: 0.75rem;
@@ -42,6 +48,8 @@
         align-items: center;
         gap: 0.5rem;
         text-decoration: none;
+        flex-shrink: 0;
+        white-space: nowrap;
     }
 
     .btn-add:hover {

@@ -84,6 +84,9 @@
             transition: all 0.2s ease;
             font-weight: 500;
             font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .nav-menu .nav-link i {

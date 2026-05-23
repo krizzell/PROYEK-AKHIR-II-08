@@ -55,12 +55,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   Widget _buildBottomNav() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Container(
         height: 80,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.zero,
           boxShadow: [
             BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 24, offset: const Offset(0, -4)),
             BoxShadow(color: AppTheme.primary.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, -2)),

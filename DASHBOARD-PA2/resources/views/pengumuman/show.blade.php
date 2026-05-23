@@ -4,7 +4,18 @@
 
 @section('content')
 <style>
-    /*    /* RESET SWIPER DEFAULT ===== */
+    /* ===== DESIGN SYSTEM ===== */
+    :root {
+        --primary-color: #F97316;
+        --bg-page: #f9fafb;
+        --bg-card: #ffffff;
+        --bg-secondary: #f3f4f6;
+        --text-primary: #111827;
+        --text-secondary: #6b7280;
+        --border-light: #e5e7eb;
+    }
+
+    /* ===== RESET SWIPER DEFAULT ===== */
     .swiper-container .swiper-button-next,
     .swiper-container .swiper-button-prev,
     .pengumuman-slider .swiper-button-next,
@@ -20,8 +31,8 @@
         margin: 0 auto 32px;
         border-radius: 20px;
         overflow: hidden;
-        background: white;
-        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+        background: #f3f4f6;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
     
     /* ===== SWIPER CORE ===== */
@@ -29,6 +40,7 @@
         width: 100%;
         height: auto;
         padding-bottom: 0;
+        overflow: hidden !important;
     }
     
     .pengumuman-slider .swiper-wrapper {
@@ -40,8 +52,8 @@
         align-items: center;
         justify-content: center;
         width: 100%;
-        min-height: 450px;
-        background: linear-gradient(135deg, #FFF8F4 0%, #FFECDB 100%);
+        min-height: 380px;
+        background: #f3f4f6;
         flex-shrink: 0;
     }
     
@@ -49,7 +61,7 @@
         width: auto;
         height: auto;
         max-width: 90%;
-        max-height: 450px;
+        max-height: 380px;
         object-fit: contain;
     }
     
@@ -61,32 +73,28 @@
         transform: translateX(-50%) !important;
         width: auto !important;
         display: flex !important;
-        gap: 8px !important;
+        gap: 6px !important;
         z-index: 20 !important;
     }
     
     .pengumuman-slider .swiper-pagination-bullet {
-        width: 10px !important;
-        height: 10px !important;
-        background: rgba(255, 255, 255, 0.6) !important;
+        width: 8px !important;
+        height: 8px !important;
+        background: rgba(0, 0, 0, 0.25) !important;
         border-radius: 50% !important;
         cursor: pointer !important;
-        opacity: 0.7 !important;
         transition: all 0.3s ease !important;
         margin: 0 !important;
     }
     
     .pengumuman-slider .swiper-pagination-bullet:hover {
-        background: rgba(255, 255, 255, 0.8) !important;
-        opacity: 0.9 !important;
+        background: rgba(0, 0, 0, 0.4) !important;
     }
     
     .pengumuman-slider .swiper-pagination-bullet-active {
-        background: white !important;
-        opacity: 1 !important;
-        width: 32px !important;
-        border-radius: 6px !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+        background: rgba(0, 0, 0, 0.6) !important;
+        width: 8px !important;
+        border-radius: 50% !important;
     }
     
     /* ===== NAVIGATION BUTTONS ===== */
@@ -94,19 +102,18 @@
     .pengumuman-slider .swiper-button-next {
         position: absolute !important;
         top: 50% !important;
-        width: 48px !important;
-        height: 48px !important;
-        background: rgba(249, 115, 22, 0.9) !important;
+        width: 44px !important;
+        height: 44px !important;
+        background: rgba(107, 114, 128, 0.7) !important;
         border: none !important;
-        border-radius: 12px !important;
+        border-radius: 8px !important;
         color: white !important;
         cursor: pointer !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        font-size: 24px !important;
+        font-size: 20px !important;
         transition: all 0.3s ease !important;
-        box-shadow: 0 4px 16px rgba(249, 115, 22, 0.3) !important;
         z-index: 20 !important;
         transform: translateY(-50%) !important;
         margin-top: 0 !important;
@@ -120,18 +127,17 @@
     }
     
     .pengumuman-slider .swiper-button-prev {
-        left: 16px !important;
+        left: 12px !important;
     }
     
     .pengumuman-slider .swiper-button-next {
-        right: 16px !important;
+        right: 12px !important;
     }
     
     .pengumuman-slider .swiper-button-prev:hover,
     .pengumuman-slider .swiper-button-next:hover {
-        background: #E85000 !important;
-        transform: translateY(-50%) scale(1.08) !important;
-        box-shadow: 0 8px 24px rgba(249, 115, 22, 0.5) !important;
+        background: rgba(75, 85, 99, 0.9) !important;
+        transform: translateY(-50%) scale(1.05) !important;
     }
     
     .pengumuman-slider .swiper-button-prev:active,
@@ -176,11 +182,6 @@
                     </div>
                     
                     @if(count($mediaUrls) > 1)
-                        <!-- Counter -->
-                        <div class="slide-counter">
-                            <span class="current-slide">1</span> / {{ count($mediaUrls) }}
-                        </div>
-                        
                         <!-- Counter -->
                         <div class="slide-counter">
                             <span class="current-slide">1</span> / {{ count($mediaUrls) }}
@@ -255,7 +256,39 @@
             </a>
             <a href="{{ route('pengumuman.index') }}" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Kembali
-            </andex + 1;
+            </a>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const mediaCount = document.querySelectorAll('.pengumuman-slider .swiper-slide').length;
+    
+    if (mediaCount > 1) {
+        const swiper = new Swiper('.pengumuman-slider', {
+            loop: true,
+            autoplay: {
+                delay: 5000,
+                disableOnInteraction: false
+            },
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+                type: 'bullets'
+            },
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev'
+            },
+            speed: 600,
+            spaceBetween: 0,
+            on: {
+                slideChange: function() {
+                    const currentSlide = this.realIndex + 1;
                     const counterEl = document.querySelector('.current-slide');
                     if (counterEl) {
                         counterEl.textContent = currentSlide;
@@ -263,7 +296,8 @@
                 }
             }
         });
-    });
+    }
+});
 </script>
 
 @endsection

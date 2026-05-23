@@ -703,84 +703,81 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final data = _getDataPerTahun();
     final latestStatus = data.isNotEmpty ? data.last.statusUtama : '-';
     
-    return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PerkembanganScreen())),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 30, offset: const Offset(0, 10)),
-            BoxShadow(color: AppTheme.primary.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 5)),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primary.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(Icons.analytics_rounded, color: AppTheme.primary, size: 20),
-                          ),
-                          const SizedBox(width: 12),
-                          const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Perkembangan", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.textDark, letterSpacing: -0.5)),
-                              Text("Statistik pencapaian anak", style: TextStyle(fontSize: 11, color: AppTheme.textMedium, fontWeight: FontWeight.w500)),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Container(
-                    height: 180,
-                    width: double.infinity,
-                    padding: const EdgeInsets.only(right: 16, top: 10),
-                    child: _buildChart(),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF7F8FC),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Row(
-                          children: [
-                            const Text("Lihat Laporan Detail", style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w700)),
-                            const SizedBox(width: 6),
-                            Icon(Icons.arrow_forward_rounded, size: 16, color: AppTheme.primary.withOpacity(0.8)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Perkembangan",
+                style: GoogleFonts.montserrat(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: AppTheme.textDark,
+                  letterSpacing: -0.5,
+                ),
               ),
-            ),
-          ],
+              GestureDetector(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PerkembanganScreen())),
+                child: Row(
+                  children: [
+                    Text(
+                      "Lihat semua",
+                      style: GoogleFonts.montserrat(
+                        color: AppTheme.primary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Icon(Icons.arrow_forward_rounded, size: 16, color: AppTheme.primary),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PerkembanganScreen())),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 30, offset: const Offset(0, 10)),
+                BoxShadow(color: AppTheme.primary.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 5)),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("Statistik pencapaian anak", style: TextStyle(fontSize: 12, color: AppTheme.textMedium, fontWeight: FontWeight.w500)),
+                      const SizedBox(height: 24),
+                      Container(
+                        height: 180,
+                        width: double.infinity,
+                        padding: const EdgeInsets.only(right: 16, top: 10),
+                        child: _buildChart(),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
