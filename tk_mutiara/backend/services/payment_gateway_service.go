@@ -392,6 +392,32 @@ func sendFCMNotification(fcmToken, title, body string) error {
 	
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		fmt.Printf("❌ FCM API returned error %d\n", resp.StatusCode)
+		
+		// Parse error detail dari FCM response
+		var fcmError struct {
+			Error struct {
+				Code    int    `json:"code"`
+				Message string `json:"message"`
+				Status  string `json:"status"`
+				Details []struct {
+					ErrorCode string `json:"errorCode"`
+				} `json:"details"`
+			} `json:"error"`
+		}
+		if err := json.Unmarshal(respBytes, &fcmError); err == nil {
+			fmt.Printf("   → Error Code: %d\n", fcmError.Error.Code)
+			fmt.Printf("   → Error Status: %s\n", fcmError.Error.Status)
+			fmt.Printf("   → Error Message: %s\n", fcmError.Error.Message)
+			for _, d := range fcmError.Error.Details {
+				if d.ErrorCode != "" {
+					fmt.Printf("   → FCM Error Code: %s\n", d.ErrorCode)
+					if d.ErrorCode == "UNREGISTERED" {
+						fmt.Printf("   ⚠ FCM token sudah expired/invalid! User perlu re-login agar token diperbarui.\n")
+					}
+				}
+			}
+		}
+		
 		return fmt.Errorf("FCM response %d: %s", resp.StatusCode, string(respBytes))
 	}
 

@@ -212,51 +212,97 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> with TickerProv
     return Center(
       child: PopupMenuButton<String>(
         onSelected: (String value) {
+          if (_selectedMonthKey == value) return;
           setState(() {
             _selectedMonthKey = value;
           });
           _progressController.forward(from: 0.0);
         },
-        offset: const Offset(0, 45),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        offset: const Offset(0, 54),
+        color: Colors.white,
+        elevation: 12,
+        shadowColor: Colors.black.withOpacity(0.2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0xFFF1F5F9), width: 1.5),
+        ),
         itemBuilder: (BuildContext context) {
           return _monthKeys.map((String key) {
             final p = key.split('-');
             final m = int.parse(p[1]);
             final y = p[0];
+            final itemLabel = "${_getMonthName(m)} $y";
+            final isSelected = _selectedMonthKey == key;
+
             return PopupMenuItem<String>(
               value: key,
-              child: Text("${_getMonthName(m)} $y"),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              height: 50,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected ? kPrimary.withOpacity(0.08) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      itemLabel,
+                      style: TextStyle(
+                        color: isSelected ? kPrimary : kTextMain,
+                        fontSize: 14,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      ),
+                    ),
+                    if (isSelected) ...[
+                      const SizedBox(width: 16),
+                      const Icon(Icons.check_circle_rounded, color: kPrimary, size: 18),
+                    ]
+                  ],
+                ),
+              ),
             );
           }).toList();
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+                color: kPrimary.withOpacity(0.05),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const Icon(Icons.calendar_month_rounded, size: 18, color: kPrimary),
+              const SizedBox(width: 8),
               Text(
                 label,
                 style: const TextStyle(
                   color: kTextMain,
                   fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.2,
                 ),
               ),
-              const SizedBox(width: 8),
-              const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: kTextMuted),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: kPrimary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: kPrimary),
+              ),
             ],
           ),
         ),

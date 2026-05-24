@@ -73,15 +73,25 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
       backgroundColor: const Color(0xFFFFFBF8),
       body: Stack(
         children: [
-          // Soft decorative shapes
+          // Soft decorative shapes (Top)
           Positioned(top: -80, right: -80,
             child: Container(width: 220, height: 220,
               decoration: BoxDecoration(shape: BoxShape.circle,
-                color: AppTheme.primary.withOpacity(0.06)))),
+                color: AppTheme.primary.withOpacity(0.12)))),
           Positioned(top: size.height * 0.12, left: -50,
             child: Container(width: 130, height: 130,
               decoration: BoxDecoration(shape: BoxShape.circle,
-                color: AppTheme.primary.withOpacity(0.04)))),
+                color: AppTheme.primary.withOpacity(0.08)))),
+                
+          // Soft decorative shapes (Bottom)
+          Positioned(bottom: -100, left: -60,
+            child: Container(width: 260, height: 260,
+              decoration: BoxDecoration(shape: BoxShape.circle,
+                color: AppTheme.primary.withOpacity(0.10)))),
+          Positioned(bottom: size.height * 0.08, right: -40,
+            child: Container(width: 140, height: 140,
+              decoration: BoxDecoration(shape: BoxShape.circle,
+                color: AppTheme.primary.withOpacity(0.06)))),
 
           // Main content
           Column(

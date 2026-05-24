@@ -14,6 +14,7 @@ import 'pembayaran_screen.dart';
 import 'pengumuman_screen.dart';
 import 'history_screen.dart';
 import 'login_screen.dart';
+import 'notification_screen.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:tk_mutiara/theme/app_theme.dart';
 
@@ -60,6 +61,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadData();
     _syncProfile();
     _listenNotifikasi();
+    ApiService.paymentRefreshNotifier.addListener(_onPaymentUpdated);
+  }
+
+  @override
+  void dispose() {
+    ApiService.paymentRefreshNotifier.removeListener(_onPaymentUpdated);
+    super.dispose();
+  }
+
+  void _onPaymentUpdated() {
+    if (mounted) {
+      _loadData();
+    }
   }
 
   void _listenNotifikasi() {
@@ -67,6 +81,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final data = message.data;
       if (data['type'] == 'payment_success') {
         _loadData();
+        ApiService.notifyPaymentUpdated();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -81,7 +96,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     });
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      if (message.data['type'] == 'payment_success') _loadData();
+      if (message.data['type'] == 'payment_success') {
+        _loadData();
+        ApiService.notifyPaymentUpdated();
+      }
     });
   }
 
@@ -230,10 +248,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ],
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(14)),
-                    child: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 22),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const NotificationScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(14)),
+                      child: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 22),
+                    ),
                   ),
                 ],
               ),
@@ -343,7 +371,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) {
+      builder: (sheetContext) {
         return Container(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
           decoration: const BoxDecoration(
@@ -367,7 +395,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 icon: Icons.lock_reset_rounded,
                 color: AppTheme.primary,
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.pop(sheetContext);
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
                 },
               ),
@@ -379,14 +407,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 subtitle: "Akhiri sesi dan keluar",
                 icon: Icons.logout_rounded,
                 color: AppTheme.danger,
-                onTap: () {
-                  Navigator.pop(context);
-                  ApiService.logout();
-                  Navigator.pushAndRemoveUntil(
-                    context, 
-                    MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-                    (route) => false,
+                onTap: () async {
+                  Navigator.pop(sheetContext); // Close bottom sheet
+                  
+                  // Show loading spinner using parent context
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    barrierColor: Colors.black.withOpacity(0.3),
+                    builder: (dialogContext) {
+                      return const Center(
+                        child: CircularProgressIndicator(color: AppTheme.primary),
+                      );
+                    },
                   );
+
+                  // Process logout
+                  await Future.delayed(const Duration(milliseconds: 600));
+                  ApiService.logout(); // Remove 'await'
+                  
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context, 
+                      MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                      (route) => false,
+                    );
+                  }
                 },
               ),
             ],

@@ -50,12 +50,20 @@ class _PembayaranScreenState extends State<PembayaranScreen>
       curve: Curves.elasticOut,
     );
     _loadTagihan();
+    ApiService.paymentRefreshNotifier.addListener(_onPaymentUpdated);
   }
 
   @override
   void dispose() {
+    ApiService.paymentRefreshNotifier.removeListener(_onPaymentUpdated);
     _doneController.dispose();
     super.dispose();
+  }
+
+  void _onPaymentUpdated() {
+    if (mounted) {
+      _loadTagihan();
+    }
   }
 
   Future<void> _loadTagihan() async {

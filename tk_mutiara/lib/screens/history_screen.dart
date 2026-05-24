@@ -27,6 +27,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
   void initState() {
     super.initState();
     _loadPayments();
+    ApiService.paymentRefreshNotifier.addListener(_onPaymentUpdated);
+  }
+
+  @override
+  void dispose() {
+    ApiService.paymentRefreshNotifier.removeListener(_onPaymentUpdated);
+    super.dispose();
+  }
+
+  void _onPaymentUpdated() {
+    if (mounted) {
+      _loadPayments();
+    }
   }
 
   Future<void> _loadPayments() async {

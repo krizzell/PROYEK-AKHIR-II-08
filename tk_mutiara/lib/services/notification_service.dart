@@ -43,6 +43,8 @@ class NotificationService {
   static const String _channelName = 'Payment Notifications';
   static const String _channelDesc = 'Notifikasi status pembayaran';
 
+  /// Inisialisasi notification service TANPA save FCM token ke server.
+  /// FCM token akan disimpan setelah login via [saveTokenAfterLogin].
   static Future<void> init() async {
     print('\n=== INITIALIZING NOTIFICATION SERVICE ===');
     
@@ -96,20 +98,27 @@ class NotificationService {
       print('⚠ Android implementation not found');
     }
 
-    // 4. Get FCM token
+    // 4. Get FCM token (hanya log, JANGAN save ke server — user belum login)
     print('4️⃣  Getting FCM token...');
     final String? token = await _messaging.getToken();
-    print('✓ FCM Token: ${token?.substring(0, 30)}...');
     if (token != null) {
-      print('   → Saving FCM token to server...');
-      await ApiService.saveFcmToken(token);
+      print('✓ FCM Token ready: ${token.substring(0, 30)}...');
+      print('   ⚠ Belum disimpan ke server (menunggu login)');
+    } else {
+      print('⚠ FCM Token belum tersedia');
     }
 
-    // 5. Listen to token refresh
+    // 5. Listen to token refresh — cek auth state sebelum save
     print('5️⃣  Setting up token refresh listener...');
     _messaging.onTokenRefresh.listen((String newToken) {
       print('🔄 FCM Token refreshed: ${newToken.substring(0, 30)}...');
-      ApiService.saveFcmToken(newToken);
+      // Hanya save jika user sudah login (ada auth token)
+      if (ApiService.token != null) {
+        print('   → User sudah login, saving new FCM token...');
+        ApiService.saveFcmToken(newToken);
+      } else {
+        print('   ⚠ User belum login, token refresh disimpan nanti saat login');
+      }
     });
     print('✓ Token refresh listener active');
 
@@ -150,5 +159,23 @@ class NotificationService {
     print('✓ Foreground handler active\n');
 
     print('=== NOTIFICATION SERVICE INITIALIZED ===\n');
+  }
+
+  /// Dipanggil SETELAH login berhasil untuk menyimpan FCM token ke server.
+  /// Ini memastikan auth token sudah tersedia saat save FCM token.
+  static Future<void> saveTokenAfterLogin() async {
+    print('\n=== SAVING FCM TOKEN AFTER LOGIN ===');
+    try {
+      final String? fcmToken = await _messaging.getToken();
+      if (fcmToken != null) {
+        print('✓ FCM Token: ${fcmToken.substring(0, 30)}...');
+        await ApiService.saveFcmToken(fcmToken);
+        print('✓ FCM token saved to server after login');
+      } else {
+        print('⚠ Gagal dapat FCM token dari Firebase');
+      }
+    } catch (e) {
+      print('❌ Error saving FCM token after login: $e');
+    }
   }
 }

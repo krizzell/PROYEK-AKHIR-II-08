@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import '../models/pembayaran_model.dart';
 import '../models/pengumuman_model.dart';
 import '../models/perkembangan_model.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+import 'notification_service.dart';
 
 class ApiService {
   
@@ -150,16 +150,12 @@ class ApiService {
         print('✓ User saved: $_user');
         print('✓ Nomor Induk Siswa saved: $_nomorIndukSiswa');
 
-        // Save FCM token with retry logic
-        final fcmToken = await FirebaseMessaging.instance.getToken();
-        if (fcmToken != null) {
-          print('✓ FCM Token dari Firebase: $fcmToken');
-          // Jangan await di sini, lakukan di background untuk tidak block login
-          Future.delayed(Duration.zero, () => saveFcmToken(fcmToken)).catchError(
-            (e) => print('⚠ Background FCM save error: $e'),
-          );
-        } else {
-          print('⚠ Gagal dapat FCM token dari Firebase');
+        // Save FCM token SETELAH auth token tersedia
+        // Gunakan NotificationService.saveTokenAfterLogin() yang await-able
+        try {
+          await NotificationService.saveTokenAfterLogin();
+        } catch (e) {
+          print('⚠ FCM token save error (non-blocking): $e');
         }
         return {
           'success': true,
