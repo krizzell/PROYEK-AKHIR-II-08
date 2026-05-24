@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,6 +19,9 @@ import 'login_screen.dart';
 import 'notification_screen.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:tk_mutiara/theme/app_theme.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:location/location.dart' as loc;
+import 'package:geocoding/geocoding.dart' as geo;
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -32,6 +37,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<PembayaranModel> _payments = [];
   List<PengumumanModel> _pengumuman = [];
   List<PerkembanganModel> _perkembanganData = [];
+
+  // Location & Maps State
+  GoogleMapController? _mapController;
+  final loc.Location _location = loc.Location();
+  LatLng? _currentPosition;
+  String _currentAddress = "TK Swasta Mutiara Balige, Jl. TD Pardede, Toba";
+  bool _isMapLoading = true;
+  
+  // Lokasi TK Mutiara
+  final LatLng _tkMutiaraLocation = const LatLng(2.3287092, 99.0686357);
 
   List<PerkembanganModel> _getDataPerTahun() {
     if (_perkembanganData.isEmpty) return [];
@@ -61,6 +76,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadData();
     _syncProfile();
     _listenNotifikasi();
+    _getCurrentLocation();
     ApiService.paymentRefreshNotifier.addListener(_onPaymentUpdated);
   }
 
@@ -139,6 +155,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return 'Selamat Malam';
   }
 
+  Future<void> _getCurrentLocation() async {
+    bool serviceEnabled;
+    loc.PermissionStatus permissionGranted;
+
+    serviceEnabled = await _location.serviceEnabled();
+    if (!serviceEnabled) {
+      serviceEnabled = await _location.requestService();
+      if (!serviceEnabled) {
+        if (mounted) setState(() { _isMapLoading = false; _currentAddress = "GPS tidak aktif"; });
+        return;
+      }
+    }
+
+    permissionGranted = await _location.hasPermission();
+    if (permissionGranted == loc.PermissionStatus.denied) {
+      permissionGranted = await _location.requestPermission();
+      if (permissionGranted != loc.PermissionStatus.granted) {
+        if (mounted) setState(() { _isMapLoading = false; _currentAddress = "Izin lokasi ditolak"; });
+        return;
+      }
+    }
+
+    try {
+      final locationData = await _location.getLocation();
+      final lat = locationData.latitude;
+      final lng = locationData.longitude;
+      
+      if (lat != null && lng != null) {
+        if (mounted) {
+          setState(() {
+            _currentPosition = LatLng(lat, lng);
+            _isMapLoading = false;
+          });
+          // Do not animate to user's location, keep it on TK Mutiara
+        }
+      }
+    } catch (e) {
+       if (mounted) setState(() { _isMapLoading = false; });
+    }
+  }
+
+  Future<void> _getAddressFromLatLng(double lat, double lng) async {
+    // Disabled so we don't overwrite the school's address
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -179,6 +240,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         _perkembangan(),
                         const SizedBox(height: 20),
                         _pengumumanUI(),
+                        _buildMapCard(),
                         const SizedBox(height: 100),
                       ],
                     ),
@@ -188,6 +250,99 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ),
+    );
+  }
+
+  // ── MAP CARD ──
+  Widget _buildMapCard() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Lokasi Sekolah', style: GoogleFonts.montserrat(color: AppTheme.textDark, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
+              InkWell(
+                onTap: () {
+                  _mapController?.animateCamera(CameraUpdate.newLatLngZoom(_tkMutiaraLocation, 16));
+                },
+                child: const Icon(Icons.location_on_rounded, color: AppTheme.primary, size: 22),
+              )
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            height: 240,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 6))],
+              border: Border.all(color: const Color(0xFFF1F5F9)),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Stack(
+                children: [
+                  GoogleMap(
+                    padding: const EdgeInsets.only(bottom: 56), // Push zoom controls above overlay
+                    initialCameraPosition: CameraPosition(target: _tkMutiaraLocation, zoom: 16),
+                    myLocationEnabled: _currentPosition != null,
+                    myLocationButtonEnabled: false,
+                      zoomControlsEnabled: true,
+                      mapToolbarEnabled: true,
+                      scrollGesturesEnabled: true,
+                      zoomGesturesEnabled: true,
+                      gestureRecognizers: {
+                        Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()),
+                      },
+                      markers: {
+                        Marker(
+                          markerId: const MarkerId('tk_mutiara'),
+                          position: _tkMutiaraLocation,
+                          infoWindow: const InfoWindow(
+                            title: 'TK Swasta Mutiara Balige',
+                            snippet: 'Lokasi Sekolah',
+                          ),
+                          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+                        ),
+                      },
+                      onMapCreated: (controller) => _mapController = controller,
+                    ),
+                  
+                  // Address overlay
+                  Positioned(
+                    bottom: 12, left: 12, right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4)],
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.location_on_rounded, color: AppTheme.primary, size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _currentAddress,
+                              style: GoogleFonts.montserrat(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.textDark),
+                              maxLines: 2, overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
