@@ -51,6 +51,8 @@ func main() {
 	r.POST("/login", handlers.LoginHandler)
 	r.POST("/change-password", handlers.ChangePasswordHandler)
 	r.POST("/api/payment/webhook/midtrans", handlers.MidtransWebhookHandler)
+	r.POST("/api/webhook/midtrans", handlers.MidtransWebhookHandler)
+	r.POST("/api/payment-notification", handlers.MidtransWebhookHandler)
 
 	// ==============================
 	// PROTECTED ROUTES

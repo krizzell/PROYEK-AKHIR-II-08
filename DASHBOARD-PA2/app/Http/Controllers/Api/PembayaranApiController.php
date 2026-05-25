@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Akun;
 use App\Models\Tagihan;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Midtrans\Config;
 use Midtrans\Snap;
 use Midtrans\Transaction;
@@ -180,7 +181,7 @@ class PembayaranApiController extends Controller
 
             // Get status from Midtrans untuk status pending
             try {
-                $status = Transaction::status($transaction_id);
+                $status = (object) Transaction::status($transaction_id);
                 $paymentStatus = $this->mapMidtransStatus($status->transaction_status);
 
                 // Update tagihan status jika berubah
@@ -241,10 +242,16 @@ class PembayaranApiController extends Controller
     {
         try {
             $notif = json_decode($request->getContent());
+            if (!$notif) {
+                return response()->json(['status' => 'error', 'message' => 'Invalid payload'], 400);
+            }
+
             $transactionId = $notif->order_id ?? null;
             $statusCode = $notif->status_code ?? null;
             $grossAmount = $notif->gross_amount ?? null;
             $signatureKey = $notif->signature_key ?? null;
+            $transactionStatus = $notif->transaction_status ?? null;
+            $paymentType = $notif->payment_type ?? null;
 
             if (!$transactionId) {
                 return response()->json(['status' => 'error'], 400);
@@ -262,15 +269,25 @@ class PembayaranApiController extends Controller
                 }
             }
 
-            // Get status from Midtrans
-            $status = Transaction::status($transactionId);
-            $paymentStatus = $this->mapMidtransStatus($status->transaction_status);
+            // Gunakan status dari payload untuk menghindari hard-fail saat status API Midtrans timeout.
+            // Fallback ke API Midtrans hanya jika transaction_status tidak dikirim.
+            if (!$transactionStatus) {
+                try {
+                    $status = (object) Transaction::status($transactionId);
+                    $transactionStatus = $status->transaction_status ?? null;
+                    $paymentType = $status->payment_type ?? $paymentType;
+                } catch (\Exception $e) {
+                    Log::warning("Webhook status fallback failed for transaction: $transactionId - " . $e->getMessage());
+                }
+            }
+
+            $paymentStatus = $this->mapMidtransStatus($transactionStatus);
 
             // Find tagihan
             $tagihan = Tagihan::where('transaction_id', $transactionId)->first();
 
             if (!$tagihan) {
-                \Log::warning("Webhook received for unknown transaction: $transactionId");
+                Log::warning("Webhook received for unknown transaction: $transactionId");
                 return response()->json(['status' => 'warning'], 200);
             }
 
@@ -278,7 +295,7 @@ class PembayaranApiController extends Controller
             $updateData = [
                 'payment_status' => $paymentStatus,
                 'status' => $paymentStatus,
-                'payment_method' => $status->payment_type ?? null,
+                'payment_method' => $paymentType,
             ];
 
             // Set payment_date jika lunas
@@ -289,12 +306,13 @@ class PembayaranApiController extends Controller
             $tagihan->update($updateData);
 
             // Log webhook
-            \Log::info("Webhook processed - Transaction: $transactionId, Status: $paymentStatus");
+            Log::info("Webhook processed - Transaction: $transactionId, Status: $paymentStatus");
 
             return response()->json(['status' => 'success'], 200);
         } catch (\Exception $e) {
-            \Log::error("Webhook error: " . $e->getMessage());
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+            Log::error("Webhook error: " . $e->getMessage());
+            // Kembalikan 200 agar Midtrans tidak terus retry untuk error non-kritis aplikasi.
+            return response()->json(['status' => 'warning', 'message' => $e->getMessage()], 200);
         }
     }
 

@@ -2,27 +2,23 @@ package services
 
 import (
 	"bytes"
-	"crypto"
-	"crypto/rand"
-	"crypto/rsa"
 	"crypto/sha512"
-	"crypto/x509"
 	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 	"time"
+	"context"
 
 	"tk_mutiara_backend/config"
 	"tk_mutiara_backend/models"
 	"tk_mutiara_backend/repository"
+	"golang.org/x/oauth2/google"
 )
 
 type midtransSnapRequest struct {
@@ -198,8 +194,8 @@ func getFcmTokenByOrderID(db *sql.DB, orderID string) (string, error) {
 }
 
 func getAccessToken() (string, error) {
-	fmt.Printf("\n=== GET FIREBASE ACCESS TOKEN ===\n")
-	
+	fmt.Printf("\n=== GET FIREBASE ACCESS TOKEN (via oauth2/google) ===\n")
+
 	serviceAccountPath := config.AppConfig.FCMServiceAccountPath
 	if serviceAccountPath == "" {
 		serviceAccountPath = "firebase-service-account.json"
@@ -213,113 +209,28 @@ func getAccessToken() (string, error) {
 	}
 	fmt.Printf("✓ Service account file read: %d bytes\n", len(data))
 
-	var sa struct {
-		ClientEmail string `json:"client_email"`
-		PrivateKey  string `json:"private_key"`
-		TokenURI    string `json:"token_uri"`
-		ProjectID   string `json:"project_id"`
-	}
-	if err := json.Unmarshal(data, &sa); err != nil {
-		fmt.Printf("❌ Failed to parse JSON: %v\n", err)
-		return "", fmt.Errorf("gagal parse service account: %w", err)
-	}
-	fmt.Printf("✓ Service account parsed\n")
-	fmt.Printf("  - Client Email: %s\n", sa.ClientEmail)
-	fmt.Printf("  - Token URI: %s\n", sa.TokenURI)
-
-	now := time.Now()
-	// JWT claims HARUS sesuai Google OAuth2 spec
-	claims := map[string]interface{}{
-		"iss":   sa.ClientEmail,
-		"sub":   sa.ClientEmail,
-		"scope": "https://www.googleapis.com/auth/firebase.messaging",
-		"aud":   sa.TokenURI, // Token endpoint URL
-		"iat":   now.Unix(),
-		"exp":   now.Add(time.Hour).Unix(),
-	}
-
-	// Create JWT header
-	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RS256","typ":"JWT"}`))
-	claimsBytes, _ := json.Marshal(claims)
-	payload := base64.RawURLEncoding.EncodeToString(claimsBytes)
-	signingInput := header + "." + payload
-
-	fmt.Printf("✓ JWT payload created\n")
-
-	block, _ := pem.Decode([]byte(sa.PrivateKey))
-	if block == nil {
-		fmt.Printf("❌ Failed to decode PEM private key\n")
-		return "", fmt.Errorf("gagal decode private key PEM")
-	}
-	fmt.Printf("✓ Private key PEM decoded\n")
-	
-	privateKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	// Use oauth2/google helper to build JWT config and token source
+	ctx := context.Background()
+	cfg, err := google.JWTConfigFromJSON(data, "https://www.googleapis.com/auth/firebase.messaging")
 	if err != nil {
-		fmt.Printf("❌ Failed to parse private key: %v\n", err)
-		return "", fmt.Errorf("gagal parse private key: %w", err)
+		fmt.Printf("❌ Failed to create JWT config: %v\n", err)
+		return "", fmt.Errorf("gagal buat jwt config: %w", err)
 	}
 
-	rsaKey, ok := privateKey.(*rsa.PrivateKey)
-	if !ok {
-		fmt.Printf("❌ Private key is not RSA\n")
-		return "", fmt.Errorf("private key bukan RSA")
-	}
-	fmt.Printf("✓ RSA private key extracted\n")
-
-	// Sign JWT
-	h := crypto.SHA256.New()
-	h.Write([]byte(signingInput))
-	signature, err := rsa.SignPKCS1v15(rand.Reader, rsaKey, crypto.SHA256, h.Sum(nil))
+	token, err := cfg.TokenSource(ctx).Token()
 	if err != nil {
-		fmt.Printf("❌ Failed to sign JWT: %v\n", err)
-		return "", fmt.Errorf("gagal sign JWT: %w", err)
+		fmt.Printf("❌ Failed to obtain token: %v\n", err)
+		return "", fmt.Errorf("gagal dapat access token: %w", err)
 	}
-	fmt.Printf("✓ JWT signed successfully\n")
 
-	jwt := signingInput + "." + base64.RawURLEncoding.EncodeToString(signature)
-	fmt.Printf("✓ JWT created: %s...\n", jwt[:50])
-
-	// POST to token endpoint with proper form data
-	formData := url.Values{}
-	formData.Set("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer")
-	formData.Set("assertion", jwt)
-	
-	fmt.Printf("✓ Posting to token endpoint...\n")
-	fmt.Printf("  URL: %s\n", sa.TokenURI)
-	
-	resp, err := http.Post(
-		sa.TokenURI,
-		"application/x-www-form-urlencoded",
-		strings.NewReader(formData.Encode()),
-	)
-	if err != nil {
-		fmt.Printf("❌ Failed to post to token URI: %v\n", err)
-		return "", fmt.Errorf("gagal request access token: %w", err)
-	}
-	defer resp.Body.Close()
-
-	respBody, _ := io.ReadAll(resp.Body)
-	fmt.Printf("✓ Token endpoint responded with status: %d\n", resp.StatusCode)
-	fmt.Printf("  Response: %s\n", string(respBody))
-
-	var tokenResp struct {
-		AccessToken string `json:"access_token"`
-		TokenType   string `json:"token_type"`
-		ExpiresIn   int    `json:"expires_in"`
-	}
-	if err := json.Unmarshal(respBody, &tokenResp); err != nil {
-		fmt.Printf("❌ Failed to decode token response: %v\n", err)
-		return "", fmt.Errorf("gagal parse token response: %w", err)
-	}
-	
-	if tokenResp.AccessToken == "" {
+	if token == nil || token.AccessToken == "" {
 		fmt.Printf("❌ Access token is empty\n")
 		return "", fmt.Errorf("access token kosong")
 	}
 
 	fmt.Printf("✓✓ Access token acquired successfully!\n")
-	fmt.Printf("  Token: %s...\n", tokenResp.AccessToken[:30])
-	return tokenResp.AccessToken, nil
+	fmt.Printf("  Token: %s...\n", token.AccessToken[:30])
+	return token.AccessToken, nil
 }
 
 func sendFCMNotification(fcmToken, title, body string) error {
@@ -526,11 +437,41 @@ func processMidtransStatus(db *sql.DB, payload *models.MidtransNotification) err
 }
 
 func HandleMidtransWebhook(db *sql.DB, payload *models.MidtransNotification) error {
-	if !isValidMidtransSignature(payload) {
-		return fmt.Errorf("signature key midtrans tidak valid")
+	if payload == nil {
+		return fmt.Errorf("payload webhook midtrans kosong")
 	}
 
-	return processMidtransStatus(db, payload)
+	if strings.TrimSpace(payload.OrderID) == "" {
+		return fmt.Errorf("order id midtrans kosong")
+	}
+
+	// Midtrans simulator/partial callback kadang tidak menyertakan field signature inputs.
+	if strings.TrimSpace(payload.SignatureKey) != "" && strings.TrimSpace(payload.StatusCode) != "" && strings.TrimSpace(payload.GrossAmount) != "" {
+		if !isValidMidtransSignature(payload) {
+			return fmt.Errorf("signature key midtrans tidak valid")
+		}
+	}
+
+	// Jika payload callback tidak lengkap, ambil status final langsung ke Midtrans API.
+	if strings.TrimSpace(payload.TransactionStatus) == "" {
+		statusPayload, err := fetchMidtransStatusAPI(payload.OrderID)
+		if err != nil {
+			return err
+		}
+		payload = statusPayload
+	}
+
+	err := processMidtransStatus(db, payload)
+	if err != nil {
+		// Idempotent-safe: callback untuk order yang tidak ditemukan tidak perlu dianggap hard failure.
+		if strings.Contains(strings.ToLower(err.Error()), "tidak ditemukan") {
+			fmt.Printf("⚠ Webhook ignored (order not found): %s\n", payload.OrderID)
+			return nil
+		}
+		return err
+	}
+
+	return nil
 }
 
 func isValidMidtransSignature(payload *models.MidtransNotification) bool {
