@@ -37,16 +37,18 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   http: 1.6.0
+  flutter_bloc: ^9.1.1    # State management menggunakan cubit atau bloc
+  shared_preferences: ^2.5.5    # menyimpan session login dan data lokal
   webview_flutter: ^4.7.0
     
   fl_chart: ^0.68.0
-  firebase_core: ^4.7.0
-  firebase_messaging: ^16.2.0
-  flutter_local_notifications: ^17.2.4
+  firebase_core: ^4.7.0   # Inisialisasi Firebase
+  firebase_messaging: ^16.2.0   # Push notification dengan Firebase Cloud Messaging
+  flutter_local_notifications: ^17.2.4    # Notifikasi lokal
   cached_network_image: ^3.4.1
-  google_maps_flutter: ^2.17.0
-  location: ^8.0.1
-  geocoding: ^4.0.0
+  google_maps_flutter: ^2.17.0    # implementasi peta dengan Google Maps Flutter
+  location: ^8.0.1    # mengambil lokasi device
+  geocoding: ^4.0.0   # konversi koordinat ke alamat dan sebaliknya
 
 dev_dependencies:
   flutter_test:

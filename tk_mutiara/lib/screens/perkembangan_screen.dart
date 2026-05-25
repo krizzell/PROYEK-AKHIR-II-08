@@ -29,6 +29,7 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> with TickerProv
   Map<String, List<PerkembanganModel>> _groupedData = {};
   List<String> _monthKeys = [];
   String? _selectedMonthKey;
+  final ScrollController _scrollController = ScrollController();
 
   late AnimationController _progressController;
 
@@ -44,22 +45,41 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> with TickerProv
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _progressController.dispose();
     super.dispose();
   }
 
   Future<void> _loadPerkembangan() async {
     try {
+      final previousMonthKey = _selectedMonthKey;
+      final previousScrollOffset = _scrollController.hasClients
+          ? _scrollController.offset
+          : 0.0;
+
       final data = await ApiService.getPerkembangan();
       if (mounted) {
         setState(() {
           _data = data;
           _groupDataByMonth();
-          if (_monthKeys.isNotEmpty) {
+
+          if (previousMonthKey != null && _monthKeys.contains(previousMonthKey)) {
+            _selectedMonthKey = previousMonthKey;
+          } else if (_monthKeys.isNotEmpty) {
             _selectedMonthKey = _monthKeys.last;
           }
+
+          _errorMsg = null;
           _isLoading = false;
         });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!_scrollController.hasClients) return;
+          final maxOffset = _scrollController.position.maxScrollExtent;
+          final targetOffset = previousScrollOffset.clamp(0.0, maxOffset).toDouble();
+          _scrollController.jumpTo(targetOffset);
+        });
+
         _progressController.forward(from: 0.0);
       }
     } catch (e) {
@@ -122,10 +142,12 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> with TickerProv
               Expanded(
                 child: RefreshIndicator(
                   color: kPrimary,
+                  displacement: 24,
                   onRefresh: _loadPerkembangan,
                   child: ListView(
+                    controller: _scrollController,
                     physics: const AlwaysScrollableScrollPhysics(
-                      parent: BouncingScrollPhysics(),
+                      parent: ClampingScrollPhysics(),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     children: [

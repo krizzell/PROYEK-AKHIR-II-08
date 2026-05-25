@@ -901,8 +901,9 @@ class _ProfilScreenState extends State<ProfilScreen>
             ),
           ),
           ElevatedButton(
-            onPressed: () {
-              ApiService.logout();
+            onPressed: () async {
+              await ApiService.logout();
+              if (!context.mounted) return;
               Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
                 MaterialPageRoute(
                   builder: (_) => const LoginScreen(),

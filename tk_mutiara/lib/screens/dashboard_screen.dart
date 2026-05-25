@@ -579,7 +579,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   // Process logout
                   await Future.delayed(const Duration(milliseconds: 600));
-                  ApiService.logout(); // Remove 'await'
+                  await ApiService.logout();
                   
                   if (context.mounted) {
                     Navigator.pushAndRemoveUntil(

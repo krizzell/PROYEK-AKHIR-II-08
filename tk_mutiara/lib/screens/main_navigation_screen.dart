@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../cubit/bottom_nav/bottom_nav_cubit.dart';
 import '../theme/app_theme.dart';
 import 'dashboard_screen.dart';
 import 'perkembangan_screen.dart';
@@ -14,15 +17,11 @@ class MainNavigationScreen extends StatefulWidget {
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  int _currentIndex = 0;
+  final BottomNavCubit _bottomNavCubit = BottomNavCubit();
 
   // Fungsi untuk back ke tab sebelumnya atau Home
   void _goBack() {
-    setState(() {
-      if (_currentIndex != 0) {
-        _currentIndex = 0;
-      }
-    });
+    _bottomNavCubit.changeTab(0);
   }
 
   // Screen untuk setiap tab
@@ -33,6 +32,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     HistoryScreen(onBackPressed: _goBack),
     PengumumanScreen(onBackPressed: _goBack),
   ];
+
+  @override
+  void dispose() {
+    _bottomNavCubit.close();
+    super.dispose();
+  }
 
   // Nav items config (index 2 is the center floating button)
   static const _navItems = [
@@ -45,15 +50,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      body: IndexedStack(index: _currentIndex, children: _screens),
-      extendBody: true,
-      bottomNavigationBar: _buildBottomNav(),
+    return BlocProvider.value(
+      value: _bottomNavCubit,
+      child: BlocBuilder<BottomNavCubit, int>(
+        builder: (context, currentIndex) {
+          return Scaffold(
+            backgroundColor: AppTheme.background,
+            body: IndexedStack(index: currentIndex, children: _screens),
+            extendBody: true,
+            bottomNavigationBar: _buildBottomNav(currentIndex),
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildBottomNav() {
+  Widget _buildBottomNav(int currentIndex) {
     return Container(
       padding: const EdgeInsets.only(bottom: 8),
       child: Container(
@@ -69,8 +81,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: List.generate(5, (index) {
-            if (index == 2) return _buildCenterButton();
-            return _buildNavItem(index);
+            if (index == 2) return _buildCenterButton(currentIndex);
+            return _buildNavItem(index, currentIndex);
           }),
         ),
       ),
@@ -78,12 +90,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   // ── Regular nav item ──
-  Widget _buildNavItem(int index) {
-    final isActive = _currentIndex == index;
+  Widget _buildNavItem(int index, int currentIndex) {
+    final isActive = currentIndex == index;
     final item = _navItems[index];
 
     return GestureDetector(
-      onTap: () => setState(() => _currentIndex = index),
+      onTap: () => _bottomNavCubit.changeTab(index),
       behavior: HitTestBehavior.opaque,
       child: AnimatedSlide(
         duration: const Duration(milliseconds: 250),
@@ -113,9 +125,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               // Label
               AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 200),
-                style: TextStyle(
+                style: GoogleFonts.montserrat(
                   fontSize: 9,
-                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                  fontWeight: FontWeight.bold,
                   color: isActive ? AppTheme.primary : const Color(0xFFB8BCC8),
                   letterSpacing: -0.2,
                 ),
@@ -129,37 +141,75 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   // ── Floating center button (SPP) ──
-  Widget _buildCenterButton() {
-    final isActive = _currentIndex == 2;
+  Widget _buildCenterButton(int currentIndex) {
+    final isActive = currentIndex == 2;
     return GestureDetector(
-      onTap: () => setState(() => _currentIndex = 2),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
+      onTap: () => _bottomNavCubit.changeTab(2),
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 72,
+        height: 80,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.topCenter,
           children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isActive
-                      ? [const Color(0xFFFF6B1A), const Color(0xFFFF8C42)]
-                      : [AppTheme.primary.withOpacity(0.8), AppTheme.primaryLight],
+            Positioned(
+              top: -16,
+              child: AnimatedScale(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                scale: isActive ? 1.04 : 1.0,
+                child: Container(
+                  width: 62,
+                  height: 62,
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primary.withOpacity(isActive ? 0.22 : 0.14),
+                        blurRadius: isActive ? 18 : 14,
+                        offset: const Offset(0, 7),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: isActive
+                            ? [const Color(0xFFFF7A1A), const Color(0xFFFF5B11)]
+                            : [AppTheme.primaryLight, AppTheme.primary],
+                      ),
+                    ),
+                    child: Icon(
+                      isActive ? Icons.account_balance_wallet_rounded : Icons.account_balance_wallet_outlined,
+                      color: Colors.white,
+                      size: isActive ? 30 : 28,
+                    ),
+                  ),
                 ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(color: AppTheme.primary.withOpacity(isActive ? 0.45 : 0.3), blurRadius: isActive ? 16 : 12, offset: const Offset(0, 4)),
-                  BoxShadow(color: AppTheme.primary.withOpacity(0.15), blurRadius: 24, offset: const Offset(0, 8)),
-                ],
-                border: Border.all(color: Colors.white, width: 3),
               ),
-              child: Icon(
-                isActive ? Icons.account_balance_wallet_rounded : Icons.account_balance_wallet_outlined,
-                color: Colors.white,
-                size: 26,
+            ),
+            Positioned(
+              bottom: 17,
+              child: AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 200),
+                style: GoogleFonts.montserrat(
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  color: isActive ? AppTheme.primary : const Color(0xFFB8BCC8),
+                  letterSpacing: 0,
+                ),
+                child: const Text('Bayar SPP', maxLines: 1, overflow: TextOverflow.ellipsis),
               ),
             ),
           ],

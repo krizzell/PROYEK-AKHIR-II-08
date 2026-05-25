@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
+import '../services/api_services.dart';
 import 'login_screen.dart';
+import 'main_navigation_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -50,7 +52,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
   void _goToLogin() {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            ApiService.isLoggedIn ? const MainNavigationScreen() : const LoginScreen(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           final curvedAnim = CurvedAnimation(parent: animation, curve: Curves.easeInOutCubic);
           return FadeTransition(

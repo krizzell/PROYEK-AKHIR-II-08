@@ -1,13 +1,17 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/pembayaran_model.dart';
 import '../models/pengumuman_model.dart';
 import '../models/perkembangan_model.dart';
 import 'notification_service.dart';
 
 class ApiService {
-  
+  static const String _tokenKey = 'auth_token';
+  static const String _userKey = 'user_data';
+  static const String _nomorIndukSiswaKey = 'nomor_induk_siswa';
+
   // Android emulator: flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8081
   // Device fisik (satu WiFi): flutter run --dart-define=API_BASE_URL=http://192.168.83.220:8081
   // flutter run --dart-define=IMAGE_BASE_URL=http://192.168.83.220:8000  => untuk gambar
@@ -16,8 +20,8 @@ class ApiService {
 
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    // defaultValue: 'http://192.168.83.220:8081',
-    defaultValue: 'http://127.0.0.1:8081',
+    defaultValue: 'http://192.168.83.220:8081',
+    // defaultValue: 'http://127.0.0.1:8081',
   );
   static const String imageBaseUrl = String.fromEnvironment(
     'IMAGE_BASE_URL',
@@ -36,6 +40,37 @@ class ApiService {
   static Map<String, dynamic>? get userInfo => _user;
   static String? get token => _token;
   static String? get nomorIndukSiswa => _nomorIndukSiswa;
+  static bool get isLoggedIn => _token != null && _token!.isNotEmpty;
+
+  static Future<void> loadSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    _token = prefs.getString(_tokenKey);
+    _nomorIndukSiswa = prefs.getString(_nomorIndukSiswaKey);
+
+    final userJson = prefs.getString(_userKey);
+    if (userJson != null && userJson.isNotEmpty) {
+      try {
+        _user = Map<String, dynamic>.from(jsonDecode(userJson) as Map);
+      } catch (e) {
+        print('Gagal load user dari SharedPreferences: $e');
+        _user = null;
+      }
+    }
+  }
+
+  static Future<void> _saveSession() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (_token != null) {
+      await prefs.setString(_tokenKey, _token!);
+    }
+    if (_nomorIndukSiswa != null) {
+      await prefs.setString(_nomorIndukSiswaKey, _nomorIndukSiswa!);
+    }
+    if (_user != null) {
+      await prefs.setString(_userKey, jsonEncode(_user));
+    }
+  }
 
   static void notifyPaymentUpdated() {
     paymentRefreshNotifier.value = paymentRefreshNotifier.value + 1;
@@ -151,6 +186,8 @@ class ApiService {
         print('✓ User saved: $_user');
         print('✓ Nomor Induk Siswa saved: $_nomorIndukSiswa');
 
+        await _saveSession();
+
         // Save FCM token SETELAH auth token tersedia
         // Gunakan NotificationService.saveTokenAfterLogin() yang await-able
         try {
@@ -223,10 +260,15 @@ class ApiService {
   }
 
   // LOGOUT
-  static void logout() {
+  static Future<void> logout() async {
     _token = null;
     _user = null;
     _nomorIndukSiswa = null;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_tokenKey);
+    await prefs.remove(_userKey);
+    await prefs.remove(_nomorIndukSiswaKey);
   }
 
   static Future<void> saveFcmToken(String fcmToken, {int retryCount = 0}) async {
