@@ -16,7 +16,8 @@ class ApiService {
 
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.83.220:8081',
+    // defaultValue: 'http://192.168.83.220:8081',
+    defaultValue: 'http://127.0.0.1:8081',
   );
   static const String imageBaseUrl = String.fromEnvironment(
     'IMAGE_BASE_URL',
