@@ -18,15 +18,31 @@ class ApiService {
   // php artisan serve --host=0.0.0.0 --port=8000 => untuk backend
   // php artisan storage:link => untuk membuat link storage
 
-  static const String baseUrl = String.fromEnvironment(
+  static const String _configuredBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.83.220:8081',
-    // defaultValue: 'http://127.0.0.1:8081',
+    defaultValue: '',
   );
-  static const String imageBaseUrl = String.fromEnvironment(
+
+  static const String _configuredImageBaseUrl = String.fromEnvironment(
     'IMAGE_BASE_URL',
-    defaultValue: baseUrl,
+    defaultValue: '',
   );
+
+  static const List<String> _backendCandidates = [
+    'http://127.0.0.1:8081',
+    'http://10.0.2.2:8081',
+  ];
+
+  static String _activeBaseUrl =
+      _configuredBaseUrl.isNotEmpty ? _configuredBaseUrl : _backendCandidates[0];
+
+  static String get baseUrl => _activeBaseUrl;
+  static String get imageBaseUrl {
+    if (_configuredImageBaseUrl.isNotEmpty) {
+      return _configuredImageBaseUrl;
+    }
+    return _activeBaseUrl.replaceFirst(':8081', ':8000');
+  }
 
   // Simpan token & user data setelah login
   static String? _token;
@@ -137,6 +153,63 @@ class ApiService {
     return (envelope['message'] ?? envelope['error'] ?? fallback).toString();
   }
 
+  static String _preferredBackendUrl() {
+    final configured = _configuredBaseUrl.trim();
+    if (configured.isNotEmpty) {
+      return configured;
+    }
+    return _backendCandidates.first;
+  }
+
+  static List<String> _candidateBackendUrls() {
+    final urls = <String>[];
+    final preferred = _preferredBackendUrl();
+    if (preferred.isNotEmpty) {
+      urls.add(preferred);
+    }
+    urls.addAll(_backendCandidates);
+
+    final unique = <String>[];
+    for (final url in urls) {
+      final trimmed = url.trim();
+      if (trimmed.isNotEmpty && !unique.contains(trimmed)) {
+        unique.add(trimmed);
+      }
+    }
+    return unique;
+  }
+
+  static Future<http.Response> _postLoginWithFallback({
+    required String email,
+    required String password,
+  }) async {
+    Object? lastError;
+    for (final url in _candidateBackendUrls()) {
+      try {
+        print('Coba backend: $url/login');
+        final res = await http
+            .post(
+              Uri.parse('$url/login'),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({'email': email, 'password': password}),
+            )
+            .timeout(
+              const Duration(seconds: 6),
+              onTimeout: () => throw Exception('Request timeout - Backend tidak merespons'),
+            );
+
+        _activeBaseUrl = url;
+        return res;
+      } catch (e) {
+        lastError = e;
+      }
+    }
+
+    throw Exception(
+      'Request timeout - Backend tidak merespons. Pastikan adb reverse aktif atau API_BASE_URL diarahkan ke backend yang benar. Last error: $lastError',
+    );
+  }
+
   // LOGIN~
   static Future<Map<String, dynamic>> login(
     String email,
@@ -144,21 +217,14 @@ class ApiService {
   ) async {
     try {
       print('=== LOGIN REQUEST ===');
-      print('URL: $baseUrl/login');
+      print('URL candidates: ${_candidateBackendUrls().join(', ')}');
       print('Email: $email');
 
-      final res = await http
-          .post(
-            Uri.parse('$baseUrl/login'),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({'email': email, 'password': password}),
-          )
-          .timeout(
-            const Duration(seconds: 10),
-            onTimeout: () {
-              throw Exception('Request timeout - Backend tidak merespons');
-            },
-          );
+      final res = await _postLoginWithFallback(
+        email: email,
+        password: password,
+      );
+      print('Pakai backend aktif: $baseUrl');
 
       print('=== RESPONSE ===');
       print('Status: ${res.statusCode}');
