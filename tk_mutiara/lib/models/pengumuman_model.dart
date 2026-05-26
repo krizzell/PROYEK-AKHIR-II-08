@@ -7,7 +7,7 @@ class PengumumanModel {
   final String namaGuru;
   final String judul;
   final String media;
-  final List<String> mediaPaths; // All media paths for multi-image support
+  final List<String> mediaPaths; 
   final String waktuUnggah;
   final String deskripsi;
   final String createdAt;
@@ -28,18 +28,17 @@ class PengumumanModel {
 
   static String getImageUrl(String mediaPath) {
     if (mediaPath.isEmpty) {
-      print('📸 Image URL: Empty path');
+      print('Image URL: Empty path');
       return '';
     }
 
-    // Check if media is already full URL (starts with http)
+    // mengecek apakah url sudah lengkap
     if (mediaPath.startsWith('http')) {
-      print('📸 Image URL (full): $mediaPath');
+      print('Image URL (full): $mediaPath');
       return mediaPath;
     }
 
-    // Handle JSON array string from Laravel/Go Backend
-    // Example: ["pengumuman/xxx.jpg"]
+    // menangani kasus mediaPath yang berupa JSON array string seperti '["path1.jpg","path2.jpg"]'
     String cleanPath = mediaPath;
     if (mediaPath.trim().startsWith('[') && mediaPath.trim().endsWith(']')) {
       try {
@@ -52,23 +51,20 @@ class PengumumanModel {
       }
     }
 
-    // Clean up if path starts with storage/ to avoid double storage/
     if (cleanPath.startsWith('storage/')) {
       cleanPath = cleanPath.replaceFirst('storage/', '');
     }
 
-    // If only filename/path, prepend the base URL with storage path
     final url = '${ApiService.imageBaseUrl}/storage/$cleanPath';
 
-    print('📸 Image URL (constructed): $url');
-    print('📸 Media Path Original: $mediaPath');
-    print('📸 Media Path Cleaned: $cleanPath');
+    print('Image URL (constructed): $url');
+    print('Media Path Original: $mediaPath');
+    print('Media Path Cleaned: $cleanPath');
     return url;
   }
 
   // Factory untuk parsing dari API
   factory PengumumanModel.fromJson(Map<String, dynamic> json) {
-    // Parse all media paths for multi-image support
     List<String> allPaths = [];
     String mediaValue = '';
 
@@ -79,7 +75,7 @@ class PengumumanModel {
     } else {
       final rawMedia = json['media']?.toString() ?? '';
       mediaValue = rawMedia;
-      // Try to parse JSON array string like '["path1.jpg","path2.jpg"]'
+
       if (rawMedia.trim().startsWith('[') && rawMedia.trim().endsWith(']')) {
         try {
           final List<dynamic> parsed = jsonDecode(rawMedia);
@@ -107,7 +103,6 @@ class PengumumanModel {
     );
   }
 
-  // Method copyWith untuk immutability
   PengumumanModel copyWith({
     int? idPengumuman,
     int? idGuru,

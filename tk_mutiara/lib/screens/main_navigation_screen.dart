@@ -19,7 +19,7 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final BottomNavCubit _bottomNavCubit = BottomNavCubit();
 
-  // Fungsi untuk back ke tab sebelumnya atau Home
+  // Kembali ke halaman sebelumnya
   void _goBack() {
     _bottomNavCubit.changeTab(0);
   }
@@ -39,7 +39,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     super.dispose();
   }
 
-  // Nav items config (index 2 is the center floating button)
   static const _navItems = [
     _NavItem(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Beranda'),
     _NavItem(icon: Icons.show_chart_rounded, activeIcon: Icons.show_chart_rounded, label: 'Perkembangan'),
@@ -89,7 +88,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
-  // ── Regular nav item ──
   Widget _buildNavItem(int index, int currentIndex) {
     final isActive = currentIndex == index;
     final item = _navItems[index];
@@ -140,7 +138,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
-  // ── Floating center button (SPP) ──
+  // Card SPP
   Widget _buildCenterButton(int currentIndex) {
     final isActive = currentIndex == 2;
     return GestureDetector(

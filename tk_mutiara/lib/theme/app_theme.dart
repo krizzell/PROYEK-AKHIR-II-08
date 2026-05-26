@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // === COLOR PALETTE ===
+  // COLOR PALETTE 
   static const Color primary = Color.fromARGB(255, 255, 107, 26);       // Vibrant orange
   static const Color primaryLight = Color.fromARGB(255, 255, 140, 66);  // Soft orange
   static const Color primaryDark = Color.fromARGB(255, 232, 80, 0);   // Deep orange
@@ -18,7 +18,7 @@ class AppTheme {
   static const Color danger = Color(0xFFEF4444);
   static const Color cardShadow = Color.fromARGB(26, 255, 107, 26);
 
-  // === TYPOGRAPHY ===
+  // TYPOGRAPHY 
   static TextStyle get heading1 => GoogleFonts.montserrat(
     fontSize: 20,
     fontWeight: FontWeight.bold,
@@ -116,7 +116,7 @@ class AppTheme {
     );
   }
 
-  // === GRADIENT HELPERS ===
+  // GRADIENT HELPERS 
   static LinearGradient get primaryGradient => const LinearGradient(
         colors: [primary, primaryLight],
         begin: Alignment.topLeft,
@@ -135,7 +135,6 @@ class AppTheme {
         end: Alignment.bottomRight,
       );
 
-  // === BOX SHADOW HELPERS ===
   static List<BoxShadow> get softShadow => [
         BoxShadow(
           color: primary.withOpacity(0.15),

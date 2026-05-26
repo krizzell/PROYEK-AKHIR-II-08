@@ -104,7 +104,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 children: [
                   const SizedBox(height: 32),
 
-                  // Logo centered
                   Center(child: Image.asset('assets/images/logosekolah.png', width: 100, height: 100)),
                   const SizedBox(height: 40),
 

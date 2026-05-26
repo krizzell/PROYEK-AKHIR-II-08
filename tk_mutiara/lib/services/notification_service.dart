@@ -6,13 +6,12 @@ import 'api_services.dart';
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  print('🔔 [BACKGROUND] Message received: ${message.messageId}');
+  print('[BACKGROUND] Message received: ${message.messageId}');
   
   final RemoteNotification? notif = message.notification;
   if (notif != null) {
-    print('🔔 [BACKGROUND] Title: ${notif.title}, Body: ${notif.body}');
+    print('[BACKGROUND] Title: ${notif.title}, Body: ${notif.body}');
     
-    // PENTING: Show notification di background juga!
     await flutterLocalNotificationsPlugin.show(
       notif.hashCode, // Unique ID dari notification
       notif.title,
@@ -48,7 +47,6 @@ class NotificationService {
   static Future<void> init() async {
     print('\n=== INITIALIZING NOTIFICATION SERVICE ===');
     
-    // 1. Request permissions
     print('1️⃣  Requesting notification permissions...');
     NotificationSettings settings = await _messaging.requestPermission(
       alert: true,
@@ -58,7 +56,6 @@ class NotificationService {
     );
     print('✓ Permission granted: ${settings.authorizationStatus}');
 
-    // 2. Initialize local notifications
     print('2️⃣  Initializing local notifications plugin...');
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -74,7 +71,6 @@ class NotificationService {
     );
     print('✓ Local notifications initialized');
 
-    // 3. Create Android notification channel
     print('3️⃣  Creating Android notification channel...');
     final AndroidFlutterLocalNotificationsPlugin? androidImpl =
         flutterLocalNotificationsPlugin
@@ -98,17 +94,15 @@ class NotificationService {
       print('⚠ Android implementation not found');
     }
 
-    // 4. Get FCM token (hanya log, JANGAN save ke server — user belum login)
     print('4️⃣  Getting FCM token...');
     final String? token = await _messaging.getToken();
     if (token != null) {
       print('✓ FCM Token ready: ${token.substring(0, 30)}...');
-      print('   ⚠ Belum disimpan ke server (menunggu login)');
+      print('⚠ Belum disimpan ke server (menunggu login)');
     } else {
       print('⚠ FCM Token belum tersedia');
     }
 
-    // 5. Listen to token refresh — cek auth state sebelum save
     print('5️⃣  Setting up token refresh listener...');
     _messaging.onTokenRefresh.listen((String newToken) {
       print('🔄 FCM Token refreshed: ${newToken.substring(0, 30)}...');
@@ -122,10 +116,9 @@ class NotificationService {
     });
     print('✓ Token refresh listener active');
 
-    // 6. Handle foreground messages
     print('6️⃣  Setting up foreground message handler...');
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('\n🔔 [FOREGROUND] Message received: ${message.messageId}');
+      print('\n [FOREGROUND] Message received: ${message.messageId}');
       final RemoteNotification? notif = message.notification;
       final Map<String, dynamic> data = message.data;
       
@@ -153,7 +146,7 @@ class NotificationService {
           ),
           payload: data.toString(),
         );
-        print('   ✓ Foreground notification displayed');
+        print('✓ Foreground notification displayed');
       }
     });
     print('✓ Foreground handler active\n');
@@ -161,7 +154,6 @@ class NotificationService {
     print('=== NOTIFICATION SERVICE INITIALIZED ===\n');
   }
 
-  /// Dipanggil SETELAH login berhasil untuk menyimpan FCM token ke server.
   /// Ini memastikan auth token sudah tersedia saat save FCM token.
   static Future<void> saveTokenAfterLogin() async {
     print('\n=== SAVING FCM TOKEN AFTER LOGIN ===');
@@ -175,7 +167,7 @@ class NotificationService {
         print('⚠ Gagal dapat FCM token dari Firebase');
       }
     } catch (e) {
-      print('❌ Error saving FCM token after login: $e');
+      print('Error saving FCM token after login: $e');
     }
   }
 }

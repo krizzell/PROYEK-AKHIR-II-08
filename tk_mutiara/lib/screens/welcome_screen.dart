@@ -99,7 +99,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
           // Main content
           Column(
             children: [
-              // Logo area — takes full height
               Expanded(
                 child: Center(
                   child: FadeTransition(

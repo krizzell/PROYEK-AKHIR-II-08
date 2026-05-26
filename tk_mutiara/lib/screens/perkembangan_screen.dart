@@ -179,7 +179,7 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> with TickerProv
     );
   }
 
-  // --- 1. HEADER (CONSISTENT WITH OTHER SCREENS) ---
+  // HEADER 
   Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 20, 16),
@@ -222,7 +222,7 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> with TickerProv
     );
   }
 
-  // --- 2. DATE SELECTOR ---
+  // DATE 
   Widget _buildDateSelector() {
     if (_monthKeys.isEmpty) return const SizedBox.shrink();
 
@@ -332,7 +332,6 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> with TickerProv
     );
   }
 
-  // --- 3. HERO SUMMARY CARD ---
   Widget _buildHeroSummaryCard(PerkembanganModel data) {
     double avg = 0;
     if (data.kategoriDetails.isNotEmpty) {
@@ -431,7 +430,7 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> with TickerProv
     );
   }
 
-  // --- 4. TEACHER INFO ---
+  // Info Guru
   Widget _buildGuruAssessor(PerkembanganModel data) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -470,7 +469,7 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> with TickerProv
     );
   }
 
-  // --- 5. CATEGORY CARDS ---
+  // Kategori
   Widget _buildCategoryCard(PerkembanganKategoriModel k) {
     final progress = k.nilai / 10.0;
     
@@ -611,7 +610,6 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> with TickerProv
     return map[k]?[n] ?? "Perkembangan $kategori";
   }
 
-  // --- 6. ADDITIONAL DESCRIPTION CARDS ---
   Widget _buildIndicatorCard(String text) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -700,7 +698,6 @@ class _PerkembanganScreenState extends State<PerkembanganScreen> with TickerProv
     }
   }
 
-  // --- HELPERS & STATES ---
 
   Widget _buildEmptyState() {
     return Expanded(

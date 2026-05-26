@@ -7,7 +7,7 @@ class PembayaranModel {
   final String kelas;
   final int jumlahTagihan;
   final String periode;
-  final String paymentStatus; // 'belum_bayar' | 'lunas'
+  final String paymentStatus; 
   final String transactionId;
   final String paymentMethod;
   final String paymentDate;
@@ -103,6 +103,5 @@ class PembayaranModel {
   bool get isPending => false;
   bool get isBelum => !isLunas;
 
-  // === DUMMY DATA ===
   static List<PembayaranModel> dummyHistory() => [];
 }

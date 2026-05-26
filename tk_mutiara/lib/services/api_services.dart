@@ -29,8 +29,8 @@ class ApiService {
   );
 
   static const List<String> _backendCandidates = [
-    'http://127.0.0.1:8081',
-    'http://10.0.2.2:8081',
+    'http://192.168.83.220:8081',
+    // 'http://10.0.2.2:8081',
   ];
 
   static String _activeBaseUrl =
@@ -210,7 +210,7 @@ class ApiService {
     );
   }
 
-  // LOGIN~
+  // LOGIN
   static Future<Map<String, dynamic>> login(
     String email,
     String password,
@@ -374,7 +374,6 @@ class ApiService {
         print('✗ Unauthorized (401/403) - Session mungkin expired');
       } else {
         print('⚠ Failed to save FCM token: ${res.statusCode}');
-        // Retry untuk error 5xx
         if (res.statusCode >= 500 && retryCount < 2) {
           await Future.delayed(const Duration(seconds: 3));
           return saveFcmToken(fcmToken, retryCount: retryCount + 1);
@@ -382,7 +381,6 @@ class ApiService {
       }
     } catch (e) {
       print('✗ Exception saat save FCM: $e');
-      // Retry untuk timeout/connection error
       if (retryCount < 2) {
         print('↻ Retry dalam 3 detik...');
         await Future.delayed(const Duration(seconds: 3));

@@ -38,7 +38,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<PengumumanModel> _pengumuman = [];
   List<PerkembanganModel> _perkembanganData = [];
 
-  // Location & Maps State
+  // Lokasi dan peta
   GoogleMapController? _mapController;
   final loc.Location _location = loc.Location();
   LatLng? _currentPosition;
@@ -46,7 +46,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _isMapLoading = true;
   
   // Lokasi TK Mutiara
-  final LatLng _tkMutiaraLocation = const LatLng(2.3287092, 99.0686357);
+  final LatLng _tkMutiaraLocation = const LatLng(2.3287092, 99.0686357); // Koordinat TK Mutiara dari Gmaps
 
   List<PerkembanganModel> _getDataPerTahun() {
     if (_perkembanganData.isEmpty) return [];
@@ -219,7 +219,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Column(
               children: [
                 _wrappedHeader(),
-                // Body content area that wraps 'inward' into the header
                 Transform.translate(
                   offset: const Offset(0, -32),
                   child: Container(
@@ -253,7 +252,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ── MAP CARD ──
   Widget _buildMapCard() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
@@ -346,7 +344,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ── WRAPPED HEADER ──
   Widget _wrappedHeader() {
     return Container(
       width: double.infinity,
@@ -421,7 +418,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              // Class badge
               Align(
                 alignment: Alignment.centerLeft,
                 child: Container(
@@ -438,7 +434,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              // Payment & History Cards
+              // Card untuk pembayaran
               Row(
                 children: [
                   Expanded(child: _wrappedActionCard(
@@ -521,7 +517,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ── PROFILE OPTIONS SHEET (UBAR PASSWORD & LOGOUT) ──
+  // PROFILE OPTIONS SHEET (UBAH PASSWORD & LOGOUT) 
   void _showSwitchAccount() {
     showModalBottomSheet(
       context: context,
@@ -563,9 +559,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 icon: Icons.logout_rounded,
                 color: AppTheme.danger,
                 onTap: () async {
-                  Navigator.pop(sheetContext); // Close bottom sheet
+                  Navigator.pop(sheetContext); 
                   
-                  // Show loading spinner using parent context
                   showDialog(
                     context: context,
                     barrierDismissible: false,
@@ -641,7 +636,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ── PENGUMUMAN SECTION (HORIZONTAL SCROLLABLE) ──
+  // PENGUMUMAN SECTION 
   Widget _pengumumanUI() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -763,7 +758,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     errorWidget: (context, url, error) {
-                      print('❌ Image load error: $url, Error: $error');
+                      print('Image load error: $url, Error: $error');
                       return Container(
                         color: AppTheme.primary.withOpacity(0.08),
                         child: Icon(
@@ -846,7 +841,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ── TAGIHAN CARD ──
+  // TAGIHAN CARD 
   Widget _tagihanCard() {
     if (_tagihan == null) return const SizedBox.shrink();
     return Container(
@@ -899,7 +894,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ── PERKEMBANGAN SECTION (ULTRA PREMIUM) ──
+  // PERKEMBANGAN SECTION 
   Widget _perkembangan() {
     final data = _getDataPerTahun();
     final latestStatus = data.isNotEmpty ? data.last.statusUtama : '-';

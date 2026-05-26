@@ -12,8 +12,8 @@ void main() async {
   // Inisialisasi Firebase
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-  await ApiService.loadSession();
   await NotificationService.init();
+  await ApiService.loadSession();
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -34,7 +34,6 @@ class MutiaraApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       home: const WelcomeScreen(),
-      // home: const MainNavigationScreen(), // uncomment ini kalau mau langsung ke main app
     );
   }
 }
