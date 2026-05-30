@@ -13,7 +13,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     print('[BACKGROUND] Title: ${notif.title}, Body: ${notif.body}');
     
     await flutterLocalNotificationsPlugin.show(
-      notif.hashCode, // Unique ID dari notification
+      notif.hashCode, 
       notif.title,
       notif.body,
       const NotificationDetails(
@@ -47,6 +47,7 @@ class NotificationService {
   static Future<void> init() async {
     print('\n=== INITIALIZING NOTIFICATION SERVICE ===');
     
+    // meminta izin notifikasi
     print('1️⃣  Requesting notification permissions...');
     NotificationSettings settings = await _messaging.requestPermission(
       alert: true,
@@ -71,6 +72,7 @@ class NotificationService {
     );
     print('✓ Local notifications initialized');
 
+    // membuat notifikasi channel android
     print('3️⃣  Creating Android notification channel...');
     final AndroidFlutterLocalNotificationsPlugin? androidImpl =
         flutterLocalNotificationsPlugin
@@ -94,6 +96,7 @@ class NotificationService {
       print('⚠ Android implementation not found');
     }
 
+    // mengambil token FCM
     print('4️⃣  Getting FCM token...');
     final String? token = await _messaging.getToken();
     if (token != null) {
@@ -103,6 +106,7 @@ class NotificationService {
       print('⚠ FCM Token belum tersedia');
     }
 
+    // refresh token
     print('5️⃣  Setting up token refresh listener...');
     _messaging.onTokenRefresh.listen((String newToken) {
       print('🔄 FCM Token refreshed: ${newToken.substring(0, 30)}...');

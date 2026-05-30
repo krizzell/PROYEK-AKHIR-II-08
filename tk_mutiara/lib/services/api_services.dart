@@ -29,7 +29,7 @@ class ApiService {
   );
 
   static const List<String> _backendCandidates = [
-    'http://192.168.83.220:8081',
+    'https://api.tkmutiara.my.id',
     // 'http://10.0.2.2:8081',
   ];
 

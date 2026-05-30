@@ -20,6 +20,8 @@ class PengumumanScreen extends StatefulWidget {
 }
 
 class _PengumumanScreenState extends State<PengumumanScreen> with TickerProviderStateMixin {
+  static const String imageBaseUrl = 'https://admin.tkmutiara.my.id/storage/';
+
   List<PengumumanModel> _data = [];
   PengumumanModel? _selectedData;
   bool _isLoading = true;
@@ -93,32 +95,34 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
     }
   }
 
-  String _getImageUrl(String mediaPath) {
-    if (mediaPath.isEmpty) return '';
-    if (mediaPath.startsWith('http')) return mediaPath;
+  String _getImageUrl(String media) {
+    if (media.isEmpty) return '';
 
-    String cleanPath = mediaPath;
-    if (mediaPath.trim().startsWith('[') && mediaPath.trim().endsWith(']')) {
-      try {
-        final List<dynamic> paths = jsonDecode(mediaPath);
-        if (paths.isNotEmpty) cleanPath = paths[0].toString();
-      } catch (_) {}
+    try {
+      final decoded = jsonDecode(media);
+      if (decoded is List && decoded.isNotEmpty) {
+        return _getImageUrlFromPath(decoded.first.toString());
+      }
+    } catch (_) {
+      return _getImageUrlFromPath(media);
     }
-    if (cleanPath.startsWith('storage/')) {
-      cleanPath = cleanPath.replaceFirst('storage/', '');
-    }
-    return Uri.encodeFull('${ApiService.imageBaseUrl}/storage/$cleanPath');
+
+    return _getImageUrlFromPath(media);
   }
 
   // Build image URL from a single path (no JSON parsing needed)
   String _getImageUrlFromPath(String path) {
     if (path.isEmpty) return '';
-    if (path.startsWith('http')) return path;
-    String cleanPath = path;
-    if (cleanPath.startsWith('storage/')) {
-      cleanPath = cleanPath.replaceFirst('storage/', '');
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
     }
-    return Uri.encodeFull('${ApiService.imageBaseUrl}/storage/$cleanPath');
+
+    String cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    if (cleanPath.startsWith('storage/')) {
+      return Uri.encodeFull('https://admin.tkmutiara.my.id/$cleanPath');
+    }
+
+    return Uri.encodeFull('$imageBaseUrl$cleanPath');
   }
 
   @override
