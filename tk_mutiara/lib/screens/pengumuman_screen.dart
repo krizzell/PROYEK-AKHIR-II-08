@@ -3,7 +3,6 @@ import '../theme/app_theme.dart';
 import '../models/pengumuman_model.dart';
 import '../services/api_services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'dart:convert';
 
 class PengumumanScreen extends StatefulWidget {
   final int? idPengumuman;
@@ -20,8 +19,6 @@ class PengumumanScreen extends StatefulWidget {
 }
 
 class _PengumumanScreenState extends State<PengumumanScreen> with TickerProviderStateMixin {
-  static const String imageBaseUrl = 'https://admin.tkmutiara.my.id/storage/';
-
   List<PengumumanModel> _data = [];
   PengumumanModel? _selectedData;
   bool _isLoading = true;
@@ -96,33 +93,12 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
   }
 
   String _getImageUrl(String media) {
-    if (media.isEmpty) return '';
-
-    try {
-      final decoded = jsonDecode(media);
-      if (decoded is List && decoded.isNotEmpty) {
-        return _getImageUrlFromPath(decoded.first.toString());
-      }
-    } catch (_) {
-      return _getImageUrlFromPath(media);
-    }
-
-    return _getImageUrlFromPath(media);
+    return PengumumanModel.getImageUrl(media);
   }
 
   // Build image URL from a single path (no JSON parsing needed)
   String _getImageUrlFromPath(String path) {
-    if (path.isEmpty) return '';
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-      return path;
-    }
-
-    String cleanPath = path.startsWith('/') ? path.substring(1) : path;
-    if (cleanPath.startsWith('storage/')) {
-      return Uri.encodeFull('https://admin.tkmutiara.my.id/$cleanPath');
-    }
-
-    return Uri.encodeFull('$imageBaseUrl$cleanPath');
+    return PengumumanModel.getImageUrlFromPath(path);
   }
 
   @override

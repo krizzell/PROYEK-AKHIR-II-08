@@ -1,13 +1,14 @@
 import 'dart:convert';
-import '../services/api_services.dart';
 
 class PengumumanModel {
+  static const String imageBaseUrl = 'https://admin.tkmutiara.my.id/storage/';
+
   final int idPengumuman;
   final int idGuru;
   final String namaGuru;
   final String judul;
   final String media;
-  final List<String> mediaPaths; 
+  final List<String> mediaPaths;
   final String waktuUnggah;
   final String deskripsi;
   final String createdAt;
@@ -26,41 +27,33 @@ class PengumumanModel {
     required this.updatedAt,
   });
 
-  static String getImageUrl(String mediaPath) {
-    if (mediaPath.isEmpty) {
-      print('Image URL: Empty path');
-      return '';
-    }
+  static String getImageUrl(String media) {
+    if (media.isEmpty) return '';
 
-    // mengecek apakah url sudah lengkap
-    if (mediaPath.startsWith('http')) {
-      print('Image URL (full): $mediaPath');
-      return mediaPath;
-    }
-
-    // menangani kasus mediaPath yang berupa JSON array string seperti '["path1.jpg","path2.jpg"]'
-    String cleanPath = mediaPath;
-    if (mediaPath.trim().startsWith('[') && mediaPath.trim().endsWith(']')) {
-      try {
-        final List<dynamic> paths = jsonDecode(mediaPath);
-        if (paths.isNotEmpty) {
-          cleanPath = paths[0].toString();
-        }
-      } catch (e) {
-        print('Error parsing media JSON: $e');
+    try {
+      final decoded = jsonDecode(media);
+      if (decoded is List && decoded.isNotEmpty) {
+        return getImageUrlFromPath(decoded.first.toString());
       }
+    } catch (_) {
+      return getImageUrlFromPath(media);
     }
 
+    return getImageUrlFromPath(media);
+  }
+
+  static String getImageUrlFromPath(String path) {
+    if (path.isEmpty) return '';
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    }
+
+    final cleanPath = path.startsWith('/') ? path.substring(1) : path;
     if (cleanPath.startsWith('storage/')) {
-      cleanPath = cleanPath.replaceFirst('storage/', '');
+      return Uri.encodeFull('https://admin.tkmutiara.my.id/$cleanPath');
     }
 
-    final url = '${ApiService.imageBaseUrl}/storage/$cleanPath';
-
-    print('Image URL (constructed): $url');
-    print('Media Path Original: $mediaPath');
-    print('Media Path Cleaned: $cleanPath');
-    return url;
+    return Uri.encodeFull('$imageBaseUrl$cleanPath');
   }
 
   // Factory untuk parsing dari API
