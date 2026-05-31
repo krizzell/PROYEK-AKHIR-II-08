@@ -12,3 +12,6 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+backend/proyek-akhir-ii-12e39-firebase-adminsdk-fbsvc-bc3166f098.json
+backend/.env

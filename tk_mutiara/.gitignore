@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+# Firebase service account
+backend/*firebase-adminsdk*.json
+backend/proyek-akhir-ii-12e39-firebase-adminsdk-fbsvc-bc3166f098.json
+backend/.env
