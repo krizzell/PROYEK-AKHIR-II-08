@@ -296,7 +296,7 @@
                         @endif
                     </div>
                     <h3 class="profile-name">{{ $siswa->nama_siswa }}</h3>
-                    <p class="profile-role">Siswa PAUD</p>
+                    <p class="profile-role">Siswa TK</p>
 
                     <div class="profile-stats">
                         <div class="stat-item">

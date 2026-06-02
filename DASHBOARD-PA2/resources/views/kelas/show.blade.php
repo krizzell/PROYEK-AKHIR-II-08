@@ -291,7 +291,7 @@
                             {{ substr($kelas->guru->nama_guru, 0, 1) }}
                         </div>
                         <h3 class="teacher-name">{{ $kelas->guru->nama_guru }}</h3>
-                        <p class="teacher-role">Guru Pengampu</p>
+                        <p class="teacher-role">Guru Pengajar</p>
 
                         <div class="teacher-stats">
                             <div class="stat-item">

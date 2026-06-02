@@ -17,23 +17,23 @@
     }
 
     .transfer-container {
-        background: white;
-        border-radius: 16px;
-        padding: 32px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        background: transparent;
+        border-radius: 0;
+        padding: 0;
+        box-shadow: none;
     }
 
     .header-section {
-        margin-bottom: 32px;
-        border-bottom: 2px solid var(--neutral-200);
-        padding-bottom: 20px;
+        margin-bottom: 24px;
+        border-bottom: none;
+        padding-bottom: 0;
     }
 
     .header-section h1 {
-        font-size: 28px;
+        font-size: 30px;
         font-weight: 800;
         color: var(--neutral-900);
-        margin: 0 0 8px 0;
+        margin: 0 0 16px 0;
         display: flex;
         align-items: center;
         gap: 12px;
@@ -194,10 +194,6 @@
     @media (max-width: 768px) {
         .kelas-grid {
             grid-template-columns: 1fr;
-        }
-
-        .transfer-container {
-            padding: 20px;
         }
 
         .header-section h1 {
