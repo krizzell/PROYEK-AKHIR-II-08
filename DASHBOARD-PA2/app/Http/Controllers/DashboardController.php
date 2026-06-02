@@ -19,7 +19,7 @@ class DashboardController extends Controller
         // Main statistics
         $siswa_count = Siswa::count();
         $perkembangan_recent = Perkembangan::count();
-        $pembayaran_pending = Pembayaran::where('status_bayar', 'menunggu')->count();
+        $pembayaran_pending = Tagihan::where('status', 'belum_bayar')->count();
         $pengumuman_active = Pengumuman::count();
 
         // Recent activities (combined perkembangan dan pembayaran)

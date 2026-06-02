@@ -94,7 +94,9 @@ class TagihanController extends Controller
             return redirect()->route('tagihan.index')->with('error', 'Anda tidak berwenang membuat tagihan. Hanya admin yang dapat membuat tagihan.');
         }
         
-        $siswa = Siswa::all();
+        $siswa = Siswa::with('kelas')
+            ->orderBy('nama_siswa')
+            ->get();
         
         return view('tagihan.create', compact('siswa'));
     }
@@ -176,7 +178,28 @@ class TagihanController extends Controller
             return redirect()->route('tagihan.index')->with('error', 'Anda tidak berwenang membuat bulk tagihan. Hanya admin yang dapat membuat tagihan.');
         }
         
-        return view('tagihan.bulk-create');
+        $now = now();
+        $bulanNama = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+        $periode = 'SPP ' . $bulanNama[$now->month] . ' ' . $now->year;
+
+        $totalSiswa = Siswa::count();
+        $siswaSudahPunyaTagihan = Siswa::whereHas('tagihan', function ($query) use ($periode) {
+            $query->where('periode', $periode);
+        })->count();
+        $siswaBelumPunyaTagihan = Siswa::whereDoesntHave('tagihan', function ($query) use ($periode) {
+            $query->where('periode', $periode);
+        })->count();
+        
+        return view('tagihan.bulk-create', compact(
+            'periode',
+            'totalSiswa',
+            'siswaSudahPunyaTagihan',
+            'siswaBelumPunyaTagihan'
+        ));
     }
 
     public function bulkCreateStore(Request $request)
@@ -205,36 +228,27 @@ class TagihanController extends Controller
         ];
         $periode = 'SPP ' . $bulanNama[$now->month] . ' ' . $now->year;
 
-        // Apply all untuk semua siswa
-        $query = Siswa::query();
-        
-        $siswaList = $query->get();
+        // Apply all hanya untuk siswa yang belum memiliki tagihan pada periode ini
+        $siswaList = Siswa::whereDoesntHave('tagihan', function ($query) use ($periode) {
+            $query->where('periode', $periode);
+        })->get();
         $countCreated = 0;
 
         // Buat tagihan untuk masing-masing siswa
         foreach ($siswaList as $siswa) {
-            // Cek apakah sudah ada tagihan dengan periode yang sama
-            $existingTagihan = Tagihan::where('nomor_induk_siswa', $siswa->nomor_induk_siswa)
-                                     ->where('periode', $periode)
-                                     ->exists();
-
-            if (!$existingTagihan) {
-                Tagihan::create([
-                    'nomor_induk_siswa' => $siswa->nomor_induk_siswa,
-                    'jumlah_tagihan' => $validated['jumlah_tagihan'],
-                    'periode' => $periode,
-                    'status' => 'belum_bayar',
-                    'payment_status' => 'belum_bayar'
-                ]);
-                $countCreated++;
-            }
+            Tagihan::create([
+                'nomor_induk_siswa' => $siswa->nomor_induk_siswa,
+                'jumlah_tagihan' => $validated['jumlah_tagihan'],
+                'periode' => $periode,
+                'status' => 'belum_bayar',
+                'payment_status' => 'belum_bayar'
+            ]);
+            $countCreated++;
         }
 
-        $message = "Tagihan berhasil dibuat untuk {$countCreated} siswa";
-        if ($countCreated < count($siswaList)) {
-            $skipped = count($siswaList) - $countCreated;
-            $message .= " ({$skipped} siswa sudah memiliki tagihan untuk periode ini)";
-        }
+        $message = $countCreated > 0
+            ? "Tagihan {$periode} berhasil dibuat untuk {$countCreated} siswa"
+            : "Semua siswa sudah memiliki tagihan untuk periode {$periode}";
 
         return redirect()->route('tagihan.index')->with('success', $message);
     }

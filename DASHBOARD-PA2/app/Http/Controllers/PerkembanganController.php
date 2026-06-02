@@ -52,10 +52,11 @@ class PerkembanganController extends Controller
             }
         }
         
-        // Permission: Only guru biasa (is_super_admin = 0) can create/edit/delete
+        // Permission: guru biasa boleh create/edit, data perkembangan tidak boleh dihapus.
         $canCreate = !session('is_super_admin');
+        $canDelete = false;
         
-        return view('perkembangan.index', compact('perkembangan', 'canCreate'));
+        return view('perkembangan.index', compact('perkembangan', 'canCreate', 'canDelete'));
     }
 
     public function create()
@@ -383,51 +384,15 @@ class PerkembanganController extends Controller
 
     public function destroy(Perkembangan $perkembangan)
     {
-        // Check if user is Kepala Sekolah (is_super_admin = 1)
-        // Only guru biasa (is_super_admin = 0) can delete
-        if (session('is_super_admin')) {
-            return redirect()->route('perkembangan.index')->with('error', 
-                'Kepala Sekolah hanya dapat melihat perkembangan anak. Hanya guru yang dapat menghapus laporan perkembangan.'
-            );
-        }
-
-        // Super admin bisa hapus semua, regular guru hanya untuk:
-        // 1. Perkembangan untuk siswa di kelasnya
-        // 2. Perkembangan yang mereka buat sendiri
-        if (!session('is_super_admin')) {
-            $kelasGuruArray = $this->getGuruKelasArray();
-            $siswaGuruArray = !empty($kelasGuruArray) ? Siswa::whereIn('id_kelas', $kelasGuruArray)->pluck('nomor_induk_siswa')->toArray() : [];
-            
-            $isOwnCreation = $perkembangan->id_guru == session('id_guru');
-            $isKelasStudent = in_array($perkembangan->nomor_induk_siswa, $siswaGuruArray);
-            
-            if (!$isOwnCreation && !$isKelasStudent) {
-                return redirect()->route('perkembangan.index')->with('error', 
-                    'Anda tidak berwenang menghapus perkembangan ini.'
-                );
-            }
-        }
-
-        $perkembangan->delete();
-        return redirect()->route('perkembangan.index')->with('success', 'Perkembangan berhasil dihapus');
+        return redirect()->route('perkembangan.index')->with('error',
+            'Data perkembangan anak tidak dapat dihapus.'
+        );
     }
 
     public function bulkDestroy(Request $request)
     {
-        // Check if user is Kepala Sekolah (only Guru can delete)
-        $guru = Guru::find(session('id_guru'));
-        if ($guru && $guru->jabatan === 'Kepala Sekolah') {
-            return redirect()->route('perkembangan.index')->with('error', 
-                'Kepala Sekolah hanya dapat melihat perkembangan anak. Hanya guru yang dapat menghapus laporan perkembangan.'
-            );
-        }
-
-        $validated = $request->validate([
-            'selected_perkembangan' => 'required|array|min:1',
-            'selected_perkembangan.*' => 'required|integer|exists:perkembangan,id_perkembangan',
-        ]);
-
-        $deletedCount = Perkembangan::whereIn('id_perkembangan', $validated['selected_perkembangan'])->delete();
-        return redirect()->route('perkembangan.index')->with('success', $deletedCount . ' data perkembangan berhasil dihapus');
+        return redirect()->route('perkembangan.index')->with('error',
+            'Data perkembangan anak tidak dapat dihapus.'
+        );
     }
 }

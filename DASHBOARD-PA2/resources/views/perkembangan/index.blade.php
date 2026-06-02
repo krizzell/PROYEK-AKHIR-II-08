@@ -296,6 +296,7 @@
         // Show create button only for guru biasa (is_super_admin = 0)
         // Hide for kepala sekolah (is_super_admin = 1)
         $canCreate = !session('is_super_admin');
+        $canDelete = false;
     @endphp
     
     @if($canCreate)
@@ -317,7 +318,7 @@
         Menampilkan <strong>{{ $perkembangan->count() }}</strong> data perkembangan
     </div>
     
-    @if($canCreate)
+    @if($canDelete)
         <form id="bulkDeleteForm" action="{{ route('perkembangan.bulkDestroy') }}" method="POST" style="display: none;">
             @csrf
         </form>
@@ -341,7 +342,7 @@
         <table class="table">
             <thead>
                 <tr>
-                    @if($canCreate)
+                    @if($canDelete)
                         <th style="width: 50px;">
                             <div class="select-all-wrapper">
                                 <input type="checkbox" id="selectAllPerkembangan" aria-label="Pilih semua perkembangan">
@@ -360,7 +361,7 @@
             <tbody>
                 @foreach ($perkembangan as $item)
                 <tr>
-                    @if($canCreate)
+                    @if($canDelete)
                         <td>
                             <div class="row-checkbox-wrapper">
                                 <input type="checkbox" class="perkembangan-checkbox" form="bulkDeleteForm" name="selected_perkembangan[]" value="{{ $item->id_perkembangan }}" aria-label="Pilih perkembangan {{ $item->siswa->nama_siswa ?? 'Siswa Hilang' }}">
@@ -418,6 +419,8 @@
                                 <a href="{{ route('perkembangan.edit', $item->id_perkembangan) }}" class="btn-action btn-edit" title="Edit">
                                     <i class="bi bi-pencil"></i>
                                 </a>
+                            @endif
+                            @if($canDelete)
                                 <form action="{{ route('perkembangan.destroy', $item->id_perkembangan) }}" method="POST" style="display: inline;">
                                     @csrf
                                     @method('DELETE')

@@ -39,11 +39,11 @@
                 </div>
             </div>
 
-            <!-- Card 3: Pembayaran Pending -->
+            <!-- Card 3: Tagihan Belum Dibayar -->
             <div class="stat-card-item">
                 <div class="stat-card-content">
                     <div class="stat-card-info">
-                        <p class="stat-card-title">Pembayaran Tertunda</p>
+                        <p class="stat-card-title">Tagihan Belum Dibayar</p>
                         <h2 class="stat-card-value">{{ $pembayaran_pending }}</h2>
                     </div>
                     <div class="stat-card-icon icon-orange">

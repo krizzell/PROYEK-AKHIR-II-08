@@ -151,6 +151,98 @@
         box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
     }
 
+    .student-search-wrapper {
+        position: relative;
+        margin-bottom: 0.75rem;
+    }
+
+    .student-search-wrapper i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--neutral-600);
+        font-size: 0.95rem;
+        pointer-events: none;
+    }
+
+    .student-search-input {
+        padding-left: 2.75rem;
+    }
+
+    .student-search-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 0.5rem;
+        color: var(--neutral-600);
+        font-size: 0.82rem;
+        font-weight: 500;
+    }
+
+    .student-search-empty {
+        display: none;
+        margin-top: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        background: #FFF7ED;
+        border: 1px solid #FED7AA;
+        color: #9A3412;
+        font-size: 0.88rem;
+        font-weight: 500;
+    }
+
+    .student-options {
+        display: none;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: calc(100% + 0.35rem);
+        max-height: 260px;
+        overflow-y: auto;
+        background: #FFFFFF;
+        border: 1px solid var(--neutral-300);
+        border-radius: 0.75rem;
+        box-shadow: var(--shadow-lg);
+        z-index: 20;
+        padding: 0.35rem;
+    }
+
+    .student-options.show {
+        display: block;
+    }
+
+    .student-option {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        padding: 0.75rem 0.85rem;
+        border-radius: 0.55rem;
+        text-align: left;
+        cursor: pointer;
+        transition: background 0.15s ease;
+    }
+
+    .student-option:hover,
+    .student-option.active {
+        background: #FFF7ED;
+    }
+
+    .student-option-name {
+        display: block;
+        color: var(--neutral-900);
+        font-weight: 700;
+        font-size: 0.92rem;
+    }
+
+    .student-option-meta {
+        display: block;
+        color: var(--neutral-600);
+        font-size: 0.8rem;
+        margin-top: 0.2rem;
+    }
+
     .info-box {
         padding: 1.25rem;
         border-radius: 0.875rem;
@@ -252,14 +344,33 @@
 
                         <div class="form-group">
                             <label for="nomor_induk_siswa" class="form-label">Pilih Siswa <span class="text-danger">*</span></label>
-                            <select class="form-control @error('nomor_induk_siswa') is-invalid @enderror" id="nomor_induk_siswa" name="nomor_induk_siswa" required>
-                                <option value="">-- Pilih Siswa --</option>
-                                @foreach ($siswa as $s)
-                                    <option value="{{ $s->nomor_induk_siswa }}" {{ old('nomor_induk_siswa') == $s->nomor_induk_siswa ? 'selected' : '' }}>
-                                        {{ $s->nama_siswa }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <div class="student-search-wrapper">
+                                <i class="bi bi-search"></i>
+                                <input type="text" class="form-control student-search-input @error('nomor_induk_siswa') is-invalid @enderror" id="siswa-search" autocomplete="off" placeholder="Cari dan pilih nama siswa...">
+                                <input type="hidden" id="nomor_induk_siswa" name="nomor_induk_siswa" value="{{ old('nomor_induk_siswa') }}" required>
+                                <div class="student-options" id="student-options">
+                                    @foreach ($siswa as $s)
+                                        @php
+                                            $kelasNama = $s->kelas->nama_kelas ?? 'Tanpa kelas';
+                                            $label = $s->nama_siswa . ' - ' . $kelasNama . ' (NIS: ' . $s->nomor_induk_siswa . ')';
+                                            $searchText = strtolower($label . ' ' . $s->nama_siswa . ' ' . $s->nomor_induk_siswa . ' ' . $kelasNama);
+                                        @endphp
+                                        <button type="button" class="student-option" data-value="{{ $s->nomor_induk_siswa }}" data-label="{{ $label }}" data-search="{{ $searchText }}">
+                                            <span class="student-option-name">{{ $s->nama_siswa }}</span>
+                                            <span class="student-option-meta">{{ $kelasNama }} - NIS: {{ $s->nomor_induk_siswa }}</span>
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <div class="student-search-meta">
+                                <span id="student-search-count">Menampilkan {{ $siswa->count() }} siswa</span>
+                                <button type="button" id="student-search-clear" style="display: none; border: none; background: transparent; color: var(--primary-color); font-weight: 700; padding: 0;">
+                                    Bersihkan pencarian
+                                </button>
+                            </div>
+                            <div class="student-search-empty" id="student-search-empty">
+                                Tidak ada siswa yang cocok dengan pencarian.
+                            </div>
                             @error('nomor_induk_siswa')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -298,7 +409,7 @@
                                 <i class="bi bi-info-circle-fill"></i> Informasi Penting
                             </p>
                             <p class="info-box-text">
-                                ⚠️ <strong>Satu siswa hanya dapat memiliki satu tagihan per periode.</strong> Jika Anda mencoba membuat tagihan untuk siswa yang sudah memiliki tagihan di periode yang sama, sistem akan menolak dan menampilkan pesan error.<br><br>
+                                <strong>Satu siswa hanya dapat memiliki satu tagihan per periode.</strong> Jika Anda mencoba membuat tagihan untuk siswa yang sudah memiliki tagihan di periode yang sama, sistem akan menolak dan menampilkan pesan error.<br><br>
                                 Status pembayaran akan berubah otomatis menjadi "Lunas" ketika orangtua melakukan pembayaran melalui aplikasi mobile. Anda tidak dapat mengubah status pembayaran secara manual dari sini.
                             </p>
                         </div>
@@ -318,6 +429,107 @@
 </div>
 
 <script>
+    const siswaSearchInput = document.getElementById('siswa-search');
+    const siswaSelect = document.getElementById('nomor_induk_siswa');
+    const siswaSearchCount = document.getElementById('student-search-count');
+    const siswaSearchClear = document.getElementById('student-search-clear');
+    const siswaSearchEmpty = document.getElementById('student-search-empty');
+    const siswaOptionsWrapper = document.getElementById('student-options');
+    const siswaOptions = Array.from(document.querySelectorAll('.student-option'));
+
+    function setSelectedSiswa(option) {
+        siswaSelect.value = option.dataset.value;
+        siswaSearchInput.value = option.dataset.label;
+        siswaSearchInput.classList.remove('is-invalid');
+        siswaOptionsWrapper.classList.remove('show');
+        siswaSearchClear.style.display = 'inline-flex';
+        siswaSearchEmpty.textContent = 'Tidak ada siswa yang cocok dengan pencarian.';
+        siswaOptions.forEach((item) => item.classList.remove('active'));
+        option.classList.add('active');
+        siswaSelect.dispatchEvent(new Event('change'));
+    }
+
+    function clearSelectedSiswa() {
+        siswaSelect.value = '';
+        siswaOptions.forEach((option) => option.classList.remove('active'));
+        siswaSelect.dispatchEvent(new Event('change'));
+    }
+
+    function filterSiswaOptions() {
+        const keyword = siswaSearchInput.value.trim().toLowerCase();
+        let visibleCount = 0;
+
+        siswaOptions.forEach((option) => {
+            const isMatch = option.dataset.search.includes(keyword);
+            option.style.display = isMatch ? 'block' : 'none';
+            if (isMatch) visibleCount += 1;
+        });
+
+        const selectedOption = siswaOptions.find((option) => option.dataset.value === siswaSelect.value);
+        const selectedLabel = selectedOption ? selectedOption.dataset.label.toLowerCase() : '';
+
+        if (keyword === '') {
+            clearSelectedSiswa();
+        } else if (keyword !== selectedLabel) {
+            clearSelectedSiswa();
+        }
+
+        siswaSearchCount.textContent = keyword
+            ? `Menampilkan ${visibleCount} siswa yang cocok`
+            : `Menampilkan ${siswaOptions.length} siswa`;
+        siswaSearchClear.style.display = keyword ? 'inline-flex' : 'none';
+        siswaSearchEmpty.textContent = 'Tidak ada siswa yang cocok dengan pencarian.';
+        siswaSearchEmpty.style.display = visibleCount === 0 ? 'block' : 'none';
+        siswaOptionsWrapper.classList.toggle('show', visibleCount > 0);
+    }
+
+    siswaSearchInput.addEventListener('focus', filterSiswaOptions);
+    siswaSearchInput.addEventListener('input', filterSiswaOptions);
+    siswaSearchInput.addEventListener('keydown', function(event) {
+        if (event.key !== 'Enter' || !siswaOptionsWrapper.classList.contains('show')) {
+            return;
+        }
+
+        const firstVisibleOption = siswaOptions.find((option) => option.style.display !== 'none');
+        if (firstVisibleOption) {
+            event.preventDefault();
+            setSelectedSiswa(firstVisibleOption);
+        }
+    });
+    siswaSearchClear.addEventListener('click', function() {
+        siswaSearchInput.value = '';
+        filterSiswaOptions();
+        siswaSearchInput.focus();
+    });
+    siswaOptions.forEach((option) => {
+        option.addEventListener('click', function() {
+            setSelectedSiswa(option);
+        });
+    });
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.student-search-wrapper')) {
+            siswaOptionsWrapper.classList.remove('show');
+        }
+    });
+
+    const oldSelectedSiswa = siswaSelect.value;
+    if (oldSelectedSiswa) {
+        const selectedOption = siswaOptions.find((option) => option.dataset.value === oldSelectedSiswa);
+        if (selectedOption) {
+            setSelectedSiswa(selectedOption);
+        }
+    }
+
+    siswaSearchInput.closest('form').addEventListener('submit', function(event) {
+        if (siswaSelect.value) return;
+
+        event.preventDefault();
+        siswaSearchInput.focus();
+        siswaSearchInput.classList.add('is-invalid');
+        siswaSearchEmpty.style.display = 'block';
+        siswaSearchEmpty.textContent = 'Pilih salah satu siswa dari hasil pencarian terlebih dahulu.';
+    });
+
     // Live check untuk duplikat tagihan
     document.getElementById('nomor_induk_siswa').addEventListener('change', async function() {
         const siswaId = this.value;
@@ -325,7 +537,14 @@
         const periode = periodeInput.value;
         const duplikatWarning = document.getElementById('duplikat-warning');
 
-        if (!siswaId || !periode) return;
+        if (!siswaId || !periode) {
+            if (duplikatWarning) {
+                duplikatWarning.remove();
+            }
+            document.querySelector('button[type="submit"]').disabled = false;
+            document.querySelector('button[type="submit"]').style.opacity = '1';
+            return;
+        }
 
         try {
             // Check apakah sudah ada tagihan untuk siswa + periode ini

@@ -236,7 +236,7 @@
         </div>
 
         <h3 style="font-size: 1rem; margin: 2rem 0 1rem 0; color: var(--text-primary); font-weight: 600;">
-            <i class="bi bi-check2-all"></i> Sistem akan:
+            <i class="bi bi-check3-all"></i> Sistem akan:
         </h3>
         <ul class="checklist">
             <li><i class="bi bi-check-circle-fill"></i> Membuat akun untuk <strong>{{ $siswaWithoutAccount }} siswa</strong></li>
@@ -250,7 +250,7 @@
             <i class="bi bi-shield-lock"></i> Catatan Keamanan:
         </h3>
         <div style="background: #EEF2FF; border-left: 4px solid #6366F1; padding: 1rem; border-radius: 0.5rem; color: #312E81; font-size: 0.95rem;">
-            <strong>⚠️ Pastikan password default sudah diubah oleh siswa saat login pertama kali!</strong><br>
+            <strong>Pastikan password default sudah diubah oleh siswa saat login pertama kali!</strong><br>
             Anda dapat mengatur policy untuk force change password on first login di sistem authentication.
         </div>
 
