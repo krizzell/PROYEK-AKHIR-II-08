@@ -97,11 +97,12 @@ Route::middleware('check.guru')->group(function () {
     
     // Routes untuk Pembayaran
     Route::resource('pembayaran', PembayaranController::class);
-});
 
-// Routes untuk Transfer Siswa (SuperAdmin only)
-Route::middleware(['check.guru', 'check.super.admin'])->group(function () {
+    // Routes untuk Pengajuan Perpindahan Kelas
     Route::get('/transfer-siswa', [TransferSiswaController::class, 'index'])->name('transfer-siswa.index');
+    Route::get('/transfer-siswa/pengajuan/{id_pengajuan}', [TransferSiswaController::class, 'show'])->name('transfer-siswa.show')->whereNumber('id_pengajuan');
+    Route::post('/transfer-siswa/pengajuan/{id_pengajuan}/approve', [TransferSiswaController::class, 'approve'])->name('transfer-siswa.approve')->whereNumber('id_pengajuan');
+    Route::post('/transfer-siswa/pengajuan/{id_pengajuan}/reject', [TransferSiswaController::class, 'reject'])->name('transfer-siswa.reject')->whereNumber('id_pengajuan');
     Route::get('/transfer-siswa/{nomor_induk_siswa}', [TransferSiswaController::class, 'transfer'])->name('transfer-siswa.transfer')->where('nomor_induk_siswa', '[0-9]+');
     Route::post('/transfer-siswa/{nomor_induk_siswa}/proses', [TransferSiswaController::class, 'proses'])->name('transfer-siswa.proses')->where('nomor_induk_siswa', '[0-9]+');
 });

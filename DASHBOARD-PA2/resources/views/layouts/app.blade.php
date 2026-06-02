@@ -532,9 +532,9 @@
                     </li>
                 @endif
 
-                @if (session('role') === 'guru' && session('is_super_admin'))
+                @if (session('role') === 'guru')
                     <li class="nav-item">
-                        <a href="{{ route('transfer-siswa.index') }}" class="nav-link {{ Route::currentRouteName() == 'transfer-siswa.index' ? 'active' : '' }}">
+                        <a href="{{ route('transfer-siswa.index') }}" class="nav-link {{ str_starts_with(Route::currentRouteName(), 'transfer-siswa.') ? 'active' : '' }}">
                             <i class="bi bi-arrow-left-right"></i> Perpindahan Kelas
                         </a>
                     </li>

@@ -51,4 +51,14 @@ class Guru extends Model
     {
         return $this->hasMany(Perkembangan::class, 'id_guru', 'id_guru');
     }
+
+    public function pengajuanPerpindahanDibuat(): HasMany
+    {
+        return $this->hasMany(PengajuanPerpindahanKelas::class, 'id_guru_pengaju', 'id_guru');
+    }
+
+    public function pengajuanPerpindahanDiproses(): HasMany
+    {
+        return $this->hasMany(PengajuanPerpindahanKelas::class, 'id_guru_pemroses', 'id_guru');
+    }
 }

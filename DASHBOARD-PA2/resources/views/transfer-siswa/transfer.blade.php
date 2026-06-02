@@ -1,14 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Transfer Siswa')
+@section('title', 'Ajukan Perpindahan Siswa')
 
 @section('content')
 <style>
     :root {
         --primary-color: #F97316;
         --success-color: #10B981;
-        --danger-color: #EF4444;
-        --neutral-50: #F9FAFB;
         --neutral-100: #F3F4F6;
         --neutral-200: #E5E7EB;
         --neutral-300: #D1D5DB;
@@ -18,7 +16,7 @@
     }
 
     .transfer-container {
-        max-width: 800px;
+        max-width: 820px;
         margin: 0 auto;
         background: white;
         border-radius: 16px;
@@ -38,16 +36,11 @@
     .breadcrumb-custom a {
         color: var(--primary-color);
         text-decoration: none;
-        transition: all 0.2s ease;
-    }
-
-    .breadcrumb-custom a:hover {
-        color: #E85000;
     }
 
     .header-section {
-        margin-bottom: 32px;
-        padding-bottom: 24px;
+        margin-bottom: 28px;
+        padding-bottom: 22px;
         border-bottom: 2px solid var(--neutral-200);
     }
 
@@ -76,6 +69,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 16px;
         padding: 12px 0;
     }
 
@@ -85,7 +79,7 @@
 
     .siswa-info-label {
         font-size: 13px;
-        font-weight: 600;
+        font-weight: 700;
         color: var(--neutral-700);
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -93,45 +87,9 @@
 
     .siswa-info-value {
         font-size: 15px;
-        font-weight: 700;
+        font-weight: 800;
         color: var(--neutral-900);
-    }
-
-    .form-section {
-        margin-bottom: 24px;
-    }
-
-    .form-section label {
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--neutral-900);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 8px;
-        display: block;
-    }
-
-    .select-kelas {
-        width: 100%;
-        padding: 12px 16px;
-        border: 2px solid var(--neutral-200);
-        border-radius: 8px;
-        font-size: 15px;
-        font-family: 'Montserrat', sans-serif;
-        color: var(--neutral-900);
-        background: white;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .select-kelas:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
-    }
-
-    .select-kelas option {
-        padding: 8px;
+        text-align: right;
     }
 
     .kelas-current-badge {
@@ -141,62 +99,48 @@
         padding: 4px 12px;
         border-radius: 20px;
         font-size: 11px;
-        font-weight: 700;
+        font-weight: 800;
         margin-left: 8px;
         text-transform: uppercase;
-        letter-spacing: 0.3px;
     }
 
-    .button-group {
-        display: flex;
-        gap: 12px;
-        margin-top: 32px;
+    .form-section {
+        margin-bottom: 22px;
     }
 
-    .btn-transfer {
-        flex: 1;
-        padding: 14px 24px;
-        background: linear-gradient(135deg, #F97316 0%, #E85000 100%);
-        color: white;
-        border: none;
+    .form-section label {
+        font-size: 13px;
+        font-weight: 800;
+        color: var(--neutral-900);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .select-kelas,
+    .textarea-alasan {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid var(--neutral-200);
         border-radius: 8px;
         font-size: 15px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.3s ease;
         font-family: 'Montserrat', sans-serif;
-    }
-
-    .btn-transfer:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(249, 115, 22, 0.3);
-    }
-
-    .btn-transfer:active {
-        transform: translateY(0);
-    }
-
-    .btn-cancel {
-        flex: 1;
-        padding: 14px 24px;
+        color: var(--neutral-900);
         background: white;
-        color: var(--neutral-700);
-        border: 2px solid var(--neutral-300);
-        border-radius: 8px;
-        font-size: 15px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-family: 'Montserrat', sans-serif;
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        transition: all 0.2s ease;
     }
 
-    .btn-cancel:hover {
+    .textarea-alasan {
+        min-height: 130px;
+        resize: vertical;
+    }
+
+    .select-kelas:focus,
+    .textarea-alasan:focus {
+        outline: none;
         border-color: var(--primary-color);
-        color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
     }
 
     .warning-box {
@@ -209,39 +153,69 @@
         color: #92400e;
     }
 
-    .warning-box i {
-        margin-right: 8px;
-        color: #F59E0B;
+    .button-group {
+        display: flex;
+        gap: 12px;
+        margin-top: 32px;
+    }
+
+    .btn-submit,
+    .btn-cancel {
+        flex: 1;
+        padding: 14px 24px;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 800;
+        font-family: 'Montserrat', sans-serif;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #F97316 0%, #E85000 100%);
+        color: white;
+        border: none;
+    }
+
+    .btn-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .btn-cancel {
+        background: white;
+        color: var(--neutral-700);
+        border: 2px solid var(--neutral-300);
     }
 </style>
 
 <div class="transfer-container">
-    <!-- Breadcrumb -->
     <div class="breadcrumb-custom">
         <a href="{{ route('transfer-siswa.index') }}">
-            <i class="bi bi-arrow-left"></i> Kembali ke Perpindahan Kelas
+            <i class="bi bi-arrow-left"></i> Kembali ke Pengajuan Perpindahan
         </a>
     </div>
 
-    <!-- Header -->
     <div class="header-section">
-        <h1>Proses Transfer Siswa</h1>
-        <p>Pilih kelas tujuan untuk memindahkan siswa</p>
+        <h1>Ajukan Perpindahan Siswa</h1>
+        <p>Pengajuan akan dikirim ke kepala sekolah / super admin untuk diproses.</p>
     </div>
 
-    <!-- Warning Box -->
     <div class="warning-box">
         <i class="bi bi-exclamation-triangle"></i>
-        <strong>Perhatian:</strong> Pastikan Anda memilih kelas yang tepat sebelum melakukan transfer. Data siswa akan diperbarui secara otomatis.
+        <strong>Perhatian:</strong> Guru hanya mengajukan perpindahan. Kelas siswa tidak berubah sampai pengajuan disetujui.
     </div>
 
-    <!-- Info Box: Kelas Terkunci -->
-    <div style="background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 16px; border-radius: 8px; margin-bottom: 24px; font-size: 14px; color: #1E40AF;">
-        <i class="bi bi-info-circle" style="margin-right: 8px; color: #3B82F6;"></i>
-        <strong>Informasi:</strong> Kelas {{ $lockedClass }} adalah kelas terkunci dan tidak dapat melakukan perpindahan siswa (minimum 20 siswa, maksimum 30 siswa per kelas).
-    </div>
+    @if($pengajuanAktif)
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-circle"></i>
+            Siswa ini masih memiliki pengajuan aktif berstatus menunggu.
+        </div>
+    @endif
 
-    <!-- Siswa Info Card -->
     <div class="siswa-info-card">
         <div class="siswa-info-item">
             <span class="siswa-info-label">Nama Siswa</span>
@@ -258,13 +232,12 @@
         <div class="siswa-info-item">
             <span class="siswa-info-label">Kelas Saat Ini</span>
             <span class="siswa-info-value">
-                {{ $kelasSekarang->nama_kelas }}
-                <span class="kelas-current-badge">Sekarang</span>
+                {{ $kelasSekarang->nama_kelas ?? '-' }}
+                <span class="kelas-current-badge">Asal</span>
             </span>
         </div>
     </div>
 
-    <!-- Form Transfer -->
     <form action="{{ route('transfer-siswa.proses', $siswa->nomor_induk_siswa) }}" method="POST">
         @csrf
 
@@ -272,11 +245,11 @@
             <label for="id_kelas_tujuan">
                 <i class="bi bi-arrow-right-circle"></i> Pilih Kelas Tujuan
             </label>
-            <select name="id_kelas_tujuan" id="id_kelas_tujuan" class="select-kelas" required>
+            <select name="id_kelas_tujuan" id="id_kelas_tujuan" class="select-kelas" required {{ $pengajuanAktif ? 'disabled' : '' }}>
                 <option value="">-- Pilih Kelas Tujuan --</option>
                 @foreach ($kelasAyo as $k)
-                    <option value="{{ $k->id_kelas }}">
-                        {{ $k->nama_kelas }} ({{ $k->siswa->count() }} siswa)
+                    <option value="{{ $k->id_kelas }}" {{ old('id_kelas_tujuan') == $k->id_kelas ? 'selected' : '' }}>
+                        {{ $k->nama_kelas }} ({{ $k->siswa_count }} siswa)
                     </option>
                 @endforeach
             </select>
@@ -285,13 +258,22 @@
             @enderror
         </div>
 
-        <!-- Button Group -->
+        <div class="form-section">
+            <label for="alasan">
+                <i class="bi bi-chat-left-text"></i> Alasan Perpindahan
+            </label>
+            <textarea name="alasan" id="alasan" class="textarea-alasan" required placeholder="Tuliskan alasan perpindahan kelas siswa..." {{ $pengajuanAktif ? 'disabled' : '' }}>{{ old('alasan') }}</textarea>
+            @error('alasan')
+                <small class="text-danger"><i class="bi bi-exclamation-circle"></i> {{ $message }}</small>
+            @enderror
+        </div>
+
         <div class="button-group">
             <a href="{{ route('transfer-siswa.index') }}" class="btn-cancel">
                 <i class="bi bi-x-circle"></i> Batal
             </a>
-            <button type="submit" class="btn-transfer">
-                <i class="bi bi-check-circle"></i> Konfirmasi Transfer
+            <button type="submit" class="btn-submit" {{ $pengajuanAktif ? 'disabled' : '' }}>
+                <i class="bi bi-send"></i> Kirim Pengajuan
             </button>
         </div>
     </form>

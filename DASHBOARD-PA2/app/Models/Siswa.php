@@ -36,4 +36,9 @@ class Siswa extends Model
     {
         return $this->hasMany(Tagihan::class, 'nomor_induk_siswa', 'nomor_induk_siswa');
     }
+
+    public function pengajuanPerpindahan(): HasMany
+    {
+        return $this->hasMany(PengajuanPerpindahanKelas::class, 'nomor_induk_siswa', 'nomor_induk_siswa');
+    }
 }

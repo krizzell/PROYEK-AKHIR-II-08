@@ -30,4 +30,14 @@ class Kelas extends Model
     {
         return $this->belongsToMany(Guru::class, 'guru_kelas', 'id_kelas', 'id_guru');
     }
+
+    public function pengajuanSebagaiAsal(): HasMany
+    {
+        return $this->hasMany(PengajuanPerpindahanKelas::class, 'id_kelas_asal', 'id_kelas');
+    }
+
+    public function pengajuanSebagaiTujuan(): HasMany
+    {
+        return $this->hasMany(PengajuanPerpindahanKelas::class, 'id_kelas_tujuan', 'id_kelas');
+    }
 }
