@@ -310,7 +310,7 @@
                     <th style="width: 50px;">No</th>
                     <th>Nama Kelas</th>
                     <th>Jumlah Siswa</th>
-                    <th>Guru Pengampu</th>
+                    <th>Guru Pengajar</th>
                     <th style="width: 120px;">Aksi</th>
                 </tr>
             </thead>

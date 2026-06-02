@@ -9,10 +9,19 @@ class Pengumuman extends Model
 {
     protected $table = 'pengumuman';
     protected $primaryKey = 'id_pengumuman';
-    protected $fillable = ['id_guru', 'judul', 'media', 'waktu_unggah', 'deskripsi'];
+    protected $fillable = [
+        'id_guru',
+        'judul',
+        'media',
+        'waktu_unggah',
+        'durasi_tampil',
+        'tampil_sampai',
+        'deskripsi',
+    ];
 
     protected $casts = [
         'waktu_unggah' => 'datetime',
+        'tampil_sampai' => 'datetime',
     ];
 
     public function guru(): BelongsTo

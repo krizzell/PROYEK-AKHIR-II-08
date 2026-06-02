@@ -607,6 +607,23 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+
+                        <div class="form-group">
+                            <label for="durasi_tampil" class="form-label">Masa Tampil di Mobile <span class="text-danger">*</span></label>
+                            <select class="form-control @error('durasi_tampil') is-invalid @enderror" id="durasi_tampil" name="durasi_tampil" required>
+                                @foreach ($displayDurationOptions as $value => $label)
+                                    <option value="{{ $value }}" {{ old('durasi_tampil', '7_hari') === $value ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div style="margin-top: 0.5rem; color: var(--neutral-600); font-size: 0.85rem;">
+                                Pengumuman tetap tersimpan di dashboard, tetapi tidak akan ditampilkan lagi di mobile setelah masa tampil berakhir.
+                            </div>
+                            @error('durasi_tampil')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
                     </div>
 
                     <div class="section-divider"></div>

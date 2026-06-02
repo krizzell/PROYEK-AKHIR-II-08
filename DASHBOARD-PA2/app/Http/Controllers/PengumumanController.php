@@ -9,6 +9,32 @@ use Illuminate\Support\Str;
 
 class PengumumanController extends Controller
 {
+    private function displayDurationOptions(): array
+    {
+        return [
+            '1_hari' => '1 Hari',
+            '3_hari' => '3 Hari',
+            '7_hari' => '1 Minggu',
+            '14_hari' => '2 Minggu',
+            '30_hari' => '1 Bulan',
+            '90_hari' => '3 Bulan',
+        ];
+    }
+
+    private function calculateDisplayUntil(\Carbon\Carbon $publishedAt, string $duration): \Carbon\Carbon
+    {
+        $days = match ($duration) {
+            '1_hari' => 1,
+            '3_hari' => 3,
+            '14_hari' => 14,
+            '30_hari' => 30,
+            '90_hari' => 90,
+            default => 7,
+        };
+
+        return $publishedAt->copy()->addDays($days);
+    }
+
     private function storeUploadedMedia(array $files): array
     {
         $paths = [];
@@ -74,7 +100,9 @@ class PengumumanController extends Controller
             );
         }
         
-        return view('pengumuman.create');
+        $displayDurationOptions = $this->displayDurationOptions();
+
+        return view('pengumuman.create', compact('displayDurationOptions'));
     }
 
     public function store(Request $request)
@@ -90,6 +118,7 @@ class PengumumanController extends Controller
         $validated = $request->validate([
             'judul' => 'required|string|max:150',
             'waktu_unggah' => 'required|date_format:Y-m-d\TH:i',
+            'durasi_tampil' => 'required|in:' . implode(',', array_keys($this->displayDurationOptions())),
             'deskripsi' => 'required|string',
         ] + $this->buildMediaValidationRules(), $this->mediaValidationMessages());
 
@@ -98,6 +127,10 @@ class PengumumanController extends Controller
 
         // Convert datetime-local to proper datetime format
         $validated['waktu_unggah'] = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $validated['waktu_unggah']);
+        $validated['tampil_sampai'] = $this->calculateDisplayUntil(
+            $validated['waktu_unggah'],
+            $validated['durasi_tampil']
+        );
 
         $uploadedMedia = $this->storeUploadedMedia((array) $request->file('media', []));
         $validated['media'] = $uploadedMedia ? json_encode($uploadedMedia) : null;
@@ -116,7 +149,9 @@ class PengumumanController extends Controller
 
     public function edit(Pengumuman $pengumuman)
     {
-        return view('pengumuman.edit', compact('pengumuman'));
+        $displayDurationOptions = $this->displayDurationOptions();
+
+        return view('pengumuman.edit', compact('pengumuman', 'displayDurationOptions'));
     }
 
     public function update(Request $request, Pengumuman $pengumuman)
@@ -135,6 +170,7 @@ class PengumumanController extends Controller
         $validated = $request->validate([
             'judul' => 'required|string|max:150',
             'waktu_unggah' => 'required|date_format:Y-m-d\TH:i',
+            'durasi_tampil' => 'required|in:' . implode(',', array_keys($this->displayDurationOptions())),
             'deskripsi' => 'required|string',
             'existing_media' => 'nullable|array',
             'existing_media.*' => 'nullable|string',
@@ -147,6 +183,10 @@ class PengumumanController extends Controller
 
         // Convert datetime-local to proper datetime format
         $validated['waktu_unggah'] = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i', $validated['waktu_unggah']);
+        $validated['tampil_sampai'] = $this->calculateDisplayUntil(
+            $validated['waktu_unggah'],
+            $validated['durasi_tampil']
+        );
 
         $oldMediaPaths = $pengumuman->mediaPaths();
         $keptMediaPaths = array_values(array_filter((array) $request->input('existing_media', [])));

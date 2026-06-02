@@ -267,6 +267,27 @@
         accent-color: #EF4444;
         cursor: pointer;
     }
+
+    .mobile-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.65rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        margin-bottom: 0.35rem;
+    }
+
+    .mobile-status-badge.active {
+        color: #047857;
+        background: #D1FAE5;
+    }
+
+    .mobile-status-badge.expired {
+        color: #B91C1C;
+        background: #FEE2E2;
+    }
 </style>
 
 <div class="page-header">
@@ -319,6 +340,7 @@
                     <th>Judul</th>
                     <th>Guru</th>
                     <th>Waktu Unggah</th>
+                    <th>Tampil Mobile</th>
                     <th style="width: 120px;">Aksi</th>
                 </tr>
             </thead>
@@ -341,6 +363,22 @@
                     <td><strong>{{ $item->judul }}</strong></td>
                     <td>{{ $item->guru->nama_guru ?? '-' }}</td>
                     <td><small style="color: var(--text-secondary);">{{ $item->waktu_unggah->format('d-m-Y H:i') }}</small></td>
+                    <td>
+                        @if($item->tampil_sampai)
+                            @php $isExpired = $item->tampil_sampai->isPast(); @endphp
+                            <span class="mobile-status-badge {{ $isExpired ? 'expired' : 'active' }}">
+                                <i class="bi {{ $isExpired ? 'bi-clock-history' : 'bi-check-circle' }}"></i>
+                                {{ $isExpired ? 'Berakhir' : 'Aktif' }}
+                            </span>
+                            <div>
+                                <small style="color: var(--text-secondary);">
+                                    Hingga {{ $item->tampil_sampai->format('d-m-Y H:i') }}
+                                </small>
+                            </div>
+                        @else
+                            <span style="color: var(--text-secondary); font-size: 0.85rem;">-</span>
+                        @endif
+                    </td>
                     <td>
                         <div class="action-buttons">
                             <a href="{{ route('pengumuman.show', $item->id_pengumuman) }}" class="btn-action btn-view" title="Lihat">

@@ -159,6 +159,26 @@
         z-index: 20 !important;
         backdrop-filter: blur(10px) !important;
     }
+
+    .mobile-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
+    .mobile-status-badge.active {
+        color: #047857;
+        background: #D1FAE5;
+    }
+
+    .mobile-status-badge.expired {
+        color: #B91C1C;
+        background: #FEE2E2;
+    }
 </style>
 
 <div class="row mb-3">
@@ -234,6 +254,29 @@
             </div>
             <div class="col-md-9">
                 <i class="bi bi-calendar3"></i> {{ $pengumuman->waktu_unggah->isoFormat('dddd, D MMMM YYYY H:mm') }}
+            </div>
+        </div>
+
+        <!-- Masa Tampil Mobile -->
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <strong>Tampil di Mobile:</strong>
+            </div>
+            <div class="col-md-9">
+                @if($pengumuman->tampil_sampai)
+                    @php $isExpired = $pengumuman->tampil_sampai->isPast(); @endphp
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span class="mobile-status-badge {{ $isExpired ? 'expired' : 'active' }}">
+                            <i class="bi {{ $isExpired ? 'bi-clock-history' : 'bi-check-circle' }}"></i>
+                            {{ $isExpired ? 'Berakhir' : 'Aktif' }}
+                        </span>
+                        <span style="color: var(--text-secondary);">
+                            sampai {{ $pengumuman->tampil_sampai->isoFormat('dddd, D MMMM YYYY H:mm') }}
+                        </span>
+                    </div>
+                @else
+                    <span style="color: var(--text-secondary);">Belum diatur</span>
+                @endif
             </div>
         </div>
 

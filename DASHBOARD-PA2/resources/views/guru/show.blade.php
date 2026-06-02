@@ -328,7 +328,7 @@
                             <span class="stat-value">{{ $guru->nip_guru ?? '-' }}</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">Kelas Diampu</span>
+                            <span class="stat-label">Kelas yang Diajar</span>
                             <span class="stat-value">{{ count($kelas) }} Kelas</span>
                         </div>
                     </div>

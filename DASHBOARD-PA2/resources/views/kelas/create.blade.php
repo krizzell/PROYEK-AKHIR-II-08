@@ -208,7 +208,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="id_guru" class="form-label">Guru Pengampu <span class="text-danger">*</span></label>
+                            <label for="id_guru" class="form-label">Guru Pengajar <span class="text-danger">*</span></label>
                             <select class="form-control @error('id_guru') is-invalid @enderror" id="id_guru" name="id_guru" required>
                                 <option value="">-- Pilih Guru --</option>
                                 @foreach ($guru as $g)
