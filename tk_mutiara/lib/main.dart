@@ -32,6 +32,7 @@ class MutiaraApp extends StatelessWidget {
     return MaterialApp(
       title: 'TK Mutiara',
       debugShowCheckedModeBanner: false,
+      navigatorKey: NotificationService.navigatorKey,
       theme: AppTheme.lightTheme,
       home: const WelcomeScreen(),
     );

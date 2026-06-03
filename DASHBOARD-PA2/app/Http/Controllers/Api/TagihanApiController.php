@@ -26,7 +26,7 @@ class TagihanApiController extends Controller
             }
 
             $tagihan = Tagihan::where('nomor_induk_siswa', $nomor_induk_siswa)
-                ->with('siswa', 'siswa.kelas')
+                ->with('siswa', 'siswa.kelas', 'pembayaran')
                 ->orderBy('id_tagihan', 'desc')
                 ->get()
                 ->map(function ($item) {
@@ -34,9 +34,11 @@ class TagihanApiController extends Controller
                     
                     // Format payment_date dengan error handling
                     $paymentDateFormatted = '';
-                    if ($item->payment_date) {
+                    $paymentDate = $item->payment_date ?: optional($item->pembayaran->sortByDesc('tgl_pembayaran')->first())->tgl_pembayaran;
+
+                    if ($paymentDate) {
                         try {
-                            $paymentDateFormatted = $item->payment_date->format('Y-m-d H:i:s');
+                            $paymentDateFormatted = $paymentDate->format('Y-m-d H:i:s');
                         } catch (\Exception $e) {
                             $paymentDateFormatted = '';
                         }
@@ -76,7 +78,8 @@ class TagihanApiController extends Controller
     public function show($id)
     {
         try {
-            $tagihan = Tagihan::with('siswa', 'siswa.kelas')->findOrFail($id);
+            $tagihan = Tagihan::with('siswa', 'siswa.kelas', 'pembayaran')->findOrFail($id);
+            $paymentDate = $tagihan->payment_date ?: optional($tagihan->pembayaran->sortByDesc('tgl_pembayaran')->first())->tgl_pembayaran;
 
             return response()->json([
                 'status' => 'success',
@@ -90,7 +93,7 @@ class TagihanApiController extends Controller
                     'payment_status' => $tagihan->payment_status ?: ($tagihan->status ?: 'belum_bayar'),
                     'transaction_id' => $tagihan->transaction_id,
                     'payment_method' => $tagihan->payment_method,
-                    'payment_date' => optional($tagihan->payment_date)->format('Y-m-d H:i:s'),
+                    'payment_date' => optional($paymentDate)->format('Y-m-d H:i:s'),
                 ],
             ], 200);
         } catch (\Exception $e) {

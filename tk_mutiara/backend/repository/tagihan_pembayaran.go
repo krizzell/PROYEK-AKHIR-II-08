@@ -20,6 +20,8 @@ func GetAllTagihan(db *sql.DB) ([]models.TagihanDetail, error) {
 			t.jumlah_tagihan,
 			t.periode,
 			t.status,
+			COALESCE(t.payment_status, t.status, 'belum_bayar') as payment_status,
+			COALESCE(DATE_FORMAT(t.payment_date, '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.paid_at ELSE NULL END), '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.tgl_pembayaran ELSE NULL END), '%Y-%m-%d %H:%i:%s'), '') as payment_date,
 			COALESCE(SUM(CASE WHEN p.status_bayar = 'diterima' THEN p.jumlah_bayar ELSE 0 END), 0) as total_bayar,
 			(t.jumlah_tagihan - COALESCE(SUM(CASE WHEN p.status_bayar = 'diterima' THEN p.jumlah_bayar ELSE 0 END), 0)) as sisa_bayar,
 			t.created_at
@@ -44,6 +46,8 @@ func GetAllTagihan(db *sql.DB) ([]models.TagihanDetail, error) {
 			&t.JumlahTagihan,
 			&t.Periode,
 			&t.Status,
+			&t.PaymentStatus,
+			&t.PaymentDate,
 			&t.TotalBayar,
 			&t.SisaBayar,
 			&t.CreatedAt,
@@ -68,6 +72,8 @@ func GetTagihanByID(db *sql.DB, idTagihan int) (*models.TagihanDetail, error) {
 			t.jumlah_tagihan,
 			t.periode,
 			t.status,
+			COALESCE(t.payment_status, t.status, 'belum_bayar') as payment_status,
+			COALESCE(DATE_FORMAT(t.payment_date, '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.paid_at ELSE NULL END), '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.tgl_pembayaran ELSE NULL END), '%Y-%m-%d %H:%i:%s'), '') as payment_date,
 			COALESCE(SUM(CASE WHEN p.status_bayar = 'diterima' THEN p.jumlah_bayar ELSE 0 END), 0) as total_bayar,
 			(t.jumlah_tagihan - COALESCE(SUM(CASE WHEN p.status_bayar = 'diterima' THEN p.jumlah_bayar ELSE 0 END), 0)) as sisa_bayar,
 			t.created_at
@@ -83,6 +89,8 @@ func GetTagihanByID(db *sql.DB, idTagihan int) (*models.TagihanDetail, error) {
 		&t.JumlahTagihan,
 		&t.Periode,
 		&t.Status,
+		&t.PaymentStatus,
+		&t.PaymentDate,
 		&t.TotalBayar,
 		&t.SisaBayar,
 		&t.CreatedAt,
@@ -104,6 +112,8 @@ func GetTagihanBySiswa(db *sql.DB, nomorIndukSiswa string) ([]models.TagihanDeta
 			t.jumlah_tagihan,
 			t.periode,
 			t.status,
+			COALESCE(t.payment_status, t.status, 'belum_bayar') as payment_status,
+			COALESCE(DATE_FORMAT(t.payment_date, '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.paid_at ELSE NULL END), '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.tgl_pembayaran ELSE NULL END), '%Y-%m-%d %H:%i:%s'), '') as payment_date,
 			COALESCE(SUM(CASE WHEN p.status_bayar = 'diterima' THEN p.jumlah_bayar ELSE 0 END), 0) as total_bayar,
 			(t.jumlah_tagihan - COALESCE(SUM(CASE WHEN p.status_bayar = 'diterima' THEN p.jumlah_bayar ELSE 0 END), 0)) as sisa_bayar,
 			t.created_at
@@ -129,6 +139,8 @@ func GetTagihanBySiswa(db *sql.DB, nomorIndukSiswa string) ([]models.TagihanDeta
 			&t.JumlahTagihan,
 			&t.Periode,
 			&t.Status,
+			&t.PaymentStatus,
+			&t.PaymentDate,
 			&t.TotalBayar,
 			&t.SisaBayar,
 			&t.CreatedAt,
@@ -292,11 +304,20 @@ func GetPembayaranByTagihan(db *sql.DB, idTagihan int) ([]models.PembayaranDetai
 
 // UpdatePembayaranStatus update status pembayaran
 func UpdatePembayaranStatus(db *sql.DB, idPembayaran int, statusBayar string) error {
-	_, err := db.Exec(
-		"UPDATE pembayaran SET status_bayar = ?, updated_at = NOW() WHERE id_pembayaran = ?",
-		statusBayar,
-		idPembayaran,
-	)
+	var err error
+	if statusBayar == "diterima" {
+		_, err = db.Exec(
+			"UPDATE pembayaran SET status_bayar = ?, tgl_pembayaran = CURDATE(), paid_at = NOW(), updated_at = NOW() WHERE id_pembayaran = ?",
+			statusBayar,
+			idPembayaran,
+		)
+	} else {
+		_, err = db.Exec(
+			"UPDATE pembayaran SET status_bayar = ?, updated_at = NOW() WHERE id_pembayaran = ?",
+			statusBayar,
+			idPembayaran,
+		)
+	}
 	if err != nil {
 		return fmt.Errorf("error update pembayaran: %v", err)
 	}
@@ -327,7 +348,7 @@ func UpdatePembayaranStatus(db *sql.DB, idPembayaran int, statusBayar string) er
 	// Update status tagihan
 	if totalBayar >= totalTagihan {
 		_, err = db.Exec(
-			"UPDATE tagihan SET status = 'lunas', updated_at = NOW() WHERE id_tagihan = ?",
+			"UPDATE tagihan SET status = 'lunas', payment_status = 'lunas', payment_date = COALESCE(payment_date, NOW()), updated_at = NOW() WHERE id_tagihan = ?",
 			idTagihan,
 		)
 		if err != nil {

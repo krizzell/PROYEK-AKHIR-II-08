@@ -6,12 +6,8 @@ import '../services/api_services.dart';
 class HistoryScreen extends StatefulWidget {
   final List<PembayaranModel>? payments;
   final VoidCallback? onBackPressed;
-  
-  const HistoryScreen({
-    super.key,
-    this.payments,
-    this.onBackPressed,
-  });
+
+  const HistoryScreen({super.key, this.payments, this.onBackPressed});
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -64,9 +60,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return _payments.where((p) => p.status == _filter).toList();
   }
 
-  int get _totalLunas => _payments
-      .where((p) => p.isLunas)
-      .fold(0, (sum, p) => sum + p.nominal);
+  int get _totalLunas =>
+      _payments.where((p) => p.isLunas).fold(0, (sum, p) => sum + p.nominal);
 
   int get _jumlahLunas => _payments.where((p) => p.isLunas).length;
 
@@ -74,7 +69,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: AppTheme.background,
+        backgroundColor: AppTheme.white,
         body: SafeArea(
           child: Column(
             children: [
@@ -91,7 +86,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -114,7 +109,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 edgeOffset: 20,
                 onRefresh: _loadPayments,
                 child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: ClampingScrollPhysics(),
+                  ),
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
@@ -143,10 +140,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         children: [
           IconButton(
             onPressed: widget.onBackPressed ?? () => Navigator.pop(context),
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 18,
-            ),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
             color: AppTheme.primary,
           ),
           const SizedBox(width: 4),
@@ -336,14 +330,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     width: 46,
                     height: 46,
                     decoration: BoxDecoration(
-                      gradient: AppTheme.primaryGradient,
+                      color: AppTheme.white,
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Center(
                       child: Text(
                         p.bulan.substring(0, 3).toUpperCase(),
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.primary,
                           fontSize: 12,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 0.5,
@@ -357,7 +352,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'SPP ${p.bulan} ${p.tahun}',
+                          p.periodeLabel,
                           style: const TextStyle(
                             color: AppTheme.textDark,
                             fontSize: 14,
@@ -367,7 +362,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         const SizedBox(height: 2),
                         Text(
                           p.isLunas
-                              ? _formatPaymentDateTime(p.paymentDate)
+                              ? _formatPaymentDateTime(p.tanggalBayar)
                               : 'Jatuh tempo: 10 ${p.bulan} ${p.tahun}',
                           style: const TextStyle(
                             color: AppTheme.textMedium,
@@ -424,7 +419,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppTheme.background,
+                    color: const Color(0xFFF9FAFB),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -478,27 +473,36 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   String _formatPaymentDateTime(String dateTimeString) {
     if (dateTimeString.isEmpty) return 'Dibayar: -';
-    
+
     try {
       // Parse datetime string (format: YYYY-MM-DD HH:MM:SS)
       final DateTime dt = DateTime.parse(dateTimeString);
-      
+
       // Format: Dibayar: 15 Mei 2026, 14:30
       final Map<int, String> bulanNama = {
-        1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'Mei', 6: 'Jun',
-        7: 'Jul', 8: 'Agu', 9: 'Sep', 10: 'Okt', 11: 'Nov', 12: 'Des',
+        1: 'Jan',
+        2: 'Feb',
+        3: 'Mar',
+        4: 'Apr',
+        5: 'Mei',
+        6: 'Jun',
+        7: 'Jul',
+        8: 'Agu',
+        9: 'Sep',
+        10: 'Okt',
+        11: 'Nov',
+        12: 'Des',
       };
-      
+
       final tanggal = dt.day.toString().padLeft(2, '0');
       final bulan = bulanNama[dt.month] ?? '';
       final tahun = dt.year;
       final jam = dt.hour.toString().padLeft(2, '0');
       final menit = dt.minute.toString().padLeft(2, '0');
-      
+
       return 'Dibayar: $tanggal $bulan $tahun, $jam:$menit';
     } catch (e) {
       return 'Dibayar: ${dateTimeString.split(' ').first}';
     }
   }
 }
-

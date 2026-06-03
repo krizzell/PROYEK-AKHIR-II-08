@@ -165,7 +165,24 @@ func SyncTagihanStatusByOrderID(db *sql.DB, orderID string) error {
 		newStatus = "lunas"
 	}
 
-	_, err = db.Exec("UPDATE tagihan SET status = ?, payment_status = ?, updated_at = NOW() WHERE id_tagihan = ?", newStatus, newStatus, idTagihan)
+	if newStatus == "lunas" {
+		_, err = db.Exec(`
+			UPDATE tagihan
+			SET status = ?,
+				payment_status = ?,
+				payment_date = COALESCE(payment_date, NOW()),
+				updated_at = NOW()
+			WHERE id_tagihan = ?
+		`, newStatus, newStatus, idTagihan)
+	} else {
+		_, err = db.Exec(`
+			UPDATE tagihan
+			SET status = ?,
+				payment_status = ?,
+				updated_at = NOW()
+			WHERE id_tagihan = ?
+		`, newStatus, newStatus, idTagihan)
+	}
 	if err != nil {
 		return fmt.Errorf("gagal sinkronisasi status tagihan: %w", err)
 	}

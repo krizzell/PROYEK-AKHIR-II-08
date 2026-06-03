@@ -137,6 +137,8 @@ type TagihanDetail struct {
 	JumlahTagihan   float64 `json:"jumlah_tagihan" db:"jumlah_tagihan"`
 	Periode         string  `json:"periode" db:"periode"`
 	Status          string  `json:"status" db:"status"`
+	PaymentStatus   string  `json:"payment_status" db:"payment_status"`
+	PaymentDate     string  `json:"payment_date" db:"payment_date"`
 	TotalBayar      float64 `json:"total_bayar"`
 	SisaBayar       float64 `json:"sisa_bayar"`
 	CreatedAt       string  `json:"created_at" db:"created_at"`

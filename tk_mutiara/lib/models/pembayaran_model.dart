@@ -7,7 +7,7 @@ class PembayaranModel {
   final String kelas;
   final int jumlahTagihan;
   final String periode;
-  final String paymentStatus; 
+  final String paymentStatus;
   final String transactionId;
   final String paymentMethod;
   final String paymentDate;
@@ -41,7 +41,12 @@ class PembayaranModel {
           ? json['id_tagihan'] as int
           : int.tryParse((json['id_tagihan'] ?? '0').toString()) ?? 0,
       nomorIndukSiswa: (json['nomor_induk_siswa'] ?? '').toString(),
-      namaSiswa: (json['nama_siswa'] ?? json['nama_anak'] ?? ApiService.userInfo?['nama_siswa'] ?? '').toString(),
+      namaSiswa:
+          (json['nama_siswa'] ??
+                  json['nama_anak'] ??
+                  ApiService.userInfo?['nama_siswa'] ??
+                  '')
+              .toString(),
       kelas: (json['kelas'] ?? ApiService.userInfo?['kelas'] ?? '').toString(),
       jumlahTagihan: json['jumlah_tagihan'] is int
           ? json['jumlah_tagihan'] as int
@@ -62,16 +67,33 @@ class PembayaranModel {
 
   String get id => idTagihan.toString();
 
-  String get bulan {
-    if (periode.contains(' ')) {
-      return periode.split(' ').first;
+  String get periodeBersih {
+    var value = periode.trim().replaceAll(RegExp(r'\s+'), ' ');
+
+    if (value.toLowerCase().startsWith('spp ')) {
+      value = value.substring(4).trim();
     }
-    return periode;
+
+    return value;
+  }
+
+  String get periodeLabel {
+    final value = periodeBersih;
+    return value.isEmpty ? 'SPP' : 'SPP $value';
+  }
+
+  String get bulan {
+    final value = periodeBersih;
+    if (value.contains(' ')) {
+      return value.split(' ').first;
+    }
+    return value;
   }
 
   String get tahun {
-    if (periode.contains(' ')) {
-      final parts = periode.split(' ');
+    final value = periodeBersih;
+    if (value.contains(' ')) {
+      final parts = value.split(' ');
       return parts.length > 1 ? parts.last : '';
     }
     return '';
@@ -81,7 +103,10 @@ class PembayaranModel {
 
   String get status => isLunas ? 'lunas' : 'belum';
 
-  String get tanggalBayar => paymentDate;
+  String get tanggalBayar {
+    if (paymentDate.isNotEmpty) return paymentDate;
+    return isLunas ? createdAt : '';
+  }
 
   String get metodePembayaran => paymentMethod;
 

@@ -239,7 +239,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: AppTheme.background,
+        backgroundColor: AppTheme.white,
         body: SafeArea(
           child: Column(
             children: [
@@ -256,7 +256,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
     }
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: _isDone
             ? _buildSuccessView(context)
@@ -301,7 +301,9 @@ class _PembayaranScreenState extends State<PembayaranScreen>
             edgeOffset: 20,
             onRefresh: _loadTagihan,
             child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: ClampingScrollPhysics(),
+              ),
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
@@ -365,9 +367,10 @@ class _PembayaranScreenState extends State<PembayaranScreen>
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: AppTheme.primaryGradient,
+        color: AppTheme.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: AppTheme.softShadow,
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: AppTheme.cardShadowList,
       ),
       child: Column(
         children: [
@@ -377,7 +380,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
               const Text(
                 'Detail Tagihan',
                 style: TextStyle(
-                  color: Colors.white70,
+                  color: AppTheme.textMedium,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -388,13 +391,17 @@ class _PembayaranScreenState extends State<PembayaranScreen>
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: tagihan.isLunas
+                      ? const Color(0xFFE8F8EE)
+                      : const Color(0xFFFFEDE0),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   tagihan.isLunas ? 'Lunas' : 'Belum Lunas',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: tagihan.isLunas
+                        ? const Color(0xFF16A34A)
+                        : AppTheme.primary,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
@@ -408,15 +415,15 @@ class _PembayaranScreenState extends State<PembayaranScreen>
             tagihan.namaSiswa.isEmpty ? '-' : tagihan.namaSiswa,
           ),
           _tagihanRow('Kelas', tagihan.kelas.isEmpty ? '-' : tagihan.kelas),
-          _tagihanRow('Periode', tagihan.periode),
-          const Divider(color: Colors.white24, height: 24),
+          _tagihanRow('Periode', tagihan.periodeLabel),
+          const Divider(color: Color(0xFFE5E7EB), height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
                 'Total Pembayaran',
                 style: TextStyle(
-                  color: Colors.white70,
+                  color: AppTheme.textMedium,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -424,7 +431,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
               Text(
                 tagihan.nominalFormatted,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppTheme.primary,
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
                 ),
@@ -444,12 +451,12 @@ class _PembayaranScreenState extends State<PembayaranScreen>
         children: [
           Text(
             label,
-            style: const TextStyle(color: Colors.white60, fontSize: 12),
+            style: const TextStyle(color: AppTheme.textMedium, fontSize: 12),
           ),
           Text(
             value,
             style: const TextStyle(
-              color: Colors.white,
+              color: AppTheme.textDark,
               fontSize: 13,
               fontWeight: FontWeight.w700,
             ),
@@ -605,13 +612,14 @@ class _PembayaranScreenState extends State<PembayaranScreen>
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  gradient: AppTheme.primaryGradient,
+                  color: AppTheme.white,
                   shape: BoxShape.circle,
-                  boxShadow: AppTheme.softShadow,
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                  boxShadow: AppTheme.cardShadowList,
                 ),
                 child: const Icon(
                   Icons.check_circle_outline_rounded,
-                  color: Colors.white,
+                  color: AppTheme.success,
                   size: 60,
                 ),
               ),

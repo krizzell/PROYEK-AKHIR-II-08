@@ -2,6 +2,7 @@ package services
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha512"
 	"database/sql"
 	"encoding/base64"
@@ -13,12 +14,11 @@ import (
 	"os"
 	"strings"
 	"time"
-	"context"
 
+	"golang.org/x/oauth2/google"
 	"tk_mutiara_backend/config"
 	"tk_mutiara_backend/models"
 	"tk_mutiara_backend/repository"
-	"golang.org/x/oauth2/google"
 )
 
 type midtransSnapRequest struct {
@@ -46,6 +46,12 @@ type midtransItemDetail struct {
 type midtransSnapResponse struct {
 	Token       string `json:"token"`
 	RedirectURL string `json:"redirect_url"`
+}
+
+type paymentNotificationDetail struct {
+	NamaSiswa string
+	Periode   string
+	Nominal   float64
 }
 
 func CreateMidtransTransaction(db *sql.DB, nomorIndukSiswa string, idTagihan int) (*models.CreateMidtransTransactionResponse, error) {
@@ -160,7 +166,7 @@ func requestMidtransSnap(payload midtransSnapRequest) (*midtransSnapResponse, er
 func getFcmTokenByOrderID(db *sql.DB, orderID string) (string, error) {
 	fmt.Printf("\n=== GET FCM TOKEN BY ORDER ID ===\n")
 	fmt.Printf("Order ID: %s\n", orderID)
-	
+
 	query := `
 		SELECT a.fcm_token
 		FROM akun a
@@ -170,7 +176,7 @@ func getFcmTokenByOrderID(db *sql.DB, orderID string) (string, error) {
 		WHERE p.midtrans_order_id = ?
 		LIMIT 1
 	`
-	
+
 	var fcmToken sql.NullString
 	err := db.QueryRow(query, orderID).Scan(&fcmToken)
 	if err != nil {
@@ -182,15 +188,77 @@ func getFcmTokenByOrderID(db *sql.DB, orderID string) (string, error) {
 		}
 		return "", fmt.Errorf("gagal ambil fcm token: %w", err)
 	}
-	
+
 	if !fcmToken.Valid || strings.TrimSpace(fcmToken.String) == "" {
 		fmt.Printf("❌ FCM token kosong/null untuk order %s\n", orderID)
 		fmt.Printf("⚠ Debug: User mungkin belum save FCM token setelah login\n")
 		return "", fmt.Errorf("fcm token tidak tersedia")
 	}
-	
+
 	fmt.Printf("✓ FCM token ditemukan: %s...\n", fcmToken.String[:min(20, len(fcmToken.String))])
 	return fcmToken.String, nil
+}
+
+func getPaymentNotificationDetail(db *sql.DB, orderID string) (*paymentNotificationDetail, error) {
+	var detail paymentNotificationDetail
+
+	err := db.QueryRow(`
+		SELECT
+			COALESCE(s.nama_siswa, 'Siswa') AS nama_siswa,
+			COALESCE(t.periode, '') AS periode,
+			COALESCE(t.jumlah_tagihan, p.jumlah_bayar, 0) AS nominal
+		FROM pembayaran p
+		JOIN tagihan t ON p.id_tagihan = t.id_tagihan
+		LEFT JOIN siswa s ON t.nomor_induk_siswa = s.nomor_induk_siswa
+		WHERE p.midtrans_order_id = ?
+		LIMIT 1
+	`, orderID).Scan(&detail.NamaSiswa, &detail.Periode, &detail.Nominal)
+	if err != nil {
+		return nil, fmt.Errorf("gagal ambil detail notifikasi: %w", err)
+	}
+
+	return &detail, nil
+}
+
+func formatRupiah(value float64) string {
+	raw := fmt.Sprintf("%.0f", value)
+	var builder strings.Builder
+
+	for i, digit := range raw {
+		if i > 0 && (len(raw)-i)%3 == 0 {
+			builder.WriteString(".")
+		}
+		builder.WriteRune(digit)
+	}
+
+	return "Rp " + builder.String()
+}
+
+func buildPaymentNotificationText(db *sql.DB, orderID string) (string, string) {
+	title := "Pembayaran SPP Berhasil"
+	body := fmt.Sprintf("Pembayaran untuk order %s berhasil dikonfirmasi. Ketuk untuk melihat detail.", orderID)
+
+	detail, err := getPaymentNotificationDetail(db, orderID)
+	if err != nil {
+		fmt.Printf("⚠ Could not build detailed notification body: %v\n", err)
+		return title, body
+	}
+
+	periodeLabel := strings.TrimSpace(detail.Periode)
+	if periodeLabel != "" && !strings.HasPrefix(strings.ToLower(periodeLabel), "spp ") {
+		periodeLabel = "SPP " + periodeLabel
+	}
+	if periodeLabel == "" {
+		periodeLabel = "SPP"
+	}
+
+	namaSiswa := strings.TrimSpace(detail.NamaSiswa)
+	if namaSiswa == "" {
+		namaSiswa = "siswa"
+	}
+
+	return periodeLabel + " Lunas",
+		fmt.Sprintf("Pembayaran %s untuk %s berhasil dikonfirmasi. Ketuk untuk melihat detail.", formatRupiah(detail.Nominal), namaSiswa)
 }
 
 func getAccessToken() (string, error) {
@@ -234,11 +302,16 @@ func getAccessToken() (string, error) {
 }
 
 func sendFCMNotification(fcmToken, title, body string) error {
+	if strings.Contains(body, "TAGIHAN-") {
+		title = "Pembayaran SPP Berhasil"
+		body = "Pembayaran SPP Anda berhasil dikonfirmasi. Ketuk untuk melihat detail pembayaran."
+	}
+
 	fmt.Printf("\n=== SEND FCM NOTIFICATION ===\n")
 	fmt.Printf("Title: %s\n", title)
 	fmt.Printf("Body: %s\n", body)
 	fmt.Printf("FCM Token: %s...\n", fcmToken[:min(20, len(fcmToken))])
-	
+
 	projectID := "proyek-akhir-ii-12e39"
 
 	accessToken, err := getAccessToken()
@@ -258,11 +331,11 @@ func sendFCMNotification(fcmToken, title, body string) error {
 			"android": map[string]interface{}{
 				"priority": "high",
 				"notification": map[string]interface{}{
-					"sound":               "default",
-					"click_action":        "FLUTTER_NOTIFICATION_CLICK",
-					"channel_id":          "payment_channel",
-					"tag":                 "payment",
-					"color":               "#FF7A00",
+					"sound":        "default",
+					"click_action": "FLUTTER_NOTIFICATION_CLICK",
+					"channel_id":   "payment_channel",
+					"tag":          "payment",
+					"color":        "#FF7A00",
 				},
 			},
 			"data": map[string]string{
@@ -300,10 +373,10 @@ func sendFCMNotification(fcmToken, title, body string) error {
 	respBytes, _ := io.ReadAll(resp.Body)
 	fmt.Printf("✓ Response Status: %d\n", resp.StatusCode)
 	fmt.Printf("✓ Response Body: %s\n", string(respBytes))
-	
+
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		fmt.Printf("❌ FCM API returned error %d\n", resp.StatusCode)
-		
+
 		// Parse error detail dari FCM response
 		var fcmError struct {
 			Error struct {
@@ -328,7 +401,7 @@ func sendFCMNotification(fcmToken, title, body string) error {
 				}
 			}
 		}
-		
+
 		return fmt.Errorf("FCM response %d: %s", resp.StatusCode, string(respBytes))
 	}
 
@@ -379,7 +452,7 @@ func processMidtransStatus(db *sql.DB, payload *models.MidtransNotification) err
 	fmt.Printf("Transaction Status: %s\n", payload.TransactionStatus)
 	fmt.Printf("Fraud Status: %s\n", payload.FraudStatus)
 	fmt.Printf("Payment Type: %s\n", payload.PaymentType)
-	
+
 	rawPayload, _ := json.Marshal(payload)
 	if err := repository.UpdatePembayaranMidtransStatus(
 		db,
@@ -397,7 +470,7 @@ func processMidtransStatus(db *sql.DB, payload *models.MidtransNotification) err
 
 	if isMidtransSuccess(payload.TransactionStatus, payload.FraudStatus) {
 		fmt.Printf("✓✓ Payment marked as SUCCESS - will send notification\n")
-		
+
 		if err := repository.MarkPembayaranLunasByOrderID(db, payload.OrderID); err != nil {
 			fmt.Printf("❌ Failed to mark as lunas: %v\n", err)
 			return err
@@ -412,8 +485,8 @@ func processMidtransStatus(db *sql.DB, payload *models.MidtransNotification) err
 			fmt.Printf("✓ FCM token obtained, attempting to send notification...\n")
 			if err := sendFCMNotification(
 				fcmToken,
-				"Pembayaran Berhasil ✅",
-				fmt.Sprintf("Pembayaran SPP untuk order %s telah dikonfirmasi.", payload.OrderID),
+				"Pembayaran Berhasil",
+				fmt.Sprintf("Pembayaran SPP untuk %s telah berhasil dikonfirmasi.", payload.OrderID),
 			); err != nil {
 				fmt.Printf("❌ Failed to send FCM notification: %v\n", err)
 			} else {

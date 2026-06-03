@@ -8,24 +8,23 @@ class PengumumanScreen extends StatefulWidget {
   final int? idPengumuman;
   final VoidCallback? onBackPressed;
 
-  const PengumumanScreen({
-    super.key,
-    this.idPengumuman,
-    this.onBackPressed,
-  });
+  const PengumumanScreen({super.key, this.idPengumuman, this.onBackPressed});
 
   @override
   State<PengumumanScreen> createState() => _PengumumanScreenState();
 }
 
-class _PengumumanScreenState extends State<PengumumanScreen> with TickerProviderStateMixin {
+class _PengumumanScreenState extends State<PengumumanScreen>
+    with TickerProviderStateMixin {
   List<PengumumanModel> _data = [];
   PengumumanModel? _selectedData;
   bool _isLoading = true;
   String? _errorMsg;
   late AnimationController _fadeController;
+  final TextEditingController _searchController = TextEditingController();
   final PageController _imagePageController = PageController();
   int _currentImageIndex = 0;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -40,8 +39,20 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
   @override
   void dispose() {
     _fadeController.dispose();
+    _searchController.dispose();
     _imagePageController.dispose();
     super.dispose();
+  }
+
+  List<PengumumanModel> get _filteredData {
+    final keyword = _searchQuery.trim().toLowerCase();
+    if (keyword.isEmpty) return _data;
+
+    return _data.where((item) {
+      return item.judul.toLowerCase().contains(keyword) ||
+          item.deskripsi.toLowerCase().contains(keyword) ||
+          item.namaGuru.toLowerCase().contains(keyword);
+    }).toList();
   }
 
   void _showDetail(PengumumanModel pengumuman) {
@@ -63,7 +74,9 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
         _isLoading = false;
         if (widget.idPengumuman != null) {
           try {
-            _selectedData = _data.firstWhere((p) => p.idPengumuman == widget.idPengumuman);
+            _selectedData = _data.firstWhere(
+              (p) => p.idPengumuman == widget.idPengumuman,
+            );
           } catch (_) {}
         }
       });
@@ -85,7 +98,20 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
       if (diff.inMinutes < 60) return '${diff.inMinutes}m lalu';
       if (diff.inHours < 24) return '${diff.inHours}j lalu';
       if (diff.inDays < 7) return '${diff.inDays}h lalu';
-      final months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'Mei',
+        'Jun',
+        'Jul',
+        'Agu',
+        'Sep',
+        'Okt',
+        'Nov',
+        'Des',
+      ];
       return '${date.day} ${months[date.month - 1]} ${date.year}';
     } catch (_) {
       return dateString;
@@ -106,17 +132,25 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
     if (_selectedData != null) return _buildDetailView(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FC),
+      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: Column(
           children: [
             _buildHeader(context),
+            if (!_isLoading && _errorMsg == null && _data.isNotEmpty)
+              _buildSearchField(),
             if (_isLoading)
-              const Expanded(child: Center(child: CircularProgressIndicator(color: AppTheme.primary)))
+              const Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(color: AppTheme.primary),
+                ),
+              )
             else if (_errorMsg != null && _data.isEmpty)
               _buildErrorState()
             else if (_data.isEmpty)
               _buildEmptyState()
+            else if (_filteredData.isEmpty)
+              _buildSearchEmptyState()
             else
               Expanded(
                 child: RefreshIndicator(
@@ -124,10 +158,13 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                   edgeOffset: 20,
                   onRefresh: _loadPengumuman,
                   child: ListView.builder(
-                    physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: ClampingScrollPhysics(),
+                    ),
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                    itemCount: _data.length,
+                    itemCount: _filteredData.length,
                     itemBuilder: (context, index) {
+                      final item = _filteredData[index];
                       return TweenAnimationBuilder<double>(
                         tween: Tween(begin: 0.0, end: 1.0),
                         duration: Duration(milliseconds: 400 + (index * 100)),
@@ -140,7 +177,7 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                         },
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 16),
-                          child: _buildPengumumanCard(_data[index]),
+                          child: _buildPengumumanCard(item),
                         ),
                       );
                     },
@@ -167,18 +204,51 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                   color: AppTheme.danger.withOpacity(0.08),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.wifi_off_rounded, size: 48, color: AppTheme.danger.withOpacity(0.6)),
+                child: Icon(
+                  Icons.wifi_off_rounded,
+                  size: 48,
+                  color: AppTheme.danger.withOpacity(0.6),
+                ),
               ),
               const SizedBox(height: 20),
-              const Text('Gagal Memuat', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
+              const Text(
+                'Gagal Memuat',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.textDark,
+                ),
+              ),
               const SizedBox(height: 8),
-              Text(_errorMsg!, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.textMedium, fontSize: 13)),
+              Text(
+                _errorMsg!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppTheme.textMedium,
+                  fontSize: 13,
+                ),
+              ),
               const SizedBox(height: 24),
               FilledButton.icon(
-                onPressed: () { setState(() { _isLoading = true; _errorMsg = null; }); _loadPengumuman(); },
+                onPressed: () {
+                  setState(() {
+                    _isLoading = true;
+                    _errorMsg = null;
+                  });
+                  _loadPengumuman();
+                },
                 icon: const Icon(Icons.refresh_rounded, size: 18),
                 label: const Text('Coba Lagi'),
-                style: FilledButton.styleFrom(backgroundColor: AppTheme.primary, padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
               ),
             ],
           ),
@@ -195,14 +265,133 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
           children: [
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.06), shape: BoxShape.circle),
-              child: Icon(Icons.campaign_outlined, size: 56, color: AppTheme.primary.withOpacity(0.4)),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withOpacity(0.06),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.campaign_outlined,
+                size: 56,
+                color: AppTheme.primary.withOpacity(0.4),
+              ),
             ),
             const SizedBox(height: 20),
-            const Text('Belum Ada Pengumuman', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
+            const Text(
+              'Belum Ada Pengumuman',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.textDark,
+              ),
+            ),
             const SizedBox(height: 8),
-            const Text('Pengumuman baru akan muncul di sini', style: TextStyle(color: AppTheme.textMedium, fontSize: 13)),
+            const Text(
+              'Pengumuman baru akan muncul di sini',
+              style: TextStyle(color: AppTheme.textMedium, fontSize: 13),
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchEmptyState() {
+    return Expanded(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(22),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withOpacity(0.06),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.search_off_rounded,
+                  size: 52,
+                  color: AppTheme.primary.withOpacity(0.45),
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Pengumuman Tidak Ditemukan',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.textDark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Tidak ada hasil untuk "$_searchQuery"',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppTheme.textMedium,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchField() {
+    return Container(
+      color: AppTheme.white,
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (value) => setState(() => _searchQuery = value),
+        textInputAction: TextInputAction.search,
+        style: const TextStyle(
+          color: AppTheme.textDark,
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
+        decoration: InputDecoration(
+          hintText: 'Cari pengumuman...',
+          hintStyle: const TextStyle(
+            color: AppTheme.textLight,
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+          ),
+          prefixIcon: const Icon(
+            Icons.search_rounded,
+            color: AppTheme.textMedium,
+            size: 20,
+          ),
+          suffixIcon: _searchQuery.isEmpty
+              ? null
+              : IconButton(
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() => _searchQuery = '');
+                  },
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    color: AppTheme.textMedium,
+                    size: 18,
+                  ),
+                ),
+          filled: true,
+          fillColor: AppTheme.white,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: AppTheme.primary),
+          ),
         ),
       ),
     );
@@ -210,6 +399,9 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
 
   Widget _buildHeader(BuildContext context) {
     final isDetail = _selectedData != null;
+    final totalText = _searchQuery.trim().isEmpty
+        ? '${_data.length} pengumuman tersedia'
+        : '${_filteredData.length} dari ${_data.length} pengumuman';
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 20, 16),
       color: AppTheme.white,
@@ -228,12 +420,20 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
             children: [
               Text(
                 isDetail ? 'Detail Pengumuman' : 'Pengumuman',
-                style: const TextStyle(color: AppTheme.textDark, fontSize: 18, fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                  color: AppTheme.textDark,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               if (!isDetail && _data.isNotEmpty)
                 Text(
-                  '${_data.length} pengumuman tersedia',
-                  style: TextStyle(color: AppTheme.textMedium, fontSize: 12, fontWeight: FontWeight.w500),
+                  totalText,
+                  style: TextStyle(
+                    color: AppTheme.textMedium,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
             ],
           ),
@@ -246,7 +446,7 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
   Widget _buildDetailView(BuildContext context) {
     final data = _selectedData!;
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FC),
+      backgroundColor: AppTheme.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -266,7 +466,13 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                         decoration: BoxDecoration(
                           color: const Color(0xFFEEEFF5),
                           borderRadius: BorderRadius.circular(20),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 8))],
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(20),
@@ -277,34 +483,49 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                               PageView.builder(
                                 controller: _imagePageController,
                                 itemCount: data.mediaPaths.length,
-                                onPageChanged: (index) => setState(() => _currentImageIndex = index),
+                                onPageChanged: (index) =>
+                                    setState(() => _currentImageIndex = index),
                                 itemBuilder: (context, index) {
-                                  final imageUrl = _getImageUrlFromPath(data.mediaPaths[index]);
+                                  final imageUrl = _getImageUrlFromPath(
+                                    data.mediaPaths[index],
+                                  );
                                   return CachedNetworkImage(
                                     imageUrl: imageUrl,
                                     fit: BoxFit.cover,
-                                    memCacheHeight: 800, // Optimasi memori untuk gambar besar
+                                    memCacheHeight:
+                                        800, // Optimasi memori untuk gambar besar
                                     placeholder: (context, url) => Center(
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2.5,
                                         color: AppTheme.primary,
                                       ),
                                     ),
-                                    errorWidget: (context, url, error) => const Center(
-                                      child: Icon(Icons.image_not_supported_rounded, size: 48, color: AppTheme.textLight),
-                                    ),
+                                    errorWidget: (context, url, error) =>
+                                        const Center(
+                                          child: Icon(
+                                            Icons.image_not_supported_rounded,
+                                            size: 48,
+                                            color: AppTheme.textLight,
+                                          ),
+                                        ),
                                   );
                                 },
                               ),
                               // Bottom gradient overlay
                               Positioned(
-                                bottom: 0, left: 0, right: 0,
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
                                 child: Container(
                                   height: 80,
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
-                                      begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                                      colors: [Colors.transparent, Colors.black.withOpacity(0.4)],
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.transparent,
+                                        Colors.black.withOpacity(0.4),
+                                      ],
                                     ),
                                   ),
                                 ),
@@ -312,31 +533,57 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                               // Dot indicators (only if more than 1 image)
                               if (data.mediaPaths.length > 1)
                                 Positioned(
-                                  bottom: 12, left: 0, right: 0,
+                                  bottom: 12,
+                                  left: 0,
+                                  right: 0,
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
-                                    children: List.generate(data.mediaPaths.length, (index) {
-                                      final isActive = index == _currentImageIndex;
-                                      return AnimatedContainer(
-                                        duration: const Duration(milliseconds: 250),
-                                        margin: const EdgeInsets.symmetric(horizontal: 3),
-                                        width: isActive ? 20 : 7,
-                                        height: 7,
-                                        decoration: BoxDecoration(
-                                          color: isActive ? Colors.white : Colors.white.withOpacity(0.5),
-                                          borderRadius: BorderRadius.circular(4),
-                                          boxShadow: isActive ? [BoxShadow(color: Colors.white.withOpacity(0.3), blurRadius: 4)] : [],
-                                        ),
-                                      );
-                                    }),
+                                    children: List.generate(
+                                      data.mediaPaths.length,
+                                      (index) {
+                                        final isActive =
+                                            index == _currentImageIndex;
+                                        return AnimatedContainer(
+                                          duration: const Duration(
+                                            milliseconds: 250,
+                                          ),
+                                          margin: const EdgeInsets.symmetric(
+                                            horizontal: 3,
+                                          ),
+                                          width: isActive ? 20 : 7,
+                                          height: 7,
+                                          decoration: BoxDecoration(
+                                            color: isActive
+                                                ? Colors.white
+                                                : Colors.white.withOpacity(0.5),
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                            boxShadow: isActive
+                                                ? [
+                                                    BoxShadow(
+                                                      color: Colors.white
+                                                          .withOpacity(0.3),
+                                                      blurRadius: 4,
+                                                    ),
+                                                  ]
+                                                : [],
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                               // Image counter badge
                               if (data.mediaPaths.length > 1)
                                 Positioned(
-                                  top: 12, left: 12,
+                                  top: 12,
+                                  left: 12,
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Colors.black.withOpacity(0.5),
                                       borderRadius: BorderRadius.circular(20),
@@ -344,19 +591,33 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Icon(Icons.photo_library_rounded, size: 13, color: Colors.white),
+                                        const Icon(
+                                          Icons.photo_library_rounded,
+                                          size: 13,
+                                          color: Colors.white,
+                                        ),
                                         const SizedBox(width: 4),
-                                        Text('${_currentImageIndex + 1}/${data.mediaPaths.length}',
-                                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                                        Text(
+                                          '${_currentImageIndex + 1}/${data.mediaPaths.length}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
                                 ),
                               // Time badge
                               Positioned(
-                                top: 12, right: 12,
+                                top: 12,
+                                right: 12,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withOpacity(0.92),
                                     borderRadius: BorderRadius.circular(20),
@@ -364,9 +625,20 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.access_time_rounded, size: 13, color: AppTheme.primary),
+                                      const Icon(
+                                        Icons.access_time_rounded,
+                                        size: 13,
+                                        color: AppTheme.primary,
+                                      ),
                                       const SizedBox(width: 4),
-                                      Text(_formatDate(data.waktuUnggah), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
+                                      Text(
+                                        _formatDate(data.waktuUnggah),
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppTheme.textDark,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -382,46 +654,107 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(data.judul, style: const TextStyle(color: AppTheme.textDark, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5, height: 1.2)),
+                          Text(
+                            data.judul,
+                            style: const TextStyle(
+                              color: AppTheme.textDark,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.5,
+                              height: 1.2,
+                            ),
+                          ),
                           const SizedBox(height: 14),
                           // Author chip
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(colors: [AppTheme.primary.withOpacity(0.08), AppTheme.primary.withOpacity(0.02)]),
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppTheme.primary.withOpacity(0.08),
+                                  AppTheme.primary.withOpacity(0.02),
+                                ],
+                              ),
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: AppTheme.primary.withOpacity(0.1)),
+                              border: Border.all(
+                                color: AppTheme.primary.withOpacity(0.1),
+                              ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 CircleAvatar(
                                   radius: 16,
-                                  backgroundColor: AppTheme.primary.withOpacity(0.15),
+                                  backgroundColor: AppTheme.primary.withOpacity(
+                                    0.15,
+                                  ),
                                   child: Text(
-                                    (data.namaGuru.isNotEmpty ? data.namaGuru : 'A')[0].toUpperCase(),
-                                    style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w800, fontSize: 14),
+                                    (data.namaGuru.isNotEmpty
+                                            ? data.namaGuru
+                                            : 'A')[0]
+                                        .toUpperCase(),
+                                    style: const TextStyle(
+                                      color: AppTheme.primary,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 14,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 10),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('Diposting oleh', style: TextStyle(color: AppTheme.textMedium, fontSize: 10, fontWeight: FontWeight.w600)),
-                                    Text(data.namaGuru.isNotEmpty ? data.namaGuru : 'Admin', style: const TextStyle(color: AppTheme.textDark, fontSize: 13, fontWeight: FontWeight.w800)),
+                                    const Text(
+                                      'Diposting oleh',
+                                      style: TextStyle(
+                                        color: AppTheme.textMedium,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    Text(
+                                      data.namaGuru.isNotEmpty
+                                          ? data.namaGuru
+                                          : 'Admin',
+                                      style: const TextStyle(
+                                        color: AppTheme.textDark,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
                                   ],
                                 ),
                                 if (data.mediaPaths.isEmpty) ...[
                                   const Spacer(),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                    decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(20)),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primary.withOpacity(0.08),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Icon(Icons.access_time_rounded, size: 12, color: AppTheme.primary),
+                                        const Icon(
+                                          Icons.access_time_rounded,
+                                          size: 12,
+                                          color: AppTheme.primary,
+                                        ),
                                         const SizedBox(width: 4),
-                                        Text(_formatDate(data.waktuUnggah), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
+                                        Text(
+                                          _formatDate(data.waktuUnggah),
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppTheme.textDark,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -438,23 +771,49 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(18),
-                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(0, 4))],
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.03),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
                                   children: [
-                                    Container(width: 4, height: 18, decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(2))),
+                                    Container(
+                                      width: 4,
+                                      height: 18,
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.primary,
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    ),
                                     const SizedBox(width: 10),
-                                    const Text('Isi Pengumuman', style: TextStyle(color: AppTheme.textDark, fontSize: 15, fontWeight: FontWeight.w800)),
+                                    const Text(
+                                      'Isi Pengumuman',
+                                      style: TextStyle(
+                                        color: AppTheme.textDark,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
                                   ],
                                 ),
                                 const SizedBox(height: 14),
                                 Text(
                                   data.deskripsi,
                                   textAlign: TextAlign.justify,
-                                  style: const TextStyle(color: AppTheme.textDark, fontSize: 14, fontWeight: FontWeight.w500, height: 1.8, letterSpacing: 0.1),
+                                  style: const TextStyle(
+                                    color: AppTheme.textDark,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    height: 1.8,
+                                    letterSpacing: 0.1,
+                                  ),
                                 ),
                               ],
                             ),
@@ -483,8 +842,16 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16, offset: const Offset(0, 4)),
-            BoxShadow(color: AppTheme.primary.withOpacity(0.03), blurRadius: 8, offset: const Offset(0, 2)),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: AppTheme.primary.withOpacity(0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
           ],
         ),
         child: ClipRRect(
@@ -503,7 +870,8 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                       CachedNetworkImage(
                         imageUrl: _getImageUrl(data.media),
                         fit: BoxFit.cover,
-                        memCacheHeight: 400, // Optimasi: jangan decode gambar 1MB full untuk list kecil
+                        memCacheHeight:
+                            400, // Optimasi: jangan decode gambar 1MB full untuk list kecil
                         placeholder: (context, url) => Container(
                           color: const Color(0xFFEEEFF5),
                           child: Center(
@@ -516,35 +884,63 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                         errorWidget: (context, url, error) => Container(
                           color: const Color(0xFFEEEFF5),
                           child: const Center(
-                            child: Icon(Icons.image_outlined, size: 36, color: AppTheme.textLight),
+                            child: Icon(
+                              Icons.image_outlined,
+                              size: 36,
+                              color: AppTheme.textLight,
+                            ),
                           ),
                         ),
                       ),
                       // Gradient overlay
                       Positioned(
-                        bottom: 0, left: 0, right: 0,
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
                         child: Container(
                           height: 60,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                              colors: [Colors.transparent, Colors.black.withOpacity(0.35)],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.35),
+                              ],
                             ),
                           ),
                         ),
                       ),
                       // Time badge on image
                       Positioned(
-                        top: 10, right: 10,
+                        top: 10,
+                        right: 10,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.92), borderRadius: BorderRadius.circular(20)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.92),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.access_time_rounded, size: 12, color: AppTheme.primary),
+                              const Icon(
+                                Icons.access_time_rounded,
+                                size: 12,
+                                color: AppTheme.primary,
+                              ),
                               const SizedBox(width: 4),
-                              Text(_formatDate(data.waktuUnggah), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
+                              Text(
+                                _formatDate(data.waktuUnggah),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.textDark,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -566,22 +962,42 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                           radius: 14,
                           backgroundColor: AppTheme.primary.withOpacity(0.1),
                           child: Text(
-                            (data.namaGuru.isNotEmpty ? data.namaGuru : 'A')[0].toUpperCase(),
-                            style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w800, fontSize: 11),
+                            (data.namaGuru.isNotEmpty ? data.namaGuru : 'A')[0]
+                                .toUpperCase(),
+                            style: const TextStyle(
+                              color: AppTheme.primary,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 11,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             data.namaGuru.isNotEmpty ? data.namaGuru : 'Admin',
-                            style: const TextStyle(color: AppTheme.textMedium, fontSize: 12, fontWeight: FontWeight.w700),
+                            style: const TextStyle(
+                              color: AppTheme.textMedium,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         if (!hasImage) ...[
-                          const Icon(Icons.access_time_rounded, size: 13, color: AppTheme.textLight),
+                          const Icon(
+                            Icons.access_time_rounded,
+                            size: 13,
+                            color: AppTheme.textLight,
+                          ),
                           const SizedBox(width: 4),
-                          Text(_formatDate(data.waktuUnggah), style: const TextStyle(color: AppTheme.textLight, fontSize: 11, fontWeight: FontWeight.w600)),
+                          Text(
+                            _formatDate(data.waktuUnggah),
+                            style: const TextStyle(
+                              color: AppTheme.textLight,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ],
                       ],
                     ),
@@ -591,7 +1007,13 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                       data.judul,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppTheme.textDark, fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: -0.3, height: 1.3),
+                      style: const TextStyle(
+                        color: AppTheme.textDark,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.3,
+                        height: 1.3,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     // Description preview
@@ -599,7 +1021,11 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                       data.deskripsi,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: AppTheme.textMedium.withOpacity(0.8), fontSize: 13, height: 1.5),
+                      style: TextStyle(
+                        color: AppTheme.textMedium.withOpacity(0.8),
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     // Read more link
@@ -607,18 +1033,40 @@ class _PengumumanScreenState extends State<PengumumanScreen> with TickerProvider
                       children: [
                         const Spacer(),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 7,
+                          ),
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(colors: [AppTheme.primary, AppTheme.primaryLight]),
+                            gradient: LinearGradient(
+                              colors: [AppTheme.primary, AppTheme.primaryLight],
+                            ),
                             borderRadius: BorderRadius.circular(20),
-                            boxShadow: [BoxShadow(color: AppTheme.primary.withOpacity(0.25), blurRadius: 8, offset: const Offset(0, 3))],
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primary.withOpacity(0.25),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('Baca', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                              Text(
+                                'Baca',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                               SizedBox(width: 4),
-                              Icon(Icons.arrow_forward_rounded, size: 14, color: Colors.white),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 14,
+                                color: Colors.white,
+                              ),
                             ],
                           ),
                         ),

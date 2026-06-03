@@ -1,177 +1,195 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import '../screens/notification_screen.dart';
 import 'api_services.dart';
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+AndroidNotificationDetails _paymentAndroidDetails(String? title, String? body) {
+  final safeTitle = title ?? 'Pembayaran SPP Berhasil';
+  final safeBody =
+      body ??
+      'Pembayaran SPP Anda berhasil dikonfirmasi. Ketuk untuk melihat detail pembayaran.';
+
+  return AndroidNotificationDetails(
+    'payment_channel',
+    'Payment Notifications',
+    channelDescription: 'Notifikasi status pembayaran',
+    importance: Importance.high,
+    priority: Priority.high,
+    icon: '@mipmap/ic_launcher',
+    color: const Color(0xFFFF6B1A),
+    enableVibration: true,
+    enableLights: true,
+    playSound: true,
+    styleInformation: BigTextStyleInformation(
+      safeBody,
+      contentTitle: safeTitle,
+      summaryText: 'TK Mutiara',
+    ),
+  );
+}
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   print('[BACKGROUND] Message received: ${message.messageId}');
-  
-  final RemoteNotification? notif = message.notification;
-  if (notif != null) {
-    print('[BACKGROUND] Title: ${notif.title}, Body: ${notif.body}');
-    
-    await flutterLocalNotificationsPlugin.show(
-      notif.hashCode, 
-      notif.title,
-      notif.body,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'payment_channel',
-          'Payment Notifications',
-          channelDescription: 'Notifikasi status pembayaran',
-          importance: Importance.high,
-          priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
-        ),
-      ),
-      payload: message.data.toString(),
-    );
-    print('✓✓ Background notification ditampilkan!');
-  }
-}
 
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
+  final RemoteNotification? notif = message.notification;
+  if (notif == null) return;
+
+  await flutterLocalNotificationsPlugin.show(
+    notif.hashCode,
+    notif.title,
+    notif.body,
+    NotificationDetails(
+      android: _paymentAndroidDetails(notif.title, notif.body),
+    ),
+    payload: message.data.toString(),
+  );
+  print('[BACKGROUND] Local notification displayed');
+}
 
 class NotificationService {
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
   static const String _channelId = 'payment_channel';
   static const String _channelName = 'Payment Notifications';
   static const String _channelDesc = 'Notifikasi status pembayaran';
 
-  /// Inisialisasi notification service TANPA save FCM token ke server.
-  /// FCM token akan disimpan setelah login via [saveTokenAfterLogin].
   static Future<void> init() async {
     print('\n=== INITIALIZING NOTIFICATION SERVICE ===');
-    
-    // meminta izin notifikasi
-    print('1️⃣  Requesting notification permissions...');
-    NotificationSettings settings = await _messaging.requestPermission(
+
+    final NotificationSettings settings = await _messaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
       provisional: false,
     );
-    print('✓ Permission granted: ${settings.authorizationStatus}');
+    print('Permission status: ${settings.authorizationStatus}');
 
-    print('2️⃣  Initializing local notifications plugin...');
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    const InitializationSettings initSettings =
-        InitializationSettings(android: androidSettings);
+    const InitializationSettings initSettings = InitializationSettings(
+      android: androidSettings,
+    );
 
     await flutterLocalNotificationsPlugin.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
-        print('✓ Notification tapped: ${response.payload}');
+        print('Local notification tapped: ${response.payload}');
+        ApiService.notifyPaymentUpdated();
+        _openNotificationScreen();
       },
     );
-    print('✓ Local notifications initialized');
 
-    // membuat notifikasi channel android
-    print('3️⃣  Creating Android notification channel...');
     final AndroidFlutterLocalNotificationsPlugin? androidImpl =
         flutterLocalNotificationsPlugin
             .resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin>();
+              AndroidFlutterLocalNotificationsPlugin
+            >();
 
-    if (androidImpl != null) {
-      await androidImpl.createNotificationChannel(
-        const AndroidNotificationChannel(
-          _channelId,
-          _channelName,
-          description: _channelDesc,
-          importance: Importance.high,
-          enableVibration: true,
-          enableLights: true,
-          playSound: true,
-        ),
-      );
-      print('✓ Notification channel created');
-    } else {
-      print('⚠ Android implementation not found');
-    }
+    await androidImpl?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        _channelId,
+        _channelName,
+        description: _channelDesc,
+        importance: Importance.high,
+        enableVibration: true,
+        enableLights: true,
+        playSound: true,
+      ),
+    );
 
-    // mengambil token FCM
-    print('4️⃣  Getting FCM token...');
     final String? token = await _messaging.getToken();
     if (token != null) {
-      print('✓ FCM Token ready: ${token.substring(0, 30)}...');
-      print('⚠ Belum disimpan ke server (menunggu login)');
+      print('FCM token ready: ${token.substring(0, 30)}...');
     } else {
-      print('⚠ FCM Token belum tersedia');
+      print('FCM token belum tersedia');
     }
 
-    // refresh token
-    print('5️⃣  Setting up token refresh listener...');
     _messaging.onTokenRefresh.listen((String newToken) {
-      print('🔄 FCM Token refreshed: ${newToken.substring(0, 30)}...');
-      // Hanya save jika user sudah login (ada auth token)
+      print('FCM token refreshed: ${newToken.substring(0, 30)}...');
       if (ApiService.token != null) {
-        print('   → User sudah login, saving new FCM token...');
         ApiService.saveFcmToken(newToken);
-      } else {
-        print('   ⚠ User belum login, token refresh disimpan nanti saat login');
       }
     });
-    print('✓ Token refresh listener active');
 
-    print('6️⃣  Setting up foreground message handler...');
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('\n [FOREGROUND] Message received: ${message.messageId}');
+      print('[FOREGROUND] Message received: ${message.messageId}');
       final RemoteNotification? notif = message.notification;
       final Map<String, dynamic> data = message.data;
-      
-      print('   Title: ${notif?.title}');
-      print('   Body: ${notif?.body}');
-      print('   Data: $data');
-      
-      if (notif != null) {
-        flutterLocalNotificationsPlugin.show(
-          notif.hashCode,
-          notif.title,
-          notif.body,
-          NotificationDetails(
-            android: AndroidNotificationDetails(
-              _channelId,
-              _channelName,
-              channelDescription: _channelDesc,
-              importance: Importance.high,
-              priority: Priority.high,
-              icon: '@mipmap/ic_launcher',
-              enableVibration: true,
-              enableLights: true,
-              playSound: true,
-            ),
-          ),
-          payload: data.toString(),
-        );
-        print('✓ Foreground notification displayed');
+
+      if (notif == null) return;
+
+      flutterLocalNotificationsPlugin.show(
+        notif.hashCode,
+        notif.title,
+        notif.body,
+        NotificationDetails(
+          android: _paymentAndroidDetails(notif.title, notif.body),
+        ),
+        payload: data.toString(),
+      );
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('Notification opened from background: ${message.data}');
+      if (_isPaymentNotification(message)) {
+        ApiService.notifyPaymentUpdated();
+        _openNotificationScreen();
       }
     });
-    print('✓ Foreground handler active\n');
+
+    final RemoteMessage? initialMessage = await _messaging.getInitialMessage();
+    if (initialMessage != null && _isPaymentNotification(initialMessage)) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        print('Notification opened from terminated state');
+        ApiService.notifyPaymentUpdated();
+        _openNotificationScreen();
+      });
+    }
 
     print('=== NOTIFICATION SERVICE INITIALIZED ===\n');
   }
 
-  /// Ini memastikan auth token sudah tersedia saat save FCM token.
   static Future<void> saveTokenAfterLogin() async {
     print('\n=== SAVING FCM TOKEN AFTER LOGIN ===');
     try {
       final String? fcmToken = await _messaging.getToken();
       if (fcmToken != null) {
-        print('✓ FCM Token: ${fcmToken.substring(0, 30)}...');
+        print('FCM token: ${fcmToken.substring(0, 30)}...');
         await ApiService.saveFcmToken(fcmToken);
-        print('✓ FCM token saved to server after login');
+        print('FCM token saved to server after login');
       } else {
-        print('⚠ Gagal dapat FCM token dari Firebase');
+        print('Gagal dapat FCM token dari Firebase');
       }
     } catch (e) {
       print('Error saving FCM token after login: $e');
     }
+  }
+
+  static bool _isPaymentNotification(RemoteMessage message) {
+    final type = (message.data['type'] ?? '').toString().toLowerCase();
+    return type == 'payment_success' ||
+        type == 'payment' ||
+        type.contains('payment');
+  }
+
+  static void _openNotificationScreen() {
+    final navigator = navigatorKey.currentState;
+    if (navigator == null) {
+      print('Navigator belum siap, halaman notifikasi belum bisa dibuka');
+      return;
+    }
+
+    navigator.push(
+      MaterialPageRoute(builder: (_) => const NotificationScreen()),
+    );
   }
 }
