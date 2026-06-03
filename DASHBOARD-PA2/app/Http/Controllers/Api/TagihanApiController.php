@@ -77,6 +77,7 @@ class TagihanApiController extends Controller
                         'payment_method' => $item->payment_method,
                         'payment_date' => $paymentDateFormatted,
                         'created_at' => $item->created_at->format('Y-m-d H:i:s'),
+                        'updated_at' => $item->updated_at?->format('Y-m-d H:i:s'),
                     ];
                 });
 
@@ -114,6 +115,7 @@ class TagihanApiController extends Controller
                     'transaction_id' => $tagihan->transaction_id,
                     'payment_method' => $tagihan->payment_method,
                     'payment_date' => $this->formatPaymentDate($paymentDate),
+                    'updated_at' => $tagihan->updated_at?->format('Y-m-d H:i:s'),
                 ],
             ], 200);
         } catch (\Exception $e) {

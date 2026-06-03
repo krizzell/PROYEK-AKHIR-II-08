@@ -156,7 +156,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ),
               ),
               Text(
-                'SPP Tahun Ajaran 2024/2025',
+                'SPP Tahun Ajaran 2025/2026',
                 style: TextStyle(
                   color: AppTheme.textMedium,
                   fontSize: 12,

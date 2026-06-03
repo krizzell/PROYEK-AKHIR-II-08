@@ -12,6 +12,7 @@ class PembayaranModel {
   final String paymentMethod;
   final String paymentDate;
   final String createdAt;
+  final String updatedAt;
 
   PembayaranModel({
     required this.idTagihan,
@@ -25,6 +26,7 @@ class PembayaranModel {
     this.paymentMethod = '',
     this.paymentDate = '',
     this.createdAt = '',
+    this.updatedAt = '',
   });
 
   factory PembayaranModel.fromJson(Map<String, dynamic> json) {
@@ -62,6 +64,7 @@ class PembayaranModel {
       paymentMethod: (json['payment_method'] ?? '').toString(),
       paymentDate: (json['payment_date'] ?? '').toString(),
       createdAt: (json['created_at'] ?? '').toString(),
+      updatedAt: (json['updated_at'] ?? json['paid_at'] ?? '').toString(),
     );
   }
 
@@ -105,6 +108,8 @@ class PembayaranModel {
 
   String get tanggalBayar {
     if (paymentDate.isNotEmpty) return paymentDate;
+    if (updatedAt.isNotEmpty) return updatedAt;
+    if (isLunas) return DateTime.now().toIso8601String();
     return '';
   }
 

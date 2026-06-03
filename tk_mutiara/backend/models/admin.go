@@ -142,6 +142,7 @@ type TagihanDetail struct {
 	TotalBayar      float64 `json:"total_bayar"`
 	SisaBayar       float64 `json:"sisa_bayar"`
 	CreatedAt       string  `json:"created_at" db:"created_at"`
+	UpdatedAt       string  `json:"updated_at" db:"updated_at"`
 }
 
 // PembayaranDetail model untuk pembayaran detail
