@@ -105,7 +105,7 @@ class PembayaranModel {
 
   String get tanggalBayar {
     if (paymentDate.isNotEmpty) return paymentDate;
-    return isLunas ? createdAt : '';
+    return '';
   }
 
   String get metodePembayaran => paymentMethod;

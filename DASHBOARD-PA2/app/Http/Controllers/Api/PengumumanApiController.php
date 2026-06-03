@@ -15,6 +15,10 @@ class PengumumanApiController extends Controller
     {
         try {
             $pengumuman = Pengumuman::with('guru')
+                ->where(function ($query) {
+                    $query->whereNull('tampil_sampai')
+                        ->orWhere('tampil_sampai', '>=', now());
+                })
                 ->orderBy('waktu_unggah', 'desc')
                 ->get()
                 ->map(function ($item) {
@@ -45,11 +49,16 @@ class PengumumanApiController extends Controller
     public function show($id)
     {
         try {
-            $pengumuman = Pengumuman::with('guru')->find($id);
+            $pengumuman = Pengumuman::with('guru')
+                ->where(function ($query) {
+                    $query->whereNull('tampil_sampai')
+                        ->orWhere('tampil_sampai', '>=', now());
+                })
+                ->find($id);
 
             if (!$pengumuman) {
                 return response()->json([
-                    'error' => 'Pengumuman tidak ditemukan'
+                    'error' => 'Pengumuman tidak ditemukan atau sudah berakhir'
                 ], 404);
             }
 

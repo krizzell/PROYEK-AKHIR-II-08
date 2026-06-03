@@ -21,7 +21,7 @@ func GetAllTagihan(db *sql.DB) ([]models.TagihanDetail, error) {
 			t.periode,
 			t.status,
 			COALESCE(t.payment_status, t.status, 'belum_bayar') as payment_status,
-			COALESCE(DATE_FORMAT(t.payment_date, '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.paid_at ELSE NULL END), '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.tgl_pembayaran ELSE NULL END), '%Y-%m-%d %H:%i:%s'), '') as payment_date,
+			COALESCE(DATE_FORMAT(t.payment_date, '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.paid_at ELSE NULL END), '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.updated_at ELSE NULL END), '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.tgl_pembayaran ELSE NULL END), '%Y-%m-%d %H:%i:%s'), '') as payment_date,
 			COALESCE(SUM(CASE WHEN p.status_bayar = 'diterima' THEN p.jumlah_bayar ELSE 0 END), 0) as total_bayar,
 			(t.jumlah_tagihan - COALESCE(SUM(CASE WHEN p.status_bayar = 'diterima' THEN p.jumlah_bayar ELSE 0 END), 0)) as sisa_bayar,
 			t.created_at
@@ -73,7 +73,7 @@ func GetTagihanByID(db *sql.DB, idTagihan int) (*models.TagihanDetail, error) {
 			t.periode,
 			t.status,
 			COALESCE(t.payment_status, t.status, 'belum_bayar') as payment_status,
-			COALESCE(DATE_FORMAT(t.payment_date, '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.paid_at ELSE NULL END), '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.tgl_pembayaran ELSE NULL END), '%Y-%m-%d %H:%i:%s'), '') as payment_date,
+			COALESCE(DATE_FORMAT(t.payment_date, '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.paid_at ELSE NULL END), '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.updated_at ELSE NULL END), '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.tgl_pembayaran ELSE NULL END), '%Y-%m-%d %H:%i:%s'), '') as payment_date,
 			COALESCE(SUM(CASE WHEN p.status_bayar = 'diterima' THEN p.jumlah_bayar ELSE 0 END), 0) as total_bayar,
 			(t.jumlah_tagihan - COALESCE(SUM(CASE WHEN p.status_bayar = 'diterima' THEN p.jumlah_bayar ELSE 0 END), 0)) as sisa_bayar,
 			t.created_at
@@ -113,7 +113,7 @@ func GetTagihanBySiswa(db *sql.DB, nomorIndukSiswa string) ([]models.TagihanDeta
 			t.periode,
 			t.status,
 			COALESCE(t.payment_status, t.status, 'belum_bayar') as payment_status,
-			COALESCE(DATE_FORMAT(t.payment_date, '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.paid_at ELSE NULL END), '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.tgl_pembayaran ELSE NULL END), '%Y-%m-%d %H:%i:%s'), '') as payment_date,
+			COALESCE(DATE_FORMAT(t.payment_date, '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.paid_at ELSE NULL END), '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.updated_at ELSE NULL END), '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(MAX(CASE WHEN p.status_bayar = 'diterima' THEN p.tgl_pembayaran ELSE NULL END), '%Y-%m-%d %H:%i:%s'), '') as payment_date,
 			COALESCE(SUM(CASE WHEN p.status_bayar = 'diterima' THEN p.jumlah_bayar ELSE 0 END), 0) as total_bayar,
 			(t.jumlah_tagihan - COALESCE(SUM(CASE WHEN p.status_bayar = 'diterima' THEN p.jumlah_bayar ELSE 0 END), 0)) as sisa_bayar,
 			t.created_at

@@ -8,6 +8,37 @@ use Illuminate\Http\Request;
 
 class TagihanApiController extends Controller
 {
+    private function resolvePaymentDate(Tagihan $tagihan)
+    {
+        if ($tagihan->payment_date) {
+            return $tagihan->payment_date;
+        }
+
+        $latestPayment = $tagihan->pembayaran
+            ->where('status_bayar', 'diterima')
+            ->sortByDesc(function ($payment) {
+                return (string) ($payment->paid_at ?? $payment->updated_at ?? $payment->tgl_pembayaran ?? '');
+            })
+            ->first();
+
+        return $latestPayment?->paid_at
+            ?? $latestPayment?->updated_at
+            ?? $latestPayment?->tgl_pembayaran;
+    }
+
+    private function formatPaymentDate($date): string
+    {
+        if (!$date) {
+            return '';
+        }
+
+        try {
+            return \Carbon\Carbon::parse($date)->format('Y-m-d H:i:s');
+        } catch (\Exception $e) {
+            return '';
+        }
+    }
+
     /**
      * Get list of tagihan for authenticated user (orangtua)
      * Mobile app akan send nomor_induk_siswa via token
@@ -31,18 +62,7 @@ class TagihanApiController extends Controller
                 ->get()
                 ->map(function ($item) {
                     $normalizedStatus = $item->payment_status ?: ($item->status ?: 'belum_bayar');
-                    
-                    // Format payment_date dengan error handling
-                    $paymentDateFormatted = '';
-                    $paymentDate = $item->payment_date ?: optional($item->pembayaran->sortByDesc('tgl_pembayaran')->first())->tgl_pembayaran;
-
-                    if ($paymentDate) {
-                        try {
-                            $paymentDateFormatted = $paymentDate->format('Y-m-d H:i:s');
-                        } catch (\Exception $e) {
-                            $paymentDateFormatted = '';
-                        }
-                    }
+                    $paymentDateFormatted = $this->formatPaymentDate($this->resolvePaymentDate($item));
 
                     return [
                         'id_tagihan' => $item->id_tagihan,
@@ -79,7 +99,7 @@ class TagihanApiController extends Controller
     {
         try {
             $tagihan = Tagihan::with('siswa', 'siswa.kelas', 'pembayaran')->findOrFail($id);
-            $paymentDate = $tagihan->payment_date ?: optional($tagihan->pembayaran->sortByDesc('tgl_pembayaran')->first())->tgl_pembayaran;
+            $paymentDate = $this->resolvePaymentDate($tagihan);
 
             return response()->json([
                 'status' => 'success',
@@ -93,7 +113,7 @@ class TagihanApiController extends Controller
                     'payment_status' => $tagihan->payment_status ?: ($tagihan->status ?: 'belum_bayar'),
                     'transaction_id' => $tagihan->transaction_id,
                     'payment_method' => $tagihan->payment_method,
-                    'payment_date' => optional($paymentDate)->format('Y-m-d H:i:s'),
+                    'payment_date' => $this->formatPaymentDate($paymentDate),
                 ],
             ], 200);
         } catch (\Exception $e) {

@@ -372,7 +372,7 @@
                             </span>
                             <div>
                                 <small style="color: var(--text-secondary);">
-                                    Hingga {{ $item->tampil_sampai->format('d-m-Y H:i') }}
+                                    {{ $isExpired ? 'Berakhir pada' : 'Aktif hingga' }} {{ $item->tampil_sampai->format('d-m-Y H:i') }}
                                 </small>
                             </div>
                         @else
