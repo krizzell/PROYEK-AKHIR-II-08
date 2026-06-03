@@ -145,6 +145,10 @@
             padding: 0 15px;
         }
 
+        .sidebar-footer::before {
+            content: none;
+        }
+
         .logout-btn {
             width: 100%;
             display: flex;
@@ -170,44 +174,63 @@
         .sidebar-footer-buttons {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 9px;
+        }
+
+        .sidebar-footer-buttons form {
+            width: 100%;
         }
 
         .sidebar-footer-btn {
             width: 100%;
+            min-height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            padding: 10px 12px;
+            gap: 9px;
+            padding: 10px 14px;
             border: 1px solid #E5E7EB;
             border-radius: 8px;
-            font-weight: 500;
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            font-size: 14px;
+            font-size: 13.5px;
+            line-height: 1;
             text-decoration: none;
             background-color: transparent;
         }
 
+        .sidebar-footer-btn i {
+            font-size: 14px;
+            line-height: 1;
+        }
+
         .sidebar-footer-btn.change-password {
-            color: #2196F3;
+            color: #1D4ED8;
             border-color: #BFDBFE;
         }
 
         .sidebar-footer-btn.change-password:hover {
             background-color: #EFF6FF;
-            color: #1976D2;
+            border-color: #93C5FD;
+            color: #1E40AF;
         }
 
         .sidebar-footer-btn.logout {
             color: #DC2626;
-            border-color: #FEE2E2;
+            border-color: #FECACA;
         }
 
         .sidebar-footer-btn.logout:hover {
-            background-color: #FEE2E2;
+            background-color: #FEF2F2;
+            border-color: #FCA5A5;
             color: #B91C1C;
+        }
+
+        .sidebar-footer-btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
         }
 
         /* ===== MAIN CONTENT STYLING ===== */

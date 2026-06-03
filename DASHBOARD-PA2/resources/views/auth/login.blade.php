@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - School Monitor</title>
+    <title>Login - TK Swasta Mutiara Balige</title>
+
+    <link rel="icon" type="image/png" href="{{ asset('images/logo_sekolah_favicon.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ asset('images/logo_sekolah_favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/logo_sekolah_favicon.png') }}">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
@@ -199,6 +203,10 @@ body {
     font-weight: 700;
 }
 
+.demo-info {
+    margin-top: 18px;
+}
+
 /* ===== FOOTER ===== */
 .login-footer {
     margin-top: 28px;
@@ -263,12 +271,10 @@ body {
         <section class="login-left">
             <div class="left-content">
                 <div>
-                    <!-- LOGO -->
                     <div class="left-logo">
                         <img src="{{ asset('images/logo_tk_mutiara.png') }}" alt="Logo Sekolah">
                     </div>
-
-                    <h2>Selamat datang di School Monitor</h2>
+                    <h2>Selamat Datang di Portal TK Swasta Mutiara</h2>
                     <p>Akses dashboard untuk mengelola data dan aktivitas sekolah secara efisien.</p>
                 </div>
             </div>
@@ -281,7 +287,7 @@ body {
                         <i class="bi bi-mortarboard"></i>
                     </div> -->
                     <h1>TK Swasta Mutiara Balige</h1>
-                    <p>Masuk ke Admin Dashboard PA-2</p>
+                    <p>Masuk ke Admin Dashboard TK Swasta Mutiara Balige</p>
                 </div>
 
                 @if ($errors->any())
@@ -331,7 +337,6 @@ body {
                             Password
                         </label>
                        <div class="input-icon password-wrapper">
-                            <!-- icon kiri -->
                             <i class="bi bi-key input-icon-left"></i>
 
                             <input type="password" 
@@ -341,7 +346,6 @@ body {
                                 placeholder="Masukkan password"
                                 required>
 
-                            <!-- icon kanan -->
                             <i class="bi bi-eye toggle-password" id="togglePassword"></i>
                         </div>
                         @error('password')
@@ -359,7 +363,7 @@ body {
 
                 <div class="demo-info">
                     <i class="bi bi-info-circle"></i>
-                    <strong>Demo:</strong> Hubungi administrator untuk mendapatkan akun Anda
+                    <strong>Info:</strong> Hubungi Kepala Sekolah atau Super Admin untuk mendapatkan akses akun 
                 </div>
 
                 <div class="login-footer">
