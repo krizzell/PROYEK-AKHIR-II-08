@@ -16,13 +16,10 @@ class TagihanApiController extends Controller
 
         $latestPayment = $tagihan->pembayaran
             ->where('status_bayar', 'diterima')
-            ->sortByDesc(function ($payment) {
-                return (string) ($payment->paid_at ?? $payment->updated_at ?? $payment->tgl_pembayaran ?? '');
-            })
+            ->sortByDesc(fn($payment) => (string) ($payment->paid_at ?? $payment->tgl_pembayaran ?? ''))
             ->first();
 
         return $latestPayment?->paid_at
-            ?? $latestPayment?->updated_at
             ?? $latestPayment?->tgl_pembayaran;
     }
 

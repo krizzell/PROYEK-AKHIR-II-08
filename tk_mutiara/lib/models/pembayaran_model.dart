@@ -108,8 +108,6 @@ class PembayaranModel {
 
   String get tanggalBayar {
     if (paymentDate.isNotEmpty) return paymentDate;
-    if (updatedAt.isNotEmpty) return updatedAt;
-    if (isLunas) return DateTime.now().toIso8601String();
     return '';
   }
 
