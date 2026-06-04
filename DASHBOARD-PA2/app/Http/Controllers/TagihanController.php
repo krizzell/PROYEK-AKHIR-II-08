@@ -7,6 +7,7 @@ use App\Models\Siswa;
 use App\Models\Kelas;
 use App\Models\Guru;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class TagihanController extends Controller
 {
@@ -137,6 +138,8 @@ class TagihanController extends Controller
 
     public function show(Tagihan $tagihan)
     {
+        $tagihan->loadMissing('siswa.kelas', 'pembayaran');
+
         $idGuru = session('id_guru');
         $isSuperAdmin = session('is_super_admin', false);
         
@@ -147,8 +150,21 @@ class TagihanController extends Controller
                 return redirect()->route('tagihan.index')->with('error', 'Anda tidak berwenang melihat tagihan ini');
             }
         }
-        
-        return view('tagihan.show', compact('tagihan'));
+
+        $latestPayment = $tagihan->pembayaran
+            ->where('status_bayar', 'diterima')
+            ->sortByDesc(fn($payment) => (string) ($payment->paid_at ?? $payment->tgl_pembayaran ?? ''))
+            ->first();
+
+        $tanggalPembayaran = $tagihan->payment_date
+            ?? $latestPayment?->paid_at
+            ?? $latestPayment?->tgl_pembayaran;
+
+        $tanggalPembayaranFormatted = $tanggalPembayaran
+            ? Carbon::parse($tanggalPembayaran)->format('d-m-Y H:i')
+            : null;
+
+        return view('tagihan.show', compact('tagihan', 'tanggalPembayaranFormatted'));
     }
 
     public function edit(Tagihan $tagihan)

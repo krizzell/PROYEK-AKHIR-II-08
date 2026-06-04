@@ -201,6 +201,54 @@
         color: var(--text-primary);
     }
 
+    .akun-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .search-wrapper {
+        position: relative;
+        width: min(100%, 420px);
+    }
+
+    .search-wrapper i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        pointer-events: none;
+    }
+
+    .search-input {
+        width: 100%;
+        height: 46px;
+        padding: 0.75rem 1rem 0.75rem 2.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        background: #FFFFFF;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        font-weight: 500;
+        outline: none;
+        transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+        border-color: #FF7A00;
+        box-shadow: 0 0 0 4px rgba(255, 122, 0, 0.12);
+    }
+
+    .search-input::placeholder {
+        color: #9CA3AF;
+        font-weight: 400;
+    }
+
     .bulk-actions {
         display: flex;
         align-items: center;
@@ -304,8 +352,14 @@
         </div>
     </div>
 @else
-    <div class="count-info">
-        Menampilkan <strong>{{ $akun->count() }}</strong> akun
+    <div class="akun-toolbar">
+        <div class="count-info" style="margin-bottom: 0;">
+            Menampilkan <strong id="visibleAkunCount">{{ $akun->count() }}</strong> dari <strong>{{ $akun->count() }}</strong> akun
+        </div>
+        <div class="search-wrapper">
+            <i class="bi bi-search"></i>
+            <input type="search" id="akunSearchInput" class="search-input" placeholder="Cari username, role, guru, atau siswa...">
+        </div>
     </div>
     <form id="bulkDeleteForm" action="{{ route('akun.bulkDestroy') }}" method="POST" style="display: none;">
         @csrf
@@ -345,7 +399,19 @@
             </thead>
             <tbody>
                 @foreach ($akun as $item)
-                <tr>
+                @php
+                    $statusLabel = $item->role === 'guru'
+                        ? ($item->is_super_admin ? 'super admin' : 'regular guru')
+                        : '';
+                    $searchText = implode(' ', [
+                        $item->username,
+                        $item->role,
+                        $statusLabel,
+                        $item->guru->nama_guru ?? '',
+                        $item->siswa->nama_siswa ?? '',
+                    ]);
+                @endphp
+                <tr data-search-text="{{ \Illuminate\Support\Str::lower($searchText) }}">
                     <td>
                         <div class="row-checkbox-wrapper">
                             <input type="checkbox" class="akun-checkbox" form="bulkDeleteForm" name="selected_akun[]" value="{{ $item->id_akun }}" aria-label="Pilih akun {{ $item->username }}">
@@ -392,6 +458,10 @@
                 @endforeach
             </tbody>
         </table>
+        <div class="empty-state" id="searchEmptyState" style="display: none;">
+            <i class="bi bi-search"></i>
+            <p>Akun tidak ditemukan</p>
+        </div>
     </div>
 @endif
 
@@ -407,6 +477,10 @@
         const selectedAkunCount = document.getElementById('selectedAkunCount');
         const clearSelectionBtn = document.getElementById('clearSelectionBtn');
         const bulkActionsContainer = document.querySelector('.bulk-actions');
+        const searchInput = document.getElementById('akunSearchInput');
+        const visibleAkunCount = document.getElementById('visibleAkunCount');
+        const searchEmptyState = document.getElementById('searchEmptyState');
+        const tableElement = document.querySelector('.table-container table');
 
         if (!selectAllCheckbox || !bulkDeleteBtn || !bulkDeleteForm || !selectedAkunCount || !clearSelectionBtn || !bulkActionsContainer) {
             return;
@@ -415,7 +489,9 @@
         bulkActionsContainer.classList.add('hidden');
 
         const syncButtonState = () => {
+            const visibleCheckboxes = rowCheckboxes.filter((checkbox) => checkbox.closest('tr').style.display !== 'none');
             const selectedCount = rowCheckboxes.filter((checkbox) => checkbox.checked).length;
+            const visibleSelectedCount = visibleCheckboxes.filter((checkbox) => checkbox.checked).length;
             
             if (selectedCount > 0) {
                 bulkActionsContainer.classList.remove('hidden');
@@ -432,13 +508,15 @@
                 ? `<i class="bi bi-check-circle-fill" style="color: #10B981; margin-right: 0.5rem;"></i> ${selectedCount} akun dipilih`
                 : '';
 
-            selectAllCheckbox.checked = selectedCount > 0 && selectedCount === rowCheckboxes.length;
-            selectAllCheckbox.indeterminate = selectedCount > 0 && selectedCount < rowCheckboxes.length;
+            selectAllCheckbox.checked = visibleCheckboxes.length > 0 && visibleSelectedCount === visibleCheckboxes.length;
+            selectAllCheckbox.indeterminate = visibleSelectedCount > 0 && visibleSelectedCount < visibleCheckboxes.length;
         };
 
         selectAllCheckbox.addEventListener('change', function () {
             rowCheckboxes.forEach((checkbox) => {
-                checkbox.checked = this.checked;
+                if (checkbox.closest('tr').style.display !== 'none') {
+                    checkbox.checked = this.checked;
+                }
             });
             syncButtonState();
         });
@@ -487,6 +565,30 @@
         });
 
         syncButtonState();
+
+        if (searchInput && visibleAkunCount && searchEmptyState && tableElement) {
+            searchInput.addEventListener('input', function () {
+                const keyword = this.value.trim().toLowerCase();
+                let visibleCount = 0;
+
+                rowCheckboxes.forEach((checkbox) => {
+                    const row = checkbox.closest('tr');
+                    const isMatch = row.dataset.searchText.includes(keyword);
+                    row.style.display = isMatch ? '' : 'none';
+
+                    if (!isMatch) {
+                        checkbox.checked = false;
+                    } else {
+                        visibleCount += 1;
+                    }
+                });
+
+                visibleAkunCount.textContent = visibleCount;
+                tableElement.style.display = visibleCount > 0 ? '' : 'none';
+                searchEmptyState.style.display = visibleCount > 0 ? 'none' : 'block';
+                syncButtonState();
+            });
+        }
     });
 </script>
 @endsection

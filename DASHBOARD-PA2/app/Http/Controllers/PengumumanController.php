@@ -9,6 +9,11 @@ use Illuminate\Support\Str;
 
 class PengumumanController extends Controller
 {
+    private function canManagePengumuman(): bool
+    {
+        return session('is_super_admin', false) || (bool) session('id_guru');
+    }
+
     private function displayDurationOptions(): array
     {
         return [
@@ -89,11 +94,8 @@ class PengumumanController extends Controller
         // Hanya SuperAdmin dan guru yang bisa membuat pengumuman
         // SuperAdmin: bisa membuat pengumuman untuk sekolah
         // Guru regular: harus punya id_guru di session
-        
-        $isSuperAdmin = session('is_super_admin', false);
-        $idGuru = session('id_guru');
-        
-        if (!$isSuperAdmin && !$idGuru) {
+
+        if (!$this->canManagePengumuman()) {
             return redirect()->route('pengumuman.index')->with('error', 
                 'Akun Anda tidak terhubung dengan data guru. ' .
                 'Hubungi super admin untuk link akun Anda dengan guru.'
@@ -108,10 +110,7 @@ class PengumumanController extends Controller
     public function store(Request $request)
     {
         // SuperAdmin atau guru yang punya id_guru bisa membuat pengumuman
-        $isSuperAdmin = session('is_super_admin', false);
-        $idGuru = session('id_guru');
-        
-        if (!$isSuperAdmin && !$idGuru) {
+        if (!$this->canManagePengumuman()) {
             return redirect()->route('pengumuman.index')->with('error', 'Anda tidak berwenang membuat pengumuman. Hanya guru dan admin yang dapat membuat pengumuman.');
         }
 
@@ -156,15 +155,10 @@ class PengumumanController extends Controller
 
     public function update(Request $request, Pengumuman $pengumuman)
     {
-        // SuperAdmin bisa edit semua, guru regular hanya bisa edit milik mereka
+        // SuperAdmin dan guru bisa mengedit semua pengumuman.
         $isSuperAdmin = session('is_super_admin', false);
-        $idGuru = session('id_guru');
-        
-        if (!$isSuperAdmin) {
-            // Guru regular harus punya id_guru dan hanya bisa edit pengumuman mereka
-            if (!$idGuru || $pengumuman->id_guru != $idGuru) {
-                return redirect()->route('pengumuman.index')->with('error', 'Anda tidak berwenang mengedit pengumuman ini.');
-            }
+        if (!$this->canManagePengumuman()) {
+            return redirect()->route('pengumuman.index')->with('error', 'Anda tidak berwenang mengedit pengumuman ini.');
         }
 
         $validated = $request->validate([
@@ -204,11 +198,8 @@ class PengumumanController extends Controller
 
     public function destroy(Pengumuman $pengumuman)
     {
-        // SuperAdmin bisa delete semua, guru regular hanya bisa delete milik mereka
-        $isSuperAdmin = session('is_super_admin', false);
-        $idGuru = session('id_guru');
-        
-        if (!$isSuperAdmin && (!$idGuru || $pengumuman->id_guru != $idGuru)) {
+        // SuperAdmin dan guru bisa menghapus semua pengumuman.
+        if (!$this->canManagePengumuman()) {
             return redirect()->route('pengumuman.index')->with('error', 'Anda tidak berwenang menghapus pengumuman ini.');
         }
         
@@ -226,19 +217,13 @@ class PengumumanController extends Controller
             'selected_pengumuman.*' => 'required|integer|exists:pengumuman,id_pengumuman',
         ]);
 
-        // SuperAdmin bisa delete semua, guru regular hanya milik mereka
-        $isSuperAdmin = session('is_super_admin', false);
-        $idGuru = session('id_guru');
-        
-        $query = Pengumuman::whereIn('id_pengumuman', $validated['selected_pengumuman']);
-        
-        if (!$isSuperAdmin && $idGuru) {
-            // Guru regular hanya bisa delete pengumuman milik mereka
-            $query->where('id_guru', $idGuru);
-        } elseif (!$isSuperAdmin) {
+        // SuperAdmin dan guru bisa menghapus semua pengumuman.
+        if (!$this->canManagePengumuman()) {
             return redirect()->route('pengumuman.index')->with('error', 'Anda tidak berwenang menghapus pengumuman.');
         }
-        
+
+        $query = Pengumuman::whereIn('id_pengumuman', $validated['selected_pengumuman']);
+
         $pengumumanToDelete = $query->get();
         
         foreach ($pengumumanToDelete as $item) {

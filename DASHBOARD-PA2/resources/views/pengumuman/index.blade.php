@@ -186,6 +186,54 @@
         color: var(--text-primary);
     }
 
+    .pengumuman-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .search-wrapper {
+        position: relative;
+        width: min(100%, 420px);
+    }
+
+    .search-wrapper i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        pointer-events: none;
+    }
+
+    .search-input {
+        width: 100%;
+        height: 46px;
+        padding: 0.75rem 1rem 0.75rem 2.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        background: #FFFFFF;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        font-weight: 500;
+        outline: none;
+        transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+        border-color: #FF7A00;
+        box-shadow: 0 0 0 4px rgba(255, 122, 0, 0.12);
+    }
+
+    .search-input::placeholder {
+        color: #9CA3AF;
+        font-weight: 400;
+    }
+
     .bulk-actions {
         display: flex;
         align-items: center;
@@ -305,8 +353,14 @@
         </div>
     </div>
 @else
-    <div class="count-info">
-        Menampilkan <strong>{{ $pengumuman->count() }}</strong> pengumuman
+    <div class="pengumuman-toolbar">
+        <div class="count-info" style="margin-bottom: 0;">
+            Menampilkan <strong id="visiblePengumumanCount">{{ $pengumuman->count() }}</strong> dari <strong>{{ $pengumuman->count() }}</strong> pengumuman
+        </div>
+        <div class="search-wrapper">
+            <i class="bi bi-search"></i>
+            <input type="search" id="pengumumanSearchInput" class="search-input" placeholder="Cari judul, guru, tanggal, atau status...">
+        </div>
     </div>
     <form id="bulkDeleteForm" action="{{ route('pengumuman.bulkDestroy') }}" method="POST" style="display: none;">
         @csrf
@@ -346,7 +400,17 @@
             </thead>
             <tbody>
                 @foreach ($pengumuman as $item)
-                <tr>
+                @php
+                    $isExpired = $item->tampil_sampai?->isPast();
+                    $searchText = implode(' ', [
+                        $item->judul,
+                        $item->guru->nama_guru ?? '',
+                        optional($item->waktu_unggah)->format('d-m-Y H:i'),
+                        $item->tampil_sampai ? ($isExpired ? 'berakhir' : 'aktif') : '',
+                        $item->tampil_sampai ? $item->tampil_sampai->format('d-m-Y H:i') : '',
+                    ]);
+                @endphp
+                <tr data-search-text="{{ \Illuminate\Support\Str::lower($searchText) }}">
                     <td>
                         <div class="row-checkbox-wrapper">
                             <input type="checkbox" class="pengumuman-checkbox" form="bulkDeleteForm" name="selected_pengumuman[]" value="{{ $item->id_pengumuman }}" aria-label="Pilih pengumuman {{ $item->judul }}">
@@ -365,7 +429,6 @@
                     <td><small style="color: var(--text-secondary);">{{ $item->waktu_unggah->format('d-m-Y H:i') }}</small></td>
                     <td>
                         @if($item->tampil_sampai)
-                            @php $isExpired = $item->tampil_sampai->isPast(); @endphp
                             <span class="mobile-status-badge {{ $isExpired ? 'expired' : 'active' }}">
                                 <i class="bi {{ $isExpired ? 'bi-clock-history' : 'bi-check-circle' }}"></i>
                                 {{ $isExpired ? 'Berakhir' : 'Aktif' }}
@@ -400,6 +463,10 @@
                 @endforeach
             </tbody>
         </table>
+        <div class="empty-state" id="searchEmptyState" style="display: none;">
+            <i class="bi bi-search"></i>
+            <p>Pengumuman tidak ditemukan</p>
+        </div>
     </div>
 @endif
 
@@ -415,6 +482,10 @@
         const selectedPengumumanCount = document.getElementById('selectedPengumumanCount');
         const clearSelectionBtn = document.getElementById('clearSelectionBtn');
         const bulkActionsContainer = document.querySelector('.bulk-actions');
+        const searchInput = document.getElementById('pengumumanSearchInput');
+        const visiblePengumumanCount = document.getElementById('visiblePengumumanCount');
+        const searchEmptyState = document.getElementById('searchEmptyState');
+        const tableElement = document.querySelector('.table-container table');
 
         if (!selectAllCheckbox || !bulkDeleteBtn || !bulkDeleteForm || !selectedPengumumanCount || !clearSelectionBtn || !bulkActionsContainer) {
             return;
@@ -423,7 +494,9 @@
         bulkActionsContainer.classList.add('hidden');
 
         const syncButtonState = () => {
+            const visibleCheckboxes = rowCheckboxes.filter((checkbox) => checkbox.closest('tr').style.display !== 'none');
             const selectedCount = rowCheckboxes.filter((checkbox) => checkbox.checked).length;
+            const visibleSelectedCount = visibleCheckboxes.filter((checkbox) => checkbox.checked).length;
             
             if (selectedCount > 0) {
                 bulkActionsContainer.classList.remove('hidden');
@@ -440,13 +513,15 @@
                 ? `<i class="bi bi-check-circle-fill" style="color: #10B981; margin-right: 0.5rem;"></i> ${selectedCount} pengumuman dipilih`
                 : '';
 
-            selectAllCheckbox.checked = selectedCount > 0 && selectedCount === rowCheckboxes.length;
-            selectAllCheckbox.indeterminate = selectedCount > 0 && selectedCount < rowCheckboxes.length;
+            selectAllCheckbox.checked = visibleCheckboxes.length > 0 && visibleSelectedCount === visibleCheckboxes.length;
+            selectAllCheckbox.indeterminate = visibleSelectedCount > 0 && visibleSelectedCount < visibleCheckboxes.length;
         };
 
         selectAllCheckbox.addEventListener('change', function () {
             rowCheckboxes.forEach((checkbox) => {
-                checkbox.checked = this.checked;
+                if (checkbox.closest('tr').style.display !== 'none') {
+                    checkbox.checked = this.checked;
+                }
             });
             syncButtonState();
         });
@@ -495,6 +570,30 @@
         });
 
         syncButtonState();
+
+        if (searchInput && visiblePengumumanCount && searchEmptyState && tableElement) {
+            searchInput.addEventListener('input', function () {
+                const keyword = this.value.trim().toLowerCase();
+                let visibleCount = 0;
+
+                rowCheckboxes.forEach((checkbox) => {
+                    const row = checkbox.closest('tr');
+                    const isMatch = row.dataset.searchText.includes(keyword);
+                    row.style.display = isMatch ? '' : 'none';
+
+                    if (!isMatch) {
+                        checkbox.checked = false;
+                    } else {
+                        visibleCount += 1;
+                    }
+                });
+
+                visiblePengumumanCount.textContent = visibleCount;
+                tableElement.style.display = visibleCount > 0 ? '' : 'none';
+                searchEmptyState.style.display = visibleCount > 0 ? 'none' : 'block';
+                syncButtonState();
+            });
+        }
     });
 </script>
 @endsection

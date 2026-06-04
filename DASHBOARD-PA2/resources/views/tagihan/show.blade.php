@@ -67,6 +67,19 @@
 
         <div class="row mb-3">
             <div class="col-md-3">
+                <strong>Tanggal Pembayaran:</strong>
+            </div>
+            <div class="col-md-9">
+                @if ($tagihan->status === 'lunas' && $tanggalPembayaranFormatted)
+                    {{ $tanggalPembayaranFormatted }}
+                @else
+                    <span class="text-muted">-</span>
+                @endif
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
                 <strong>Dibuat:</strong>
             </div>
             <div class="col-md-9">
