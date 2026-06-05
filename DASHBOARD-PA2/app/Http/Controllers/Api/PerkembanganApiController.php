@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Perkembangan;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PerkembanganApiController extends Controller
 {
@@ -29,6 +30,8 @@ class PerkembanganApiController extends Controller
                 ->orderBy('bulan', 'desc')
                 ->get()
                 ->map(function ($item) {
+                    $rataRataKelas = $this->getRataRataKelas($item);
+
                     return [
                         'id_perkembangan' => $item->id_perkembangan,
                         'id_guru' => $item->id_guru,
@@ -41,6 +44,7 @@ class PerkembanganApiController extends Controller
                         'kategori' => $item->kategori,
                         'deskripsi' => $item->deskripsi,
                         'status_utama' => $item->status_utama,
+                        'rata_rata_kelas' => $rataRataKelas,
                         'template_deskripsi' => $item->template_deskripsi,
                         'kategori_details' => $item->kategoriDetails->map(function ($detail) {
                             return [
@@ -102,6 +106,7 @@ class PerkembanganApiController extends Controller
                     'kategori' => $perkembangan->kategori,
                     'deskripsi' => $perkembangan->deskripsi,
                     'status_utama' => $perkembangan->status_utama,
+                    'rata_rata_kelas' => $this->getRataRataKelas($perkembangan),
                     'template_deskripsi' => $perkembangan->template_deskripsi,
                     'kategori_details' => $perkembangan->kategoriDetails->map(function ($detail) {
                         return [
@@ -126,5 +131,29 @@ class PerkembanganApiController extends Controller
                 'message' => 'Error: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    private function getRataRataKelas(Perkembangan $perkembangan): float
+    {
+        $idKelas = $perkembangan->siswa?->id_kelas;
+
+        if (!$idKelas || !$perkembangan->bulan || !$perkembangan->tahun) {
+            return 0;
+        }
+
+        return (float) Perkembangan::query()
+            ->join('siswa', 'perkembangan.nomor_induk_siswa', '=', 'siswa.nomor_induk_siswa')
+            ->where('siswa.id_kelas', $idKelas)
+            ->where('perkembangan.bulan', $perkembangan->bulan)
+            ->where('perkembangan.tahun', $perkembangan->tahun)
+            ->avg(DB::raw("
+                CASE COALESCE(perkembangan.status_utama, 'BSH')
+                    WHEN 'BB' THEN 1
+                    WHEN 'MB' THEN 2
+                    WHEN 'BSH' THEN 3
+                    WHEN 'BSB' THEN 4
+                    ELSE 0
+                END
+            "));
     }
 }

@@ -46,6 +46,7 @@ class PerkembanganModel {
   final String deskripsi;
   final String templateDeskripsi;
   final String statusUtama;
+  final double rataRataKelas;
   final String createdAt;
   final String updatedAt;
   final List<PerkembanganKategoriModel> kategoriDetails;
@@ -63,6 +64,7 @@ class PerkembanganModel {
     required this.deskripsi,
     required this.templateDeskripsi,
     required this.statusUtama,
+    required this.rataRataKelas,
     required this.createdAt,
     required this.updatedAt,
     required this.kategoriDetails,
@@ -83,24 +85,33 @@ class PerkembanganModel {
       deskripsi: json['deskripsi'] ?? '',
       templateDeskripsi: json['template_deskripsi'] ?? '',
       statusUtama: json['status_utama'] ?? 'BSH',
+      rataRataKelas: _toDouble(json['rata_rata_kelas']),
       createdAt: json['created_at'] ?? '',
       updatedAt: json['updated_at'] ?? '',
-      kategoriDetails: kategoris.map((k) => PerkembanganKategoriModel.fromJson(k)).toList(),
+      kategoriDetails: kategoris
+          .map((k) => PerkembanganKategoriModel.fromJson(k))
+          .toList(),
     );
   }
 
-int get nilaiChart {
-  switch (statusUtama) {
-    case "BB":
-      return 1;
-    case "MB":
-      return 2;
-    case "BSH":
-      return 3;
-    case "BSB":
-      return 4;
-    default:
-      return 0;
+  static double _toDouble(dynamic value) {
+    if (value == null) return 0;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString()) ?? 0;
   }
-}
+
+  int get nilaiChart {
+    switch (statusUtama) {
+      case "BB":
+        return 1;
+      case "MB":
+        return 2;
+      case "BSH":
+        return 3;
+      case "BSB":
+        return 4;
+      default:
+        return 0;
+    }
+  }
 }

@@ -41,6 +41,22 @@ func GetPerkembanganHandler(c *gin.Context) {
 			p.deskripsi,
 			COALESCE(p.template_deskripsi, '') as template_deskripsi,
 			COALESCE(p.status_utama, 'BSH') as status_utama,
+			COALESCE((
+				SELECT AVG(
+					CASE COALESCE(p2.status_utama, 'BSH')
+						WHEN 'BB' THEN 1
+						WHEN 'MB' THEN 2
+						WHEN 'BSH' THEN 3
+						WHEN 'BSB' THEN 4
+						ELSE 0
+					END
+				)
+				FROM perkembangan p2
+				INNER JOIN siswa s2 ON p2.nomor_induk_siswa = s2.nomor_induk_siswa
+				WHERE s2.id_kelas = s.id_kelas
+				  AND COALESCE(p2.bulan, 0) = COALESCE(p.bulan, 0)
+				  AND COALESCE(p2.tahun, 0) = COALESCE(p.tahun, 0)
+			), 0) as rata_rata_kelas,
 			DATE_FORMAT(p.created_at, '%Y-%m-%d %H:%i:%s') as created_at,
 			DATE_FORMAT(p.updated_at, '%Y-%m-%d %H:%i:%s') as updated_at
 		FROM perkembangan p
@@ -69,7 +85,7 @@ func GetPerkembanganHandler(c *gin.Context) {
 
 		err := rows.Scan(
 			&p.IDPerkembangan, &p.IDGuru, &p.NomorIndukSiswa, &p.NamaAnak, &p.NamaGuru, &p.Kelas,
-			&p.Bulan, &p.Tahun, &p.Kategori, &p.Deskripsi, &p.TemplateDeskripsi, &p.StatusUtama, &p.CreatedAt, &p.UpdatedAt,
+			&p.Bulan, &p.Tahun, &p.Kategori, &p.Deskripsi, &p.TemplateDeskripsi, &p.StatusUtama, &p.RataRataKelas, &p.CreatedAt, &p.UpdatedAt,
 		)
 		if err != nil {
 			continue
@@ -151,7 +167,25 @@ func GetPerkembanganByIDHandler(c *gin.Context) {
 			COALESCE(p.bulan, 0) as bulan,
 			COALESCE(p.tahun, 0) as tahun,
 			p.kategori,
-			p.deskripsi,		COALESCE(p.template_deskripsi, '') as template_deskripsi,			COALESCE(p.status_utama, 'BSH') as status_utama,
+			p.deskripsi,
+			COALESCE(p.template_deskripsi, '') as template_deskripsi,
+			COALESCE(p.status_utama, 'BSH') as status_utama,
+			COALESCE((
+				SELECT AVG(
+					CASE COALESCE(p2.status_utama, 'BSH')
+						WHEN 'BB' THEN 1
+						WHEN 'MB' THEN 2
+						WHEN 'BSH' THEN 3
+						WHEN 'BSB' THEN 4
+						ELSE 0
+					END
+				)
+				FROM perkembangan p2
+				INNER JOIN siswa s2 ON p2.nomor_induk_siswa = s2.nomor_induk_siswa
+				WHERE s2.id_kelas = s.id_kelas
+				  AND COALESCE(p2.bulan, 0) = COALESCE(p.bulan, 0)
+				  AND COALESCE(p2.tahun, 0) = COALESCE(p.tahun, 0)
+			), 0) as rata_rata_kelas,
 			DATE_FORMAT(p.created_at, '%Y-%m-%d %H:%i:%s') as created_at,
 			DATE_FORMAT(p.updated_at, '%Y-%m-%d %H:%i:%s') as updated_at
 		FROM perkembangan p
@@ -164,7 +198,7 @@ func GetPerkembanganByIDHandler(c *gin.Context) {
 	var p models.Perkembangan
 	err = config.DB.QueryRow(query, id).Scan(
 		&p.IDPerkembangan, &p.IDGuru, &p.NomorIndukSiswa, &p.NamaAnak, &p.NamaGuru, &p.Kelas,
-		&p.Bulan, &p.Tahun, &p.Kategori, &p.Deskripsi, &p.TemplateDeskripsi, &p.StatusUtama, &p.CreatedAt, &p.UpdatedAt,
+		&p.Bulan, &p.Tahun, &p.Kategori, &p.Deskripsi, &p.TemplateDeskripsi, &p.StatusUtama, &p.RataRataKelas, &p.CreatedAt, &p.UpdatedAt,
 	)
 	if err != nil {
 		statusCode := http.StatusInternalServerError

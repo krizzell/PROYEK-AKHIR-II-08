@@ -57,6 +57,7 @@ type Perkembangan struct {
 	Deskripsi         string                 `json:"deskripsi" db:"deskripsi"`
 	TemplateDeskripsi string                 `json:"template_deskripsi" db:"template_deskripsi"`
 	StatusUtama       string                 `json:"status_utama" db:"status_utama"`
+	RataRataKelas     float64                `json:"rata_rata_kelas" db:"rata_rata_kelas"`
 	CreatedAt         string                 `json:"created_at" db:"created_at"`
 	UpdatedAt         string                 `json:"updated_at" db:"updated_at"`
 	KategoriDetails   []PerkembanganKategori `json:"kategori_details" db:"-"`
