@@ -27,36 +27,82 @@ class PerkembanganController extends Controller
     {
         // Super admin bisa melihat SEMUA perkembangan, 
         // Guru regular hanya bisa melihat perkembangan dari siswa di kelasnya
+        $query = Perkembangan::with('guru', 'siswa.kelas')
+            ->orderBy('id_perkembangan', 'desc');
+
         if (session('is_super_admin')) {
-            $perkembangan = Perkembangan::with('guru')
-                ->with('siswa.kelas')
-                ->orderBy('id_perkembangan', 'desc')
-                ->get();
+            $kelasOptionsQuery = Kelas::query();
         } else {
             // Filter perkembangan berdasarkan siswa di kelas guru
             $kelasGuruArray = $this->getGuruKelasArray();
             
             if (empty($kelasGuruArray)) {
                 // Guru belum punya kelas, tampilkan kosong
-                $perkembangan = collect();
+                $query->whereRaw('1 = 0');
+                $kelasOptionsQuery = Kelas::whereRaw('1 = 0');
             } else {
                 $siswaGuruArray = Siswa::whereIn('id_kelas', $kelasGuruArray)
                     ->pluck('nomor_induk_siswa')
                     ->toArray();
-                
-                $perkembangan = Perkembangan::whereIn('nomor_induk_siswa', $siswaGuruArray)
-                    ->with('guru')
-                    ->with('siswa.kelas')
-                    ->orderBy('id_perkembangan', 'desc')
-                    ->get();
+
+                $query->whereIn('nomor_induk_siswa', $siswaGuruArray);
+                $kelasOptionsQuery = Kelas::whereIn('id_kelas', $kelasGuruArray);
             }
         }
+
+        $baseQueryForPeriod = clone $query;
+
+        if (request('nis')) {
+            $query->where('nomor_induk_siswa', 'like', '%' . request('nis') . '%');
+        }
+
+        if (request('nama')) {
+            $query->whereHas('siswa', function ($q) {
+                $q->where('nama_siswa', 'like', '%' . request('nama') . '%');
+            });
+        }
+
+        if (request('kelas')) {
+            $query->whereHas('siswa', function ($q) {
+                $q->where('id_kelas', request('kelas'));
+            });
+        }
+
+        if (request('periode')) {
+            [$bulan, $tahun] = array_pad(explode('-', request('periode'), 2), 2, null);
+            if ($bulan && $tahun) {
+                $query->where('bulan', (int) $bulan)->where('tahun', (int) $tahun);
+            }
+        }
+
+        if (request('status')) {
+            $query->where('status_utama', request('status'));
+        }
+
+        $kelasOptions = $kelasOptionsQuery->orderBy('nama_kelas')->get();
+        $periodeOptions = $baseQueryForPeriod
+            ->select('bulan', 'tahun')
+            ->whereNotNull('bulan')
+            ->whereNotNull('tahun')
+            ->distinct()
+            ->reorder()
+            ->orderByDesc('tahun')
+            ->orderByDesc('bulan')
+            ->get();
+
+        $perkembangan = $query->paginate(15)->withQueryString();
         
         // Permission: guru biasa boleh create/edit, data perkembangan tidak boleh dihapus.
         $canCreate = !session('is_super_admin');
         $canDelete = false;
         
-        return view('perkembangan.index', compact('perkembangan', 'canCreate', 'canDelete'));
+        return view('perkembangan.index', compact(
+            'perkembangan',
+            'canCreate',
+            'canDelete',
+            'kelasOptions',
+            'periodeOptions'
+        ));
     }
 
     public function create()

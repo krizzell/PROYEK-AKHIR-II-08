@@ -427,7 +427,7 @@
     </div>
 @else
     <div class="count-info">
-        Menampilkan <strong>{{ $tagihan->count() }}</strong> dari total data tagihan
+        Menampilkan <strong>{{ $tagihan->firstItem() }} - {{ $tagihan->lastItem() }}</strong> dari <strong>{{ $tagihan->total() }}</strong> total data tagihan
     </div>
     <div class="table-container">
         <table class="table">
@@ -445,7 +445,7 @@
             <tbody>
                 @foreach ($tagihan as $item)
                 <tr>
-                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $tagihan->firstItem() + $loop->index }}</td>
                     <td>
                         @if($item->siswa)
                             <strong>{{ $item->siswa->nama_siswa }}</strong><br>
@@ -489,6 +489,9 @@
                 @endforeach
             </tbody>
         </table>
+    </div>
+    <div style="margin-top: 1rem;">
+        {{ $tagihan->links('pagination::bootstrap-5') }}
     </div>
 @endif
 

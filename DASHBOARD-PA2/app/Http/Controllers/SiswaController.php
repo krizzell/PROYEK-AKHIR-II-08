@@ -35,7 +35,7 @@ class SiswaController extends Controller
             $query->where('jenis_kelamin', $request->jenis_kelamin);
         }
 
-        $siswa = $query->get();
+        $siswa = $query->paginate(15)->withQueryString();
         $kelas = Kelas::all();
 
         return view('siswa.index', compact('siswa', 'kelas'));

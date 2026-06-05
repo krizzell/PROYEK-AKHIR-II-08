@@ -129,6 +129,10 @@
         .dashboard-layout {
             grid-template-columns: 1fr;
         }
+
+        .activities-wrapper {
+            position: static;
+        }
     }
 
     /* Page Header */
@@ -144,8 +148,66 @@
     }
 
     @media (max-width: 768px) {
+        .dashboard-main {
+            padding: 22px;
+            border-radius: 12px;
+        }
+
         .stats-container {
             grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .stat-card-item {
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .stat-card-value {
+            font-size: 30px;
+        }
+
+        .stat-card-icon {
+            width: 48px;
+            height: 48px;
+            font-size: 21px;
+            border-radius: 12px;
+        }
+
+        .activities-wrapper {
+            padding: 20px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .dashboard-layout {
+            gap: 18px;
+        }
+
+        .dashboard-main {
+            padding: 18px;
+        }
+
+        .stat-card-content {
+            gap: 16px;
+        }
+
+        .stat-card-title {
+            font-size: 11.5px;
+        }
+
+        .stat-card-value {
+            font-size: 28px;
+        }
+
+        .activities-header {
+            align-items: flex-start;
+            gap: 12px;
+            flex-direction: column;
+        }
+
+        .activity-meta {
+            flex-wrap: wrap;
         }
     }
 

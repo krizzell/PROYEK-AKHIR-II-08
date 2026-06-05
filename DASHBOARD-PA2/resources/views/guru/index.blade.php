@@ -278,7 +278,7 @@
         @csrf
     </form>
 
-    <div class="bulk-actions">
+    <div class="bulk-actions hidden">
         <div class="bulk-actions-info">
             <span id="selectedGuruCount" style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;"></span>
         </div>

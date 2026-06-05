@@ -256,7 +256,44 @@
             z-index: 50;
         }
 
+        .mobile-menu-toggle {
+            width: 42px;
+            height: 42px;
+            border: 1px solid #E5E7EB;
+            border-radius: 10px;
+            background: #FFFFFF;
+            color: #111827;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.2s ease;
+        }
 
+        .mobile-menu-toggle:hover {
+            border-color: #FF7A00;
+            color: #FF7A00;
+            background: #FFF7F0;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 24, 39, 0.45);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            z-index: 900;
+        }
+
+        body.sidebar-open {
+            overflow: hidden;
+        }
+
+        body.sidebar-open .sidebar-overlay {
+            opacity: 1;
+            visibility: visible;
+        }
 
         .navbar-right {
             display: flex;
@@ -271,7 +308,8 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            cursor: pointer;
+            cursor: default;
+            user-select: none;
         }
 
         .user-avatar {
@@ -382,24 +420,6 @@
             background: #6B7280;
         }
 
-        @media (max-width: 768px) {
-            .sidebar {
-                position: fixed;
-                left: -280px;
-                height: 100vh;
-                z-index: 1000;
-                transition: left 0.3s ease;
-            }
-
-            .main-content {
-                margin-left: 0;
-            }
-
-            .sidebar.active {
-                left: 0;
-            }
-        }
-
         /* ===== TABLES & CARDS ===== */
         .table-container {
             background: #FFFFFF;
@@ -496,13 +516,406 @@
         .bg-primary {
             background-color: #FF7A00 !important;
         }
+
+        /* ===== RESPONSIVE DASHBOARD SHELL ===== */
+        @media (max-width: 1200px) {
+            .page-content {
+                padding: 28px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                left: -285px;
+                width: 280px;
+                z-index: 1000;
+                transition: left 0.25s ease;
+                box-shadow: 8px 0 24px rgba(15, 23, 42, 0.12);
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .top-navbar {
+                justify-content: space-between;
+                padding: 12px 20px;
+                z-index: 800;
+            }
+
+            .mobile-menu-toggle {
+                display: inline-flex;
+            }
+
+            .navbar-right {
+                gap: 12px;
+                margin-left: 0;
+            }
+
+            .page-content {
+                padding: 24px 20px;
+            }
+
+            .page-header {
+                flex-wrap: wrap;
+                align-items: flex-start !important;
+                gap: 1rem;
+            }
+
+            .page-header h1,
+            .page-title {
+                font-size: 1.55rem !important;
+                line-height: 1.25;
+            }
+
+            .dashboard-grid,
+            .form-grid,
+            .info-grid,
+            .detail-grid,
+            .details-grid,
+            .stats-grid,
+            .student-grid,
+            .class-grid,
+            .selection-grid,
+            .summary-grid,
+            .media-grid,
+            .category-grid,
+            .criteria-grid,
+            .teacher-toolbar,
+            .transfer-grid,
+            .request-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .top-navbar {
+                padding: 10px 16px;
+            }
+
+            .user-profile {
+                gap: 8px !important;
+                padding: 6px 0 !important;
+            }
+
+            .user-avatar {
+                width: 36px;
+                height: 36px;
+                font-size: 14px;
+                flex: 0 0 auto;
+            }
+
+            .user-info-text .user-name {
+                max-width: 135px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .user-info-text .user-role {
+                max-width: 135px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .page-content {
+                padding: 20px 14px;
+            }
+
+            .page-header {
+                margin-bottom: 1.35rem !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                justify-content: flex-start !important;
+                flex-wrap: wrap !important;
+                gap: 0.85rem !important;
+                width: 100% !important;
+            }
+
+            .page-header h1,
+            .page-title {
+                font-size: 1.35rem !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                flex-shrink: 1 !important;
+                white-space: normal !important;
+                overflow-wrap: anywhere !important;
+            }
+
+            .page-header > div,
+            .filter-actions,
+            .bulk-actions,
+            .akun-toolbar,
+            .pengumuman-toolbar {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .page-header > div {
+                display: flex !important;
+                gap: 0.75rem !important;
+            }
+
+            .page-header a,
+            .page-header button,
+            .btn-add,
+            .btn-secondary,
+            .btn-filter,
+            .btn-reset,
+            .btn-bulk-delete,
+            .btn-bulk-clear {
+                min-height: 42px;
+                max-width: 100% !important;
+                white-space: normal !important;
+            }
+
+            .page-header .btn-add,
+            .page-header .btn-secondary {
+                width: 100% !important;
+                justify-content: center !important;
+                flex-shrink: 1 !important;
+                text-align: center !important;
+            }
+
+            .akun-toolbar,
+            .pengumuman-toolbar {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 0.85rem !important;
+            }
+
+            .search-wrapper,
+            .student-search-wrapper {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            .bulk-actions {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                padding: 1rem !important;
+            }
+
+            .bulk-actions > div:last-child {
+                width: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+            }
+
+            .btn-bulk-delete,
+            .btn-bulk-clear {
+                width: 100% !important;
+                justify-content: center !important;
+            }
+
+            .filter-section {
+                padding: 1rem !important;
+                border-radius: 10px !important;
+            }
+
+            .filter-row {
+                grid-template-columns: 1fr !important;
+                gap: 0.85rem !important;
+            }
+
+            .dashboard-grid,
+            .form-grid,
+            .info-grid,
+            .detail-grid,
+            .details-grid,
+            .stats-grid,
+            .student-grid,
+            .class-grid,
+            .selection-grid,
+            .summary-grid,
+            .media-grid,
+            .category-grid,
+            .criteria-grid,
+            .teacher-toolbar,
+            .transfer-grid,
+            .request-grid,
+            .cards-grid,
+            .students-grid {
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                gap: 1rem !important;
+            }
+
+            .filter-group,
+            .form-group,
+            .input-group-custom {
+                min-width: 0 !important;
+                width: 100% !important;
+            }
+
+            .filter-group input,
+            .filter-group select,
+            .form-group input,
+            .form-group select,
+            .form-group textarea,
+            .student-search-input {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            .table-container {
+                max-width: 100% !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch;
+                border-radius: 10px !important;
+            }
+
+            .table-container .table {
+                min-width: 760px;
+            }
+
+            .table th,
+            .table td {
+                padding: 0.85rem !important;
+                font-size: 0.86rem !important;
+                white-space: nowrap;
+            }
+
+            .action-buttons {
+                flex-wrap: nowrap !important;
+                width: max-content;
+            }
+
+            .pagination {
+                flex-wrap: wrap;
+                gap: 0.25rem;
+            }
+
+            .card,
+            .form-card,
+            .detail-card,
+            .info-card,
+            .content-card,
+            .confirmation-card,
+            .dashboard-main,
+            .activities-wrapper {
+                max-width: 100% !important;
+            }
+
+            .form-actions,
+            .modal-actions,
+            .action-row,
+            .button-group {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 0.75rem !important;
+            }
+
+            .form-actions > *,
+            .modal-actions > *,
+            .action-row > *,
+            .button-group > * {
+                width: 100% !important;
+                justify-content: center !important;
+            }
+
+            [class*="grid"],
+            [class*="Grid"] {
+                min-width: 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar {
+                width: min(86vw, 280px);
+                left: calc(-1 * min(86vw, 280px));
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .sidebar-header .logo-title {
+                font-size: 18px;
+            }
+
+            .nav-menu .nav-link {
+                font-size: 13.5px;
+                padding: 10px 14px;
+            }
+
+            .page-content {
+                padding: 18px 12px;
+            }
+
+            .page-header h1,
+            .page-title {
+                font-size: 1.2rem !important;
+            }
+
+            .btn-add,
+            .btn-secondary,
+            .btn-filter,
+            .btn-reset {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .table-container .table {
+                min-width: 680px;
+            }
+
+            .table th,
+            .table td {
+                padding: 0.75rem !important;
+                font-size: 0.82rem !important;
+            }
+
+            .btn-action {
+                width: 34px !important;
+                height: 34px !important;
+                flex: 0 0 34px !important;
+            }
+
+            .user-info-text .user-name,
+            .user-info-text .user-role {
+                max-width: 105px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .page-content {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+
+            .page-header h1,
+            .page-title {
+                font-size: 1.08rem !important;
+            }
+
+            .mobile-menu-toggle {
+                width: 38px;
+                height: 38px;
+            }
+
+            .table-container .table {
+                min-width: 640px;
+            }
+        }
     </style>
     @yield('styles')
 </head>
 <body>
     <div class="container-main">
+        <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
         <!-- Sidebar -->
-        <nav class="sidebar">
+        <nav class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo-title">TK Swasta Mutiara <span>Balige</span></div>
             </div>
@@ -584,10 +997,14 @@
         <div class="main-content">
             <!-- Top Navbar -->
             <div class="top-navbar">
+                <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Buka menu navigasi" aria-controls="sidebar" aria-expanded="false">
+                    <i class="bi bi-list"></i>
+                </button>
+
                 <div class="navbar-right" style="margin-left: auto;">
 
                     <div class="user-profile-menu" style="position: relative;">
-                        <div class="user-profile" style="display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 8px;">
+                        <div class="user-profile">
                             <div class="user-avatar">{{ strtoupper(substr(session('username'), 0, 1)) }}</div>
                             <div class="user-info-text">
                                 <div class="user-name">{{ session('username') }}</div>
@@ -619,12 +1036,339 @@
         </div>
     </div>
 
+    <style>
+        /* Final responsive overrides: rendered after page-level styles so every admin page follows the same mobile rules. */
+        @media (max-width: 992px) {
+            .main-content {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .page-content {
+                width: 100%;
+                max-width: 100vw;
+                overflow-x: hidden;
+            }
+
+            .dashboard-grid,
+            .form-grid,
+            .info-grid,
+            .detail-grid,
+            .details-grid,
+            .stats-grid,
+            .student-grid,
+            .class-grid,
+            .selection-grid,
+            .summary-grid,
+            .media-grid,
+            .category-grid,
+            .criteria-grid,
+            .teacher-toolbar,
+            .transfer-grid,
+            .request-grid,
+            .cards-grid,
+            .students-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-content {
+                padding: 18px 12px !important;
+            }
+
+            .page-header {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                justify-content: flex-start !important;
+                flex-wrap: wrap !important;
+                gap: 0.85rem !important;
+                width: 100% !important;
+                margin-bottom: 1.25rem !important;
+            }
+
+            .page-header h1,
+            .page-title {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                flex: 1 1 auto !important;
+                flex-shrink: 1 !important;
+                font-size: 1.2rem !important;
+                line-height: 1.35 !important;
+                white-space: normal !important;
+                overflow-wrap: anywhere !important;
+            }
+
+            .page-header > div {
+                width: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 0.75rem !important;
+            }
+
+            .page-header .btn-add,
+            .page-header .btn-secondary,
+            .btn-add,
+            .btn-secondary {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                min-height: 44px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                flex: 1 1 auto !important;
+                flex-shrink: 1 !important;
+                padding: 0.72rem 1rem !important;
+                text-align: center !important;
+                white-space: normal !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
+            }
+
+            .count-info {
+                width: 100% !important;
+                line-height: 1.6 !important;
+            }
+
+            .akun-toolbar,
+            .pengumuman-toolbar {
+                width: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 0.85rem !important;
+            }
+
+            .search-wrapper,
+            .student-search-wrapper {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+            }
+
+            .search-input,
+            .student-search-input {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            .bulk-actions {
+                width: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 0.75rem !important;
+                padding: 0.9rem !important;
+                overflow: hidden !important;
+            }
+
+            .bulk-actions.hidden {
+                display: none !important;
+            }
+
+            .bulk-actions > div,
+            .bulk-actions > div:last-child {
+                width: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 0.65rem !important;
+            }
+
+            .btn-bulk-delete,
+            .btn-bulk-clear,
+            .btn-filter,
+            .btn-reset {
+                width: 100% !important;
+                max-width: 100% !important;
+                justify-content: center !important;
+                white-space: normal !important;
+            }
+
+            .filter-section,
+            .table-container,
+            .card,
+            .form-card,
+            .detail-card,
+            .info-card,
+            .content-card,
+            .confirmation-card,
+            .dashboard-main,
+            .activities-wrapper {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                border-radius: 10px !important;
+            }
+
+            .filter-section {
+                padding: 1rem !important;
+            }
+
+            .filter-row,
+            .form-row,
+            .dashboard-grid,
+            .form-grid,
+            .info-grid,
+            .detail-grid,
+            .details-grid,
+            .stats-grid,
+            .student-grid,
+            .class-grid,
+            .selection-grid,
+            .summary-grid,
+            .media-grid,
+            .category-grid,
+            .criteria-grid,
+            .teacher-toolbar,
+            .transfer-grid,
+            .request-grid,
+            .cards-grid,
+            .students-grid {
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                gap: 0.9rem !important;
+            }
+
+            .filter-group,
+            .form-group,
+            .input-group-custom {
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+
+            .filter-group input,
+            .filter-group select,
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            .table-container {
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .table-container .table {
+                width: max-content !important;
+                min-width: 680px !important;
+            }
+
+            .table th,
+            .table td {
+                padding: 0.78rem !important;
+                font-size: 0.82rem !important;
+                white-space: nowrap !important;
+            }
+
+            .action-buttons {
+                display: flex !important;
+                flex-wrap: nowrap !important;
+                width: max-content !important;
+            }
+
+            .btn-action {
+                width: 34px !important;
+                height: 34px !important;
+                flex: 0 0 34px !important;
+            }
+
+            .form-actions,
+            .modal-actions,
+            .action-row,
+            .button-group {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 0.75rem !important;
+            }
+
+            .form-actions > *,
+            .modal-actions > *,
+            .action-row > *,
+            .button-group > * {
+                width: 100% !important;
+                justify-content: center !important;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .page-content {
+                padding: 16px 10px !important;
+            }
+
+            .page-header h1,
+            .page-title {
+                font-size: 1.08rem !important;
+            }
+
+            .table-container .table {
+                min-width: 620px !important;
+            }
+        }
+    </style>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
     
     <script>
         // Handle delete confirmation with SweetAlert2
         document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+
+            const closeSidebar = () => {
+                if (!sidebar || !mobileMenuToggle) return;
+                sidebar.classList.remove('active');
+                document.body.classList.remove('sidebar-open');
+                mobileMenuToggle.setAttribute('aria-expanded', 'false');
+            };
+
+            const openSidebar = () => {
+                if (!sidebar || !mobileMenuToggle) return;
+                sidebar.classList.add('active');
+                document.body.classList.add('sidebar-open');
+                mobileMenuToggle.setAttribute('aria-expanded', 'true');
+            };
+
+            if (mobileMenuToggle && sidebar && sidebarOverlay) {
+                mobileMenuToggle.addEventListener('click', function() {
+                    if (sidebar.classList.contains('active')) {
+                        closeSidebar();
+                    } else {
+                        openSidebar();
+                    }
+                });
+
+                sidebarOverlay.addEventListener('click', closeSidebar);
+
+                document.addEventListener('keydown', function(event) {
+                    if (event.key === 'Escape') {
+                        closeSidebar();
+                    }
+                });
+
+                sidebar.querySelectorAll('.nav-link').forEach((link) => {
+                    link.addEventListener('click', function() {
+                        if (window.innerWidth <= 992) {
+                            closeSidebar();
+                        }
+                    });
+                });
+
+                window.addEventListener('resize', function() {
+                    if (window.innerWidth > 992) {
+                        closeSidebar();
+                    }
+                });
+            }
+
             const deleteButtons = document.querySelectorAll('[data-delete-btn]');
             deleteButtons.forEach(button => {
                 button.addEventListener('click', function(e) {

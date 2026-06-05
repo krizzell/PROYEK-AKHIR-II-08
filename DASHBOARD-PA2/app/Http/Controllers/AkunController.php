@@ -15,8 +15,17 @@ class AkunController extends Controller
      */
     private function generateUsername($baseName)
     {
-        // Convert to lowercase and remove spaces
-        $baseUsername = strtolower(str_replace(' ', '', $baseName));
+        // Gunakan nama pertama + nama terakhir agar username tetap pendek dan mudah diingat.
+        $nameWithoutTitle = trim(explode(',', $baseName)[0]);
+        $nameParts = preg_split('/\s+/', $nameWithoutTitle, -1, PREG_SPLIT_NO_EMPTY);
+
+        if (count($nameParts) >= 2) {
+            $baseUsername = $nameParts[0] . end($nameParts);
+        } else {
+            $baseUsername = $nameParts[0] ?? $baseName;
+        }
+
+        $baseUsername = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $baseUsername));
         
         // Check if username already exists
         if (!Akun::where('username', $baseUsername)->exists()) {
@@ -32,9 +41,28 @@ class AkunController extends Controller
         return $baseUsername . str_pad($counter, 2, '0', STR_PAD_LEFT);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $akun = Akun::all();
+        $akun = Akun::with('guru', 'siswa')
+            ->when($request->filled('q'), function ($query) use ($request) {
+                $keyword = $request->q;
+
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('username', 'like', '%' . $keyword . '%')
+                        ->orWhere('role', 'like', '%' . $keyword . '%')
+                        ->orWhereHas('guru', function ($guruQuery) use ($keyword) {
+                            $guruQuery->where('nama_guru', 'like', '%' . $keyword . '%');
+                        })
+                        ->orWhereHas('siswa', function ($siswaQuery) use ($keyword) {
+                            $siswaQuery->where('nama_siswa', 'like', '%' . $keyword . '%')
+                                ->orWhere('nomor_induk_siswa', 'like', '%' . $keyword . '%');
+                        });
+                });
+            })
+            ->orderBy('id_akun', 'desc')
+            ->paginate(15)
+            ->withQueryString();
+
         return view('akun.index', compact('akun'));
     }
 

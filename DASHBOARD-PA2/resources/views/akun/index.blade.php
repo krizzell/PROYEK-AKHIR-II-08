@@ -348,24 +348,28 @@
     <div class="table-container">
         <div class="empty-state">
             <i class="bi bi-inbox"></i>
-            <p>Belum ada akun</p>
+            @if(request('q'))
+                <p>Tidak ada akun yang sesuai dengan pencarian</p>
+            @else
+                <p>Belum ada akun</p>
+            @endif
         </div>
     </div>
 @else
     <div class="akun-toolbar">
         <div class="count-info" style="margin-bottom: 0;">
-            Menampilkan <strong id="visibleAkunCount">{{ $akun->count() }}</strong> dari <strong>{{ $akun->count() }}</strong> akun
+            Menampilkan <strong id="visibleAkunCount">{{ $akun->count() }}</strong> data pada halaman ini dari <strong>{{ $akun->total() }}</strong> akun
         </div>
-        <div class="search-wrapper">
+        <form action="{{ route('akun.index') }}" method="GET" class="search-wrapper">
             <i class="bi bi-search"></i>
-            <input type="search" id="akunSearchInput" class="search-input" placeholder="Cari username, role, guru, atau siswa...">
-        </div>
+            <input type="search" id="akunSearchInput" name="q" value="{{ request('q') }}" class="search-input" placeholder="Cari username, role, guru, atau siswa...">
+        </form>
     </div>
     <form id="bulkDeleteForm" action="{{ route('akun.bulkDestroy') }}" method="POST" style="display: none;">
         @csrf
     </form>
 
-    <div class="bulk-actions">
+    <div class="bulk-actions hidden">
         <div class="bulk-actions-info">
             <span id="selectedAkunCount" style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;"></span>
         </div>
@@ -417,7 +421,7 @@
                             <input type="checkbox" class="akun-checkbox" form="bulkDeleteForm" name="selected_akun[]" value="{{ $item->id_akun }}" aria-label="Pilih akun {{ $item->username }}">
                         </div>
                     </td>
-                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $akun->firstItem() + $loop->index }}</td>
                     <td><strong>{{ $item->username }}</strong></td>
                     <td>
                         <span class="badge {{ $item->role == 'guru' ? 'badge-guru' : 'badge-siswa' }}">
@@ -462,6 +466,9 @@
             <i class="bi bi-search"></i>
             <p>Akun tidak ditemukan</p>
         </div>
+    </div>
+    <div style="margin-top: 1rem;">
+        {{ $akun->links('pagination::bootstrap-5') }}
     </div>
 @endif
 

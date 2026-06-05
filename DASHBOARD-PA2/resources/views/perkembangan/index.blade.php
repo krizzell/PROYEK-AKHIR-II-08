@@ -207,6 +207,113 @@
         color: var(--text-primary);
     }
 
+    .filter-section {
+        background: #FFFFFF;
+        margin-bottom: 1.5rem;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+    }
+
+    .filter-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .filter-group label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        width: 100%;
+        padding: 0.625rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        font-size: 0.95rem;
+        color: var(--text-primary);
+        background: white;
+        transition: all 0.2s ease;
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus {
+        outline: none;
+        border-color: #FF7A00;
+        background-color: white;
+        box-shadow: 0 0 0 2px rgba(255, 122, 0, 0.1);
+    }
+
+    .filter-group select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23111827' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.5rem center;
+        padding-right: 2rem;
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-filter {
+        padding: 0.625rem 1.25rem;
+        background: #FF7A00;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-filter:hover {
+        background: #E65E00;
+        transform: translateY(-1px);
+    }
+
+    .btn-reset {
+        padding: 0.625rem 1.25rem;
+        background: white;
+        color: var(--button-gray);
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .btn-reset:hover {
+        background: var(--hover-bg);
+        border-color: var(--button-gray);
+    }
+
     .bulk-actions {
         display: flex;
         align-items: center;
@@ -306,6 +413,80 @@
     @endif
 </div>
 
+@php
+    $bulan = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    $statusOptions = [
+        'BB' => 'BB - Belum Berkembang',
+        'MB' => 'MB - Mulai Berkembang',
+        'BSH' => 'BSH - Berkembang Sesuai Harapan',
+        'BSB' => 'BSB - Berkembang Sangat Baik',
+    ];
+@endphp
+
+<div class="filter-section">
+    <div class="filter-title">
+        <i class="bi bi-funnel"></i> Filter Data
+    </div>
+    <form action="{{ route('perkembangan.index') }}" method="GET">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label for="nis">NISN</label>
+                <input type="text" id="nis" name="nis" value="{{ request('nis') }}" placeholder="Cari NISN...">
+            </div>
+            <div class="filter-group">
+                <label for="nama">Nama Siswa</label>
+                <input type="text" id="nama" name="nama" value="{{ request('nama') }}" placeholder="Cari nama...">
+            </div>
+            <div class="filter-group">
+                <label for="kelas">Kelas</label>
+                <select id="kelas" name="kelas">
+                    <option value="">-- Semua Kelas --</option>
+                    @foreach ($kelasOptions as $kelas)
+                        <option value="{{ $kelas->id_kelas }}" {{ request('kelas') == $kelas->id_kelas ? 'selected' : '' }}>
+                            {{ $kelas->nama_kelas }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="periode">Periode</label>
+                <select id="periode" name="periode">
+                    <option value="">-- Semua Periode --</option>
+                    @foreach ($periodeOptions as $periodeOption)
+                        @php
+                            $periodeValue = $periodeOption->bulan . '-' . $periodeOption->tahun;
+                            $periodeLabel = ($bulan[$periodeOption->bulan] ?? '-') . ' ' . $periodeOption->tahun;
+                        @endphp
+                        <option value="{{ $periodeValue }}" {{ request('periode') == $periodeValue ? 'selected' : '' }}>
+                            {{ $periodeLabel }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="status">Status Capaian</label>
+                <select id="status" name="status">
+                    <option value="">-- Semua Status --</option>
+                    @foreach ($statusOptions as $statusValue => $statusLabel)
+                        <option value="{{ $statusValue }}" {{ request('status') == $statusValue ? 'selected' : '' }}>
+                            {{ $statusLabel }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="btn-filter">
+                <i class="bi bi-search"></i> Cari
+            </button>
+            <a href="{{ route('perkembangan.index') }}" class="btn-reset">
+                <i class="bi bi-arrow-clockwise"></i> Reset
+            </a>
+        </div>
+    </form>
+</div>
+
 @if ($perkembangan->isEmpty())
     <div class="table-container">
         <div class="empty-state">
@@ -315,7 +496,7 @@
     </div>
 @else
     <div class="count-info">
-        Menampilkan <strong>{{ $perkembangan->count() }}</strong> data perkembangan
+        Menampilkan <strong>{{ $perkembangan->firstItem() }}</strong> - <strong>{{ $perkembangan->lastItem() }}</strong> dari <strong>{{ $perkembangan->total() }}</strong> data perkembangan
     </div>
     
     @if($canDelete)
@@ -323,7 +504,7 @@
             @csrf
         </form>
 
-        <div class="bulk-actions">
+        <div class="bulk-actions hidden">
             <div class="bulk-actions-info">
                 <span id="selectedPerkembanganCount" style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;"></span>
             </div>
@@ -360,7 +541,30 @@
             </thead>
             <tbody>
                 @foreach ($perkembangan as $item)
-                <tr>
+                @php
+                    $kelasName = $item->siswa?->kelas?->nama_kelas ?? '';
+                    $siswaName = $item->siswa?->nama_siswa ?? 'Siswa Hilang';
+                    $nisn = $item->nomor_induk_siswa ?? '';
+                    $guruName = $item->guru?->nama_guru ?? '';
+                    $periode = ($item->bulan ? ($bulan[$item->bulan] ?? '-') : '-') . ' ' . ($item->tahun ?? '-');
+                    $statusValue = $item->status_utama ?? '';
+                    $searchText = implode(' ', [
+                        $siswaName,
+                        $guruName,
+                        $kelasName,
+                        $periode,
+                        $item->kategori,
+                        $statusValue,
+                    ]);
+                @endphp
+                <tr
+                    data-search-text="{{ \Illuminate\Support\Str::lower($searchText) }}"
+                    data-nis="{{ \Illuminate\Support\Str::lower($nisn) }}"
+                    data-nama="{{ \Illuminate\Support\Str::lower($siswaName) }}"
+                    data-kelas="{{ \Illuminate\Support\Str::lower($kelasName) }}"
+                    data-periode="{{ \Illuminate\Support\Str::lower($periode) }}"
+                    data-status="{{ \Illuminate\Support\Str::lower($statusValue) }}"
+                >
                     @if($canDelete)
                         <td>
                             <div class="row-checkbox-wrapper">
@@ -368,7 +572,7 @@
                             </div>
                         </td>
                     @endif
-                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $perkembangan->firstItem() + $loop->index }}</td>
                     <td>
                         @if($item->siswa)
                             <strong>{{ $item->siswa->nama_siswa }}</strong>
@@ -386,11 +590,6 @@
                         @endif
                     </td>
                     <td>
-                        @php
-                            $bulan = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
-                                    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-                            $periode = ($item->bulan ? $bulan[$item->bulan] : '-') . ' ' . ($item->tahun ?? '-');
-                        @endphp
                         {{ $periode }}
                     </td>
                     <td>{{ $item->kategori }}</td>
@@ -436,6 +635,10 @@
             </tbody>
         </table>
     </div>
+
+    <div class="mt-3">
+        {{ $perkembangan->links('pagination::bootstrap-5') }}
+    </div>
 @endif
 
 @endsection
@@ -459,7 +662,7 @@
 
         const syncButtonState = () => {
             const selectedCount = rowCheckboxes.filter((checkbox) => checkbox.checked).length;
-            
+
             if (selectedCount > 0) {
                 bulkActionsContainer.classList.remove('hidden');
             } else {

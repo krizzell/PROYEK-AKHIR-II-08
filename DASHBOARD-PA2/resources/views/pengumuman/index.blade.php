@@ -366,7 +366,7 @@
         @csrf
     </form>
 
-    <div class="bulk-actions">
+    <div class="bulk-actions hidden">
         <div class="bulk-actions-info">
             <span id="selectedPengumumanCount" style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;"></span>
         </div>
@@ -453,7 +453,7 @@
                             <form action="{{ route('pengumuman.destroy', $item->id_pengumuman) }}" method="POST" style="display: inline;">
                                 @csrf
                                 @method('DELETE')
-                                <button type="button" class="btn-action btn-delete" title="Hapus" data-delete-btn data-item-name="pengumuman ini beserta foto">
+                                <button type="button" class="btn-action btn-delete" title="Hapus" data-delete-btn data-item-name="pengumuman ini">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>

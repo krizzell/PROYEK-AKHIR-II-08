@@ -70,7 +70,7 @@ class TagihanController extends Controller
         }
 
         // Execute query
-        $tagihan = $query->orderBy('id_tagihan', 'desc')->get();
+        $tagihan = $query->orderBy('id_tagihan', 'desc')->paginate(15)->withQueryString();
         
         // Get filter options - untuk guru biasa, hanya kelas mereka sendiri
         if ($idGuru && !$isSuperAdmin) {

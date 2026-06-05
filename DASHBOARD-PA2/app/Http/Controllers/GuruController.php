@@ -9,6 +9,20 @@ use Illuminate\Support\Facades\Storage;
 
 class GuruController extends Controller
 {
+    private function isProtectedGuru(Guru $guru): bool
+    {
+        return $guru->jabatan === 'Kepala Sekolah'
+            || $guru->akun()->where('is_super_admin', true)->exists();
+    }
+
+    private function protectedGuruNames($guruCollection): string
+    {
+        return $guruCollection
+            ->filter(fn($guru) => $this->isProtectedGuru($guru))
+            ->pluck('nama_guru')
+            ->implode(', ');
+    }
+
     public function index()
     {
         $guru = Guru::with(['akun', 'kelasAmpuan'])->orderBy('nama_guru')->get();
@@ -111,6 +125,13 @@ class GuruController extends Controller
 
     public function destroy(Guru $guru)
     {
+        if ($this->isProtectedGuru($guru)) {
+            return redirect()->route('guru.index')->with(
+                'error',
+                'Data Kepala Sekolah / Super Admin tidak dapat dihapus karena dipakai untuk akses login dashboard.'
+            );
+        }
+
         if ($guru->foto_guru && Storage::disk('public')->exists($guru->foto_guru)) {
             Storage::disk('public')->delete($guru->foto_guru);
         }
@@ -127,6 +148,14 @@ class GuruController extends Controller
         ]);
 
         $guruToDelete = Guru::whereIn('id_guru', $validated['selected_guru'])->get();
+        $protectedNames = $this->protectedGuruNames($guruToDelete);
+
+        if ($protectedNames) {
+            return redirect()->route('guru.index')->with(
+                'error',
+                'Data berikut tidak dapat dihapus karena dipakai untuk akses Kepala Sekolah / Super Admin: ' . $protectedNames
+            );
+        }
 
         foreach ($guruToDelete as $item) {
             if ($item->foto_guru && Storage::disk('public')->exists($item->foto_guru)) {
