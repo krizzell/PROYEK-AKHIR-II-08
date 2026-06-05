@@ -739,8 +739,8 @@
     .empty-state {
         display: none;
         text-align: center;
-        padding: 2rem;
-        background: var(--neutral-100);
+        padding: 2.75rem 1rem;
+        background: #FFFFFF;
         border-radius: 0.875rem;
         animation: fadeIn 0.3s ease-out;
     }
@@ -750,13 +750,17 @@
     }
 
     .empty-state-icon {
-        font-size: 3rem;
+        color: #D1D5DB;
+        font-size: 3.6rem;
+        line-height: 1;
         margin-bottom: 1rem;
     }
 
     .empty-state-text {
-        color: var(--neutral-600);
-        font-size: 0.95rem;
+        color: #64748B;
+        font-size: 1rem;
+        font-weight: 500;
+        margin: 0;
     }
 
     /* RESPONSIVE */
@@ -1214,7 +1218,7 @@
                     noResults.id = 'no-results';
                     noResults.className = 'empty-state active';
                     noResults.style.gridColumn = '1/-1';
-                    noResults.innerHTML = '<div class="empty-state-icon">🔍</div><p class="empty-state-text">Tidak ada siswa yang cocok dengan pencarian</p>';
+                    noResults.innerHTML = '<i class="bi bi-search empty-state-icon"></i><p class="empty-state-text">Siswa tidak ditemukan</p>';
                     document.getElementById('siswa-list').appendChild(noResults);
                 }
             } else {

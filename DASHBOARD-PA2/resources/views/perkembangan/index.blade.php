@@ -636,7 +636,7 @@
         </table>
     </div>
 
-    <div class="mt-3">
+    <div class="pagination-wrapper">
         {{ $perkembangan->links('pagination::bootstrap-5') }}
     </div>
 @endif

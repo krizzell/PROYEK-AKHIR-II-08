@@ -407,7 +407,7 @@
             </tbody>
         </table>
     </div>
-    <div style="margin-top: 1rem;">
+    <div class="pagination-wrapper">
         {{ $siswa->links('pagination::bootstrap-5') }}
     </div>
 @endif

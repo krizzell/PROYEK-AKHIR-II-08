@@ -490,7 +490,7 @@
             </tbody>
         </table>
     </div>
-    <div style="margin-top: 1rem;">
+    <div class="pagination-wrapper">
         {{ $tagihan->links('pagination::bootstrap-5') }}
     </div>
 @endif

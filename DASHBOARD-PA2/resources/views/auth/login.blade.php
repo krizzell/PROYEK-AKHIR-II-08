@@ -357,7 +357,7 @@ body {
                     </div>
 
                     <button type="submit" class="btn btn-login">
-                        <i class="bi bi-box-arrow-in-right"></i> Masuk
+                        <i class="bi bi-box-arrow-in-right"></i> Login
                     </button>
                 </form>
 

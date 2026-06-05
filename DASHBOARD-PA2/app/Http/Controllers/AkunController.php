@@ -44,10 +44,11 @@ class AkunController extends Controller
     public function index(Request $request)
     {
         $akun = Akun::with('guru', 'siswa')
-            ->when($request->filled('q'), function ($query) use ($request) {
-                $keyword = $request->q;
+            ->when(trim((string) $request->q) !== '', function ($query) use ($request) {
+                $keyword = trim((string) $request->q);
+                $normalizedKeyword = strtolower($keyword);
 
-                $query->where(function ($q) use ($keyword) {
+                $query->where(function ($q) use ($keyword, $normalizedKeyword) {
                     $q->where('username', 'like', '%' . $keyword . '%')
                         ->orWhere('role', 'like', '%' . $keyword . '%')
                         ->orWhereHas('guru', function ($guruQuery) use ($keyword) {
@@ -57,6 +58,14 @@ class AkunController extends Controller
                             $siswaQuery->where('nama_siswa', 'like', '%' . $keyword . '%')
                                 ->orWhere('nomor_induk_siswa', 'like', '%' . $keyword . '%');
                         });
+
+                    if (str_contains($normalizedKeyword, 'super')) {
+                        $q->orWhere('is_super_admin', 1);
+                    }
+
+                    if (str_contains($normalizedKeyword, 'regular') || str_contains($normalizedKeyword, 'biasa')) {
+                        $q->orWhere('is_super_admin', 0);
+                    }
                 });
             })
             ->orderBy('id_akun', 'desc')

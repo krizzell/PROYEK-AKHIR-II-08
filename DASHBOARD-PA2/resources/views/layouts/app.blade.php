@@ -517,6 +517,105 @@
             background-color: #FF7A00 !important;
         }
 
+        /* ===== PREMIUM PAGINATION ===== */
+        nav[aria-label="Pagination Navigation"],
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.35rem;
+            margin: 0;
+            padding: 0.4rem;
+        }
+
+        .pagination-wrapper {
+            margin-top: 1.25rem;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            width: 100%;
+        }
+
+        .pagination-wrapper nav {
+            width: 100%;
+        }
+
+        .pagination-wrapper nav > div {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .pagination-wrapper .small,
+        .pagination-wrapper p {
+            margin: 0;
+            color: #64748B;
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 0.92rem;
+            font-weight: 500;
+        }
+
+        .pagination-wrapper p span,
+        .pagination-wrapper p strong {
+            color: #111827;
+            font-weight: 700;
+        }
+
+        .pagination .page-item {
+            margin: 0;
+        }
+
+        .pagination .page-link {
+            min-width: 38px;
+            height: 38px;
+            padding: 0 0.75rem;
+            border: 1px solid #E5E7EB;
+            border-radius: 10px !important;
+            background: #FFFFFF;
+            color: #6B7280;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            line-height: 1;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+            transition: all 0.2s ease;
+        }
+
+        .pagination .page-link:hover {
+            border-color: rgba(255, 122, 0, 0.35);
+            background: #FFF7F0;
+            color: #FF7A00;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(255, 122, 0, 0.12);
+        }
+
+        .pagination .page-link:focus {
+            border-color: #FF7A00;
+            color: #FF7A00;
+            box-shadow: 0 0 0 4px rgba(255, 122, 0, 0.14);
+        }
+
+        .pagination .page-item.active .page-link {
+            border-color: #FF7A00;
+            background: linear-gradient(135deg, #FF8A1F 0%, #FF6A00 100%);
+            color: #FFFFFF;
+            box-shadow: 0 10px 22px rgba(255, 122, 0, 0.24);
+        }
+
+        .pagination .page-item.disabled .page-link {
+            border-color: #EEF2F7;
+            background: #F8FAFC;
+            color: #CBD5E1;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         /* ===== RESPONSIVE DASHBOARD SHELL ===== */
         @media (max-width: 1200px) {
             .page-content {
@@ -986,7 +1085,7 @@
                     <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
                         @csrf
                         <button type="submit" class="sidebar-footer-btn logout">
-                            <i class="bi bi-box-arrow-right"></i> Logout
+                            <i class="bi bi-box-arrow-left"></i> Logout
                         </button>
                     </form>
                 </div>

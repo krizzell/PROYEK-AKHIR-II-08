@@ -23,6 +23,42 @@ class PerkembanganController extends Controller
         return $guru->kelasAmpuan->pluck('id_kelas')->toArray();
     }
 
+    private function bulanIndonesia(int $bulan): string
+    {
+        $bulanNama = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember',
+        ];
+
+        return $bulanNama[$bulan] ?? (string) $bulan;
+    }
+
+    private function periodeLabel(int $bulan, int $tahun): string
+    {
+        return $this->bulanIndonesia($bulan) . ' ' . $tahun;
+    }
+
+    private function siswaSudahPunyaLaporanBulanan(string $nomorIndukSiswa, int $bulan, int $tahun, ?int $excludeId = null): bool
+    {
+        return Perkembangan::where('nomor_induk_siswa', $nomorIndukSiswa)
+            ->where('bulan', $bulan)
+            ->where('tahun', $tahun)
+            ->when($excludeId, function ($query) use ($excludeId) {
+                $query->where('id_perkembangan', '!=', $excludeId);
+            })
+            ->exists();
+    }
+
     public function index()
     {
         // Super admin bisa melihat SEMUA perkembangan, 
@@ -107,6 +143,9 @@ class PerkembanganController extends Controller
 
     public function create()
     {
+        $currentMonth = Carbon::now()->month;
+        $currentYear = Carbon::now()->year;
+
         // Pastikan user adalah guru dan punya id_guru
         if (!session('id_guru')) {
             return redirect()->route('perkembangan.index')->with('error', 
@@ -126,7 +165,12 @@ class PerkembanganController extends Controller
         // Filter siswa berdasarkan kelas yang diampuh guru
         if (session('is_super_admin')) {
             // Super admin bisa lihat SEMUA siswa
-            $siswa = Siswa::with('kelas')->orderBy('nama_siswa')->get();
+            $siswa = Siswa::with('kelas')
+                ->whereDoesntHave('perkembangan', function ($query) use ($currentMonth, $currentYear) {
+                    $query->where('bulan', $currentMonth)->where('tahun', $currentYear);
+                })
+                ->orderBy('nama_siswa')
+                ->get();
             $filterType = 'semua';
         } else {
             // Guru regular hanya bisa lihat siswa di kelasnya
@@ -141,6 +185,9 @@ class PerkembanganController extends Controller
             
             $siswa = Siswa::whereIn('id_kelas', $kelasGuruArray)
                 ->with('kelas')
+                ->whereDoesntHave('perkembangan', function ($query) use ($currentMonth, $currentYear) {
+                    $query->where('bulan', $currentMonth)->where('tahun', $currentYear);
+                })
                 ->orderBy('nama_siswa')
                 ->get();
             $filterType = 'kelas';
@@ -191,6 +238,19 @@ class PerkembanganController extends Controller
 
         $validated = $request->validate($rules);
 
+        $currentMonth = Carbon::now()->month;
+        $currentYear = Carbon::now()->year;
+
+        if ($this->siswaSudahPunyaLaporanBulanan($validated['nomor_induk_siswa'], $currentMonth, $currentYear)) {
+            $siswa = Siswa::where('nomor_induk_siswa', $validated['nomor_induk_siswa'])->first();
+            $namaSiswa = $siswa?->nama_siswa ?? 'Siswa ini';
+
+            return redirect()
+                ->route('perkembangan.create')
+                ->withInput()
+                ->with('error', "{$namaSiswa} sudah memiliki laporan perkembangan untuk periode {$this->periodeLabel($currentMonth, $currentYear)}. Satu siswa hanya boleh memiliki satu laporan perkembangan dalam satu bulan.");
+        }
+
         // Calculate average from nilai kategori and verify status_utama matches
         $nilaiArray = [];
         foreach ($kategoris as $kategori) {
@@ -211,8 +271,8 @@ class PerkembanganController extends Controller
         $perkembangan = Perkembangan::create([
             'id_guru' => session('id_guru'),
             'nomor_induk_siswa' => $validated['nomor_induk_siswa'],
-            'bulan' => Carbon::now()->month,
-            'tahun' => Carbon::now()->year,
+            'bulan' => $currentMonth,
+            'tahun' => $currentYear,
             'kategori' => implode(',', $kategoris),
             'status_utama' => $statusUtama,
             'deskripsi' => $request->input('deskripsi_tambahan') ?? '',
@@ -396,6 +456,19 @@ class PerkembanganController extends Controller
         }
 
         $validated = $request->validate($rules);
+
+        $reportMonth = (int) $perkembangan->bulan;
+        $reportYear = (int) $perkembangan->tahun;
+
+        if ($this->siswaSudahPunyaLaporanBulanan($validated['nomor_induk_siswa'], $reportMonth, $reportYear, $perkembangan->id_perkembangan)) {
+            $siswa = Siswa::where('nomor_induk_siswa', $validated['nomor_induk_siswa'])->first();
+            $namaSiswa = $siswa?->nama_siswa ?? 'Siswa ini';
+
+            return redirect()
+                ->route('perkembangan.edit', $perkembangan->id_perkembangan)
+                ->withInput()
+                ->with('error', "{$namaSiswa} sudah memiliki laporan perkembangan untuk periode {$this->periodeLabel($reportMonth, $reportYear)}. Satu siswa hanya boleh memiliki satu laporan perkembangan dalam satu bulan.");
+        }
 
         // Update main perkembangan record
         $perkembangan->update([

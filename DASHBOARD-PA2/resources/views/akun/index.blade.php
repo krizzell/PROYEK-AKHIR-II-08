@@ -249,6 +249,55 @@
         font-weight: 400;
     }
 
+    .search-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-search {
+        height: 46px;
+        padding: 0 1.2rem;
+        border: none;
+        border-radius: 0.75rem;
+        background: #FF7A00;
+        color: #FFFFFF;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+    }
+
+    .btn-search:hover {
+        background: #E65E00;
+        transform: translateY(-1px);
+    }
+
+    .btn-search-reset {
+        height: 46px;
+        padding: 0 1.2rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        background: #FFFFFF;
+        color: var(--button-gray);
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .btn-search-reset:hover {
+        background: var(--hover-bg);
+        border-color: var(--button-gray);
+        color: var(--text-primary);
+    }
+
     .bulk-actions {
         display: flex;
         align-items: center;
@@ -330,6 +379,19 @@
         accent-color: #EF4444;
         cursor: pointer;
     }
+
+    @media (max-width: 768px) {
+        .search-actions {
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .btn-search,
+        .btn-search-reset {
+            width: 100%;
+        }
+    }
 </style>
 
 <div class="page-header">
@@ -344,6 +406,26 @@
     </div>
 </div>
 
+<div class="akun-toolbar">
+    <div class="count-info" style="margin-bottom: 0;">
+        Menampilkan <strong id="visibleAkunCount">{{ $akun->count() }}</strong> data pada halaman ini dari <strong>{{ $akun->total() }}</strong> akun
+    </div>
+    <form action="{{ route('akun.index') }}" method="GET" class="search-actions">
+        <div class="search-wrapper">
+            <i class="bi bi-search"></i>
+            <input type="search" id="akunSearchInput" name="q" value="{{ request('q') }}" class="search-input" placeholder="Cari username, role, guru, atau siswa...">
+        </div>
+        <button type="submit" class="btn-search">
+            <i class="bi bi-search"></i> Cari
+        </button>
+        @if(request('q'))
+            <a href="{{ route('akun.index') }}" class="btn-search-reset">
+                <i class="bi bi-arrow-clockwise"></i> Reset
+            </a>
+        @endif
+    </form>
+</div>
+
 @if ($akun->isEmpty())
     <div class="table-container">
         <div class="empty-state">
@@ -356,15 +438,6 @@
         </div>
     </div>
 @else
-    <div class="akun-toolbar">
-        <div class="count-info" style="margin-bottom: 0;">
-            Menampilkan <strong id="visibleAkunCount">{{ $akun->count() }}</strong> data pada halaman ini dari <strong>{{ $akun->total() }}</strong> akun
-        </div>
-        <form action="{{ route('akun.index') }}" method="GET" class="search-wrapper">
-            <i class="bi bi-search"></i>
-            <input type="search" id="akunSearchInput" name="q" value="{{ request('q') }}" class="search-input" placeholder="Cari username, role, guru, atau siswa...">
-        </form>
-    </div>
     <form id="bulkDeleteForm" action="{{ route('akun.bulkDestroy') }}" method="POST" style="display: none;">
         @csrf
     </form>
@@ -462,12 +535,8 @@
                 @endforeach
             </tbody>
         </table>
-        <div class="empty-state" id="searchEmptyState" style="display: none;">
-            <i class="bi bi-search"></i>
-            <p>Akun tidak ditemukan</p>
-        </div>
     </div>
-    <div style="margin-top: 1rem;">
+    <div class="pagination-wrapper">
         {{ $akun->links('pagination::bootstrap-5') }}
     </div>
 @endif
@@ -484,11 +553,6 @@
         const selectedAkunCount = document.getElementById('selectedAkunCount');
         const clearSelectionBtn = document.getElementById('clearSelectionBtn');
         const bulkActionsContainer = document.querySelector('.bulk-actions');
-        const searchInput = document.getElementById('akunSearchInput');
-        const visibleAkunCount = document.getElementById('visibleAkunCount');
-        const searchEmptyState = document.getElementById('searchEmptyState');
-        const tableElement = document.querySelector('.table-container table');
-
         if (!selectAllCheckbox || !bulkDeleteBtn || !bulkDeleteForm || !selectedAkunCount || !clearSelectionBtn || !bulkActionsContainer) {
             return;
         }
@@ -572,30 +636,6 @@
         });
 
         syncButtonState();
-
-        if (searchInput && visibleAkunCount && searchEmptyState && tableElement) {
-            searchInput.addEventListener('input', function () {
-                const keyword = this.value.trim().toLowerCase();
-                let visibleCount = 0;
-
-                rowCheckboxes.forEach((checkbox) => {
-                    const row = checkbox.closest('tr');
-                    const isMatch = row.dataset.searchText.includes(keyword);
-                    row.style.display = isMatch ? '' : 'none';
-
-                    if (!isMatch) {
-                        checkbox.checked = false;
-                    } else {
-                        visibleCount += 1;
-                    }
-                });
-
-                visibleAkunCount.textContent = visibleCount;
-                tableElement.style.display = visibleCount > 0 ? '' : 'none';
-                searchEmptyState.style.display = visibleCount > 0 ? 'none' : 'block';
-                syncButtonState();
-            });
-        }
     });
 </script>
 @endsection
