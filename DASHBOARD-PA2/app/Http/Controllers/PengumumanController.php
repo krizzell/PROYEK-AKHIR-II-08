@@ -3,7 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pengumuman;
+use App\Models\Akun;
+use App\Models\NotificationLog;
+use App\Services\FcmNotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -134,8 +138,63 @@ class PengumumanController extends Controller
         $uploadedMedia = $this->storeUploadedMedia((array) $request->file('media', []));
         $validated['media'] = $uploadedMedia ? json_encode($uploadedMedia) : null;
 
-        Pengumuman::create($validated);
+        $pengumuman = Pengumuman::create($validated);
+        $this->sendNewPengumumanNotification($pengumuman);
+
         return redirect()->route('pengumuman.index')->with('success', 'Pengumuman berhasil ditambahkan');
+    }
+
+    private function sendNewPengumumanNotification(Pengumuman $pengumuman): void
+    {
+        $accounts = Akun::query()
+            ->where('role', 'orangtua')
+            ->whereNotNull('fcm_token')
+            ->where('fcm_token', '!=', '')
+            ->get(['id_akun', 'fcm_token']);
+
+        if ($accounts->isEmpty()) {
+            return;
+        }
+
+        $fcm = app(FcmNotificationService::class);
+        $title = 'Pengumuman Baru';
+        $body = 'Pengumuman baru: ' . Str::limit($pengumuman->judul, 80) . '. Ketuk untuk melihat informasi lengkap.';
+
+        foreach ($accounts as $account) {
+            try {
+                $log = NotificationLog::firstOrCreate([
+                    'type' => 'announcement_new',
+                    'reference_type' => 'pengumuman',
+                    'reference_id' => $pengumuman->id_pengumuman,
+                    'target_type' => 'akun',
+                    'target_id' => $account->id_akun,
+                    'period' => null,
+                ]);
+
+                if ($log->sent_at) {
+                    continue;
+                }
+
+                $sent = $fcm->sendToToken(
+                    $account->fcm_token,
+                    $title,
+                    $body,
+                    'announcement_new',
+                    ['id_pengumuman' => $pengumuman->id_pengumuman]
+                );
+
+                $log->update([
+                    'sent_at' => $sent ? now() : null,
+                    'error_message' => $sent ? null : 'FCM send failed',
+                ]);
+            } catch (\Throwable $e) {
+                Log::warning('Failed to send new pengumuman notification', [
+                    'id_pengumuman' => $pengumuman->id_pengumuman,
+                    'id_akun' => $account->id_akun,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 
     public function show(Pengumuman $pengumuman)

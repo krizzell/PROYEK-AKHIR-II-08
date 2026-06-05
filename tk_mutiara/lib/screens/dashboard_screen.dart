@@ -1277,62 +1277,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const PerkembanganScreen()),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 30,
+                offset: const Offset(0, 10),
+              ),
+              BoxShadow(
+                color: AppTheme.primary.withOpacity(0.04),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  blurRadius: 30,
-                  offset: const Offset(0, 10),
-                ),
-                BoxShadow(
-                  color: AppTheme.primary.withOpacity(0.04),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Statistik pencapaian anak",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.textMedium,
-                          fontWeight: FontWeight.w500,
-                        ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Statistik pencapaian anak",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textMedium,
+                        fontWeight: FontWeight.w500,
                       ),
-                      const SizedBox(height: 24),
-                      Container(
-                        height: 180,
-                        width: double.infinity,
-                        padding: const EdgeInsets.only(right: 16, top: 10),
-                        child: _buildChart(),
-                      ),
-                      const SizedBox(height: 14),
-                      _buildComparisonLegend(),
-                      const SizedBox(height: 10),
-                      _buildStatusLegend(),
-                      const SizedBox(height: 4),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 24),
+                    Container(
+                      height: 180,
+                      width: double.infinity,
+                      padding: const EdgeInsets.only(right: 16, top: 10),
+                      child: _buildChart(),
+                    ),
+                    const SizedBox(height: 14),
+                    _buildComparisonLegend(),
+                    const SizedBox(height: 10),
+                    _buildStatusLegend(),
+                    const SizedBox(height: 4),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ],
@@ -1346,7 +1340,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: _buildLineLegendItem(
             color: AppTheme.primary,
             label: 'Nilai Anak',
-            icon: Icons.circle,
             isActive:
                 _selectedChartSeries == null || _selectedChartSeries == 'anak',
             onTap: () {
@@ -1361,9 +1354,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(width: 10),
         Expanded(
           child: _buildLineLegendItem(
-            color: const Color(0xFFB45353),
+            color: const Color(0xFF2563EB),
             label: 'Rata-rata Kelas',
-            icon: Icons.diamond,
             isActive:
                 _selectedChartSeries == null || _selectedChartSeries == 'kelas',
             onTap: () {
@@ -1382,7 +1374,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildLineLegendItem({
     required Color color,
     required String label,
-    required IconData icon,
     required bool isActive,
     required VoidCallback onTap,
   }) {
@@ -1393,7 +1384,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         borderRadius: BorderRadius.circular(14),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           decoration: BoxDecoration(
             color: isActive ? color.withOpacity(0.08) : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(14),
@@ -1407,21 +1398,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 18,
-                height: 2.5,
-                color: isActive ? color : AppTheme.textLight,
+                width: 24,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: isActive ? color : AppTheme.textLight,
+                  borderRadius: BorderRadius.circular(99),
+                ),
               ),
-              const SizedBox(width: 5),
-              Icon(icon, size: 8, color: isActive ? color : AppTheme.textLight),
-              const SizedBox(width: 7),
+              const SizedBox(width: 8),
               Flexible(
                 child: Text(
                   label,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.montserrat(
                     color: isActive ? AppTheme.textDark : AppTheme.textLight,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
@@ -1440,62 +1432,50 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ('BSB', 'Berkembang Sangat Baik'),
     ];
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEFF2F7)),
-      ),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: items.map((item) {
-          final code = item.$1;
-          final label = item.$2;
-          final color = _getStatusColor(code);
-
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: color.withOpacity(0.16)),
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Keterangan status',
+            style: GoogleFonts.montserrat(
+              color: AppTheme.textLight,
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  code,
-                  style: GoogleFonts.montserrat(
-                    color: color,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  '= $label',
+          ),
+          const SizedBox(height: 8),
+          ...items.map((item) {
+            final code = item.$1;
+            final label = item.$2;
+            final color = _getStatusColor(code);
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 5),
+              child: RichText(
+                text: TextSpan(
                   style: GoogleFonts.montserrat(
                     color: AppTheme.textMedium,
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
+                    height: 1.25,
                   ),
+                  children: [
+                    TextSpan(
+                      text: code,
+                      style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    TextSpan(text: ' = $label'),
+                  ],
                 ),
-              ],
-            ),
-          );
-        }).toList(),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
@@ -1503,9 +1483,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Color _getStatusColor(String status) {
     switch (status) {
       case "BSB":
-        return const Color(0xFF3B82F6);
-      case "BSH":
         return const Color(0xFF10B981);
+      case "BSH":
+        return const Color(0xFF3B82F6);
       case "MB":
         return const Color(0xFFF59E0B);
       case "BB":
@@ -1604,9 +1584,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           drawVerticalLine: false,
           horizontalInterval: 1,
           getDrawingHorizontalLine: (value) => FlLine(
-            color: Colors.black.withOpacity(0.04),
-            strokeWidth: 1,
-            dashArray: [5, 5],
+            color: const Color(0xFFE2E8F0),
+            strokeWidth: 1.2,
+            dashArray: [6, 4],
           ),
         ),
         borderData: FlBorderData(show: false),
@@ -1776,7 +1756,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               spots: classAverageSpots,
               isCurved: true,
               curveSmoothness: 0.35,
-              color: const Color(0xFFB45353),
+              color: const Color(0xFF2563EB),
               barWidth: 2.8,
               isStrokeCapRound: true,
               dotData: FlDotData(
@@ -1784,7 +1764,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 getDotPainter: (spot, percent, bar, index) =>
                     FlDotCirclePainter(
                       radius: 3.5,
-                      color: const Color(0xFFB45353),
+                      color: const Color(0xFF2563EB),
                       strokeWidth: 2,
                       strokeColor: Colors.white,
                     ),

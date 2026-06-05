@@ -9,7 +9,7 @@ class Akun extends Model
 {
     protected $table = 'akun';
     protected $primaryKey = 'id_akun';
-    protected $fillable = ['id_guru', 'nomor_induk_siswa', 'username', 'password', 'role', 'is_super_admin'];
+    protected $fillable = ['id_guru', 'nomor_induk_siswa', 'username', 'password', 'role', 'is_super_admin', 'fcm_token'];
     protected $hidden = ['password'];
 
     public function guru(): BelongsTo

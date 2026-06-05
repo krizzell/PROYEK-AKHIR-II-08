@@ -3,21 +3,33 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../screens/notification_screen.dart';
+import '../screens/pengumuman_screen.dart';
 import 'api_services.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
-AndroidNotificationDetails _paymentAndroidDetails(String? title, String? body) {
-  final safeTitle = title ?? 'Pembayaran SPP Berhasil';
+AndroidNotificationDetails _androidDetailsForType(
+  String type,
+  String? title,
+  String? body,
+) {
+  final isAnnouncement = type.contains('announcement');
+  final safeTitle =
+      title ??
+      (isAnnouncement ? 'Pengumuman Baru' : 'Pengingat Pembayaran SPP');
   final safeBody =
       body ??
-      'Pembayaran SPP Anda berhasil dikonfirmasi. Ketuk untuk melihat detail pembayaran.';
+      (isAnnouncement
+          ? 'Ada pengumuman baru dari TK Mutiara. Ketuk untuk melihat detail.'
+          : 'Jangan lupa membayar SPP sebelum tanggal 10 bulan ini.');
 
   return AndroidNotificationDetails(
-    'payment_channel',
-    'Payment Notifications',
-    channelDescription: 'Notifikasi status pembayaran',
+    isAnnouncement ? 'announcement_channel' : 'payment_channel',
+    isAnnouncement ? 'Pengumuman Sekolah' : 'Payment Notifications',
+    channelDescription: isAnnouncement
+        ? 'Notifikasi pengumuman terbaru dari sekolah'
+        : 'Notifikasi status dan pengingat pembayaran',
     importance: Importance.high,
     priority: Priority.high,
     icon: '@mipmap/ic_launcher',
@@ -28,7 +40,7 @@ AndroidNotificationDetails _paymentAndroidDetails(String? title, String? body) {
     styleInformation: BigTextStyleInformation(
       safeBody,
       contentTitle: safeTitle,
-      summaryText: 'TK Mutiara',
+      summaryText: isAnnouncement ? 'Pengumuman TK Mutiara' : 'TK Mutiara',
     ),
   );
 }
@@ -40,15 +52,16 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
   final RemoteNotification? notif = message.notification;
   if (notif == null) return;
+  final type = (message.data['type'] ?? '').toString().toLowerCase();
 
   await flutterLocalNotificationsPlugin.show(
     notif.hashCode,
     notif.title,
     notif.body,
     NotificationDetails(
-      android: _paymentAndroidDetails(notif.title, notif.body),
+      android: _androidDetailsForType(type, notif.title, notif.body),
     ),
-    payload: message.data.toString(),
+    payload: type,
   );
   print('[BACKGROUND] Local notification displayed');
 }
@@ -60,7 +73,8 @@ class NotificationService {
 
   static const String _channelId = 'payment_channel';
   static const String _channelName = 'Payment Notifications';
-  static const String _channelDesc = 'Notifikasi status pembayaran';
+  static const String _channelDesc =
+      'Notifikasi status dan pengingat pembayaran';
 
   static Future<void> init() async {
     print('\n=== INITIALIZING NOTIFICATION SERVICE ===');
@@ -83,8 +97,7 @@ class NotificationService {
       initSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         print('Local notification tapped: ${response.payload}');
-        ApiService.notifyPaymentUpdated();
-        _openNotificationScreen();
+        _openByType(response.payload ?? '');
       },
     );
 
@@ -99,6 +112,18 @@ class NotificationService {
         _channelId,
         _channelName,
         description: _channelDesc,
+        importance: Importance.high,
+        enableVibration: true,
+        enableLights: true,
+        playSound: true,
+      ),
+    );
+
+    await androidImpl?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'announcement_channel',
+        'Pengumuman Sekolah',
+        description: 'Notifikasi pengumuman terbaru dari sekolah',
         importance: Importance.high,
         enableVibration: true,
         enableLights: true,
@@ -126,32 +151,29 @@ class NotificationService {
       final Map<String, dynamic> data = message.data;
 
       if (notif == null) return;
+      final type = (data['type'] ?? '').toString().toLowerCase();
 
       flutterLocalNotificationsPlugin.show(
         notif.hashCode,
         notif.title,
         notif.body,
         NotificationDetails(
-          android: _paymentAndroidDetails(notif.title, notif.body),
+          android: _androidDetailsForType(type, notif.title, notif.body),
         ),
-        payload: data.toString(),
+        payload: type,
       );
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       print('Notification opened from background: ${message.data}');
-      if (_isPaymentNotification(message)) {
-        ApiService.notifyPaymentUpdated();
-        _openNotificationScreen();
-      }
+      _openByType((message.data['type'] ?? '').toString());
     });
 
     final RemoteMessage? initialMessage = await _messaging.getInitialMessage();
-    if (initialMessage != null && _isPaymentNotification(initialMessage)) {
+    if (initialMessage != null) {
       Future.delayed(const Duration(milliseconds: 500), () {
         print('Notification opened from terminated state');
-        ApiService.notifyPaymentUpdated();
-        _openNotificationScreen();
+        _openByType((initialMessage.data['type'] ?? '').toString());
       });
     }
 
@@ -174,11 +196,21 @@ class NotificationService {
     }
   }
 
-  static bool _isPaymentNotification(RemoteMessage message) {
-    final type = (message.data['type'] ?? '').toString().toLowerCase();
-    return type == 'payment_success' ||
-        type == 'payment' ||
-        type.contains('payment');
+  static bool _isAnnouncementType(String type) {
+    final normalized = type.toLowerCase();
+    return normalized == 'announcement' || normalized.contains('announcement');
+  }
+
+  static void _openByType(String type) {
+    if (_isAnnouncementType(type)) {
+      _openPengumumanScreen();
+      return;
+    }
+
+    if (type.toLowerCase().contains('payment')) {
+      ApiService.notifyPaymentUpdated();
+      _openNotificationScreen();
+    }
   }
 
   static void _openNotificationScreen() {
@@ -191,5 +223,15 @@ class NotificationService {
     navigator.push(
       MaterialPageRoute(builder: (_) => const NotificationScreen()),
     );
+  }
+
+  static void _openPengumumanScreen() {
+    final navigator = navigatorKey.currentState;
+    if (navigator == null) {
+      print('Navigator belum siap, halaman pengumuman belum bisa dibuka');
+      return;
+    }
+
+    navigator.push(MaterialPageRoute(builder: (_) => const PengumumanScreen()));
   }
 }

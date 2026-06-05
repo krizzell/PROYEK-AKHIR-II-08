@@ -41,4 +41,10 @@ return [
         'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
     ],
 
+    'firebase' => [
+        'enabled' => env('FIREBASE_MESSAGING_ENABLED', true),
+        'project_id' => env('FIREBASE_PROJECT_ID', 'proyek-akhir-ii-12e39'),
+        'service_account_path' => env('FIREBASE_SERVICE_ACCOUNT_PATH'),
+    ],
+
 ];
