@@ -40,6 +40,7 @@ class FcmNotificationService
                 ],
                 'android' => [
                     'priority' => 'high',
+                    'collapse_key' => $type,
                     'notification' => [
                         'sound' => 'default',
                         'click_action' => 'FLUTTER_NOTIFICATION_CLICK',

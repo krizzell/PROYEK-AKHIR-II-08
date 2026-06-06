@@ -46,7 +46,9 @@ class SendSppPaymentReminders extends Command
         foreach ($tagihanList as $tagihan) {
             $akunList = ($tagihan->siswa?->akun ?? collect())
                 ->where('role', 'orangtua')
-                ->filter(fn ($akun) => filled($akun->fcm_token));
+                ->filter(fn ($akun) => filled($akun->fcm_token))
+                ->unique(fn ($akun) => trim((string) $akun->fcm_token))
+                ->values();
 
             if ($akunList->isEmpty()) {
                 $skippedCount++;

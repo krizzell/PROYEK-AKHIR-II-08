@@ -150,7 +150,9 @@ class PengumumanController extends Controller
             ->where('role', 'orangtua')
             ->whereNotNull('fcm_token')
             ->where('fcm_token', '!=', '')
-            ->get(['id_akun', 'fcm_token']);
+            ->get(['id_akun', 'fcm_token'])
+            ->unique(fn ($account) => trim((string) $account->fcm_token))
+            ->values();
 
         if ($accounts->isEmpty()) {
             return;
