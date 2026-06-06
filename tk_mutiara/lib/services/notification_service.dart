@@ -49,21 +49,9 @@ AndroidNotificationDetails _androidDetailsForType(
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   print('[BACKGROUND] Message received: ${message.messageId}');
-
-  final RemoteNotification? notif = message.notification;
-  if (notif == null) return;
-  final type = (message.data['type'] ?? '').toString().toLowerCase();
-
-  await flutterLocalNotificationsPlugin.show(
-    notif.hashCode,
-    notif.title,
-    notif.body,
-    NotificationDetails(
-      android: _androidDetailsForType(type, notif.title, notif.body),
-    ),
-    payload: type,
-  );
-  print('[BACKGROUND] Local notification displayed');
+  // Saat app di background/terminated, Android sudah menampilkan payload
+  // notification dari FCM. Jangan tampilkan local notification lagi agar
+  // tidak muncul dobel.
 }
 
 class NotificationService {
