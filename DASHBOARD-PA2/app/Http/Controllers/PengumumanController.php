@@ -87,6 +87,26 @@ class PengumumanController extends Controller
         ];
     }
 
+    private function contentValidationRules(): array
+    {
+        return [
+            'judul' => 'required|string|min:10|max:150',
+            'deskripsi' => 'required|string|min:30|max:1500',
+        ];
+    }
+
+    private function contentValidationMessages(): array
+    {
+        return [
+            'judul.required' => 'Judul pengumuman wajib diisi.',
+            'judul.min' => 'Judul pengumuman minimal 10 karakter.',
+            'judul.max' => 'Judul pengumuman maksimal 150 karakter.',
+            'deskripsi.required' => 'Deskripsi pengumuman wajib diisi.',
+            'deskripsi.min' => 'Deskripsi pengumuman minimal 30 karakter.',
+            'deskripsi.max' => 'Deskripsi pengumuman maksimal 1500 karakter.',
+        ];
+    }
+
     public function index()
     {
         $pengumuman = Pengumuman::with('guru')->latest('waktu_unggah')->get();
@@ -118,12 +138,10 @@ class PengumumanController extends Controller
             return redirect()->route('pengumuman.index')->with('error', 'Anda tidak berwenang membuat pengumuman. Hanya guru dan admin yang dapat membuat pengumuman.');
         }
 
-        $validated = $request->validate([
-            'judul' => 'required|string|max:150',
+        $validated = $request->validate($this->contentValidationRules() + [
             'waktu_unggah' => 'required|date_format:Y-m-d\TH:i',
             'durasi_tampil' => 'required|in:' . implode(',', array_keys($this->displayDurationOptions())),
-            'deskripsi' => 'required|string',
-        ] + $this->buildMediaValidationRules(), $this->mediaValidationMessages());
+        ] + $this->buildMediaValidationRules(), $this->contentValidationMessages() + $this->mediaValidationMessages());
 
         // Auto-set guru dari session
         $validated['id_guru'] = session('id_guru');
@@ -222,14 +240,12 @@ class PengumumanController extends Controller
             return redirect()->route('pengumuman.index')->with('error', 'Anda tidak berwenang mengedit pengumuman ini.');
         }
 
-        $validated = $request->validate([
-            'judul' => 'required|string|max:150',
+        $validated = $request->validate($this->contentValidationRules() + [
             'waktu_unggah' => 'required|date_format:Y-m-d\TH:i',
             'durasi_tampil' => 'required|in:' . implode(',', array_keys($this->displayDurationOptions())),
-            'deskripsi' => 'required|string',
             'existing_media' => 'nullable|array',
             'existing_media.*' => 'nullable|string',
-        ] + $this->buildMediaValidationRules(), $this->mediaValidationMessages());
+        ] + $this->buildMediaValidationRules(), $this->contentValidationMessages() + $this->mediaValidationMessages());
 
         // Keep id_guru jika user bukan SuperAdmin
         if (!$isSuperAdmin) {

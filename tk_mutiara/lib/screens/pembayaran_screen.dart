@@ -254,7 +254,22 @@ class _PembayaranScreenState extends State<PembayaranScreen>
         }
       }
 
-      await _pollStatusInBackground();
+      final isPaid = await _pollStatusInBackground();
+      if (!mounted) return;
+      if (!isPaid) {
+        setState(() {
+          _paymentStateLabel = 'Menunggu Pembayaran';
+          _isProcessing = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Pembayaran belum terkonfirmasi. Tekan cek status beberapa saat lagi.',
+            ),
+          ),
+        );
+        return;
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -270,12 +285,12 @@ class _PembayaranScreenState extends State<PembayaranScreen>
     });
   }
 
-  Future<void> _pollStatusInBackground() async {
-    // Cek singkat setelah halaman pembayaran selesai, lalu bebaskan UI.
-    for (int i = 0; i < 3; i++) {
+  Future<bool> _pollStatusInBackground() async {
+    // Cek beberapa kali karena webhook/status Midtrans kadang butuh jeda.
+    for (int i = 0; i < 8; i++) {
       await Future.delayed(const Duration(seconds: 2));
-      if (!mounted) return;
-      if (_lastTagihanId == '-' || _lastTagihanId.isEmpty) return;
+      if (!mounted) return false;
+      if (_lastTagihanId == '-' || _lastTagihanId.isEmpty) return false;
 
       final result = await ApiService.cekStatusPembayaran(_lastTagihanId);
       if (result['success'] == true) {
@@ -291,11 +306,13 @@ class _PembayaranScreenState extends State<PembayaranScreen>
           _doneController.forward();
           HapticFeedback.heavyImpact();
           ApiService.notifyPaymentUpdated();
-          _loadTagihan();
-          return;
+          await _loadTagihan();
+          return true;
         }
       }
     }
+
+    return false;
   }
 
   Future<void> _cekStatusPembayaran() async {

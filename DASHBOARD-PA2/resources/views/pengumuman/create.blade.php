@@ -159,6 +159,22 @@
         display: block;
     }
 
+    .field-rule-message {
+        display: none;
+        margin-top: 0.5rem;
+        color: var(--danger-color);
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .field-counter {
+        display: block;
+        margin-top: 0.25rem;
+        color: var(--neutral-600);
+        font-size: 0.78rem;
+        font-weight: 500;
+    }
+
     .invalid-feedback {
         display: block;
         color: var(--danger-color);
@@ -593,7 +609,10 @@
                         <div class="form-group">
                             <label for="judul" class="form-label">Judul Pengumuman <span class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('judul') is-invalid @enderror" 
-                                   id="judul" name="judul" value="{{ old('judul') }}" placeholder="Masukkan judul pengumuman yang menarik" required>
+                                   id="judul" name="judul" value="{{ old('judul') }}" placeholder="Masukkan judul pengumuman yang menarik" minlength="10" maxlength="150" required>
+                            <span class="form-text">Minimal 10 karakter, maksimal 150 karakter.</span>
+                            <span class="field-rule-message" id="judul-rule-message"></span>
+                            <span class="field-counter" id="judul-counter">0/150 karakter</span>
                             @error('judul')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -602,7 +621,10 @@
                         <div class="form-group">
                             <label for="deskripsi" class="form-label">Deskripsi / Isi Pengumuman <span class="text-danger">*</span></label>
                             <textarea class="form-control @error('deskripsi') is-invalid @enderror" 
-                                      id="deskripsi" name="deskripsi" placeholder="Tuliskan isi pengumuman dengan detail..." required>{{ old('deskripsi') }}</textarea>
+                                      id="deskripsi" name="deskripsi" placeholder="Tuliskan isi pengumuman dengan detail..." minlength="30" maxlength="1500" required>{{ old('deskripsi') }}</textarea>
+                            <span class="form-text">Minimal 30 karakter, maksimal 1500 karakter.</span>
+                            <span class="field-rule-message" id="deskripsi-rule-message"></span>
+                            <span class="field-counter" id="deskripsi-counter">0/1500 karakter</span>
                             @error('deskripsi')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -673,7 +695,7 @@
 
                             <div id="media-preview" class="selected-media-grid" style="display: none;"></div>
 
-                            <div style="margin-top: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                            <div id="clear-media-wrap" style="margin-top: 1rem; display: none; gap: 0.75rem; flex-wrap: wrap;">
                                 <button type="button" class="btn-premium btn-small" style="background: #EF4444; color: white;" id="clear-media-btn">
                                     <i class="bi bi-trash"></i> Hapus Semua Pilihan
                                 </button>
@@ -704,13 +726,76 @@ window.addEventListener('DOMContentLoaded', function() {
     const dropzone = document.getElementById('media-dropzone');
     const chooseButton = document.getElementById('choose-media-btn');
     const clearButton = document.getElementById('clear-media-btn');
+    const clearButtonWrap = document.getElementById('clear-media-wrap');
     const previewContainer = document.getElementById('media-preview');
     const emptyState = document.getElementById('media-empty');
     const errorWrap = document.getElementById('media-error-wrap');
     const submitButton = document.getElementById('submit-btn');
     const originalButtonHtml = submitButton.innerHTML;
+    const judulInput = document.getElementById('judul');
+    const deskripsiInput = document.getElementById('deskripsi');
 
     let selectedFiles = [];
+
+    function setupFieldValidation(input, messageElementId, counterElementId, min, max, label) {
+        const messageElement = document.getElementById(messageElementId);
+        const counterElement = document.getElementById(counterElementId);
+
+        function validate(showEmptyMessage = false) {
+            const length = input.value.length;
+            counterElement.textContent = length + '/' + max + ' karakter';
+
+            if (length === 0) {
+                input.setCustomValidity('Harap isi bidang ini.');
+                messageElement.style.display = 'none';
+                input.classList.remove('is-invalid');
+                return false;
+            }
+
+            if (length < min) {
+                input.setCustomValidity(label + ' minimal ' + min + ' karakter.');
+                messageElement.textContent = label + ' minimal ' + min + ' karakter. Saat ini baru ' + length + ' karakter.';
+                messageElement.style.display = 'block';
+                input.classList.add('is-invalid');
+                return false;
+            }
+
+            if (length > max) {
+                input.setCustomValidity(label + ' maksimal ' + max + ' karakter.');
+                messageElement.textContent = label + ' maksimal ' + max + ' karakter.';
+                messageElement.style.display = 'block';
+                input.classList.add('is-invalid');
+                return false;
+            }
+
+            messageElement.style.display = 'none';
+            input.classList.remove('is-invalid');
+            input.setCustomValidity('');
+            return true;
+        }
+
+        input.addEventListener('input', validate);
+        input.addEventListener('blur', validate);
+        validate();
+        return validate;
+    }
+
+    function reportContentValidation() {
+        const isJudulValid = validateJudul(true);
+        const isDeskripsiValid = validateDeskripsi(true);
+
+        if (isJudulValid && isDeskripsiValid) {
+            return true;
+        }
+
+        const target = isJudulValid ? deskripsiInput : judulInput;
+        target.focus();
+        target.reportValidity();
+        return false;
+    }
+
+    const validateJudul = setupFieldValidation(judulInput, 'judul-rule-message', 'judul-counter', 10, 150, 'Judul pengumuman');
+    const validateDeskripsi = setupFieldValidation(deskripsiInput, 'deskripsi-rule-message', 'deskripsi-counter', 30, 1500, 'Deskripsi pengumuman');
 
     function fileKey(file) {
         return [file.name, file.size, file.lastModified].join('__');
@@ -758,12 +843,14 @@ window.addEventListener('DOMContentLoaded', function() {
             previewContainer.style.display = 'none';
             emptyState.style.display = 'block';
             clearButton.disabled = true;
+            clearButtonWrap.style.display = 'none';
             return;
         }
 
         emptyState.style.display = 'none';
         previewContainer.style.display = 'grid';
         clearButton.disabled = false;
+        clearButtonWrap.style.display = 'flex';
 
         selectedFiles.forEach(function(file, index) {
             const reader = new window.FileReader();
@@ -855,7 +942,18 @@ window.addEventListener('DOMContentLoaded', function() {
         renderPreview();
     });
 
-    form.addEventListener('submit', function() {
+    submitButton.addEventListener('click', function(event) {
+        if (!reportContentValidation()) {
+            event.preventDefault();
+        }
+    });
+
+    form.addEventListener('submit', function(event) {
+        if (!reportContentValidation()) {
+            event.preventDefault();
+            return;
+        }
+
         submitButton.disabled = true;
         submitButton.classList.add('submit-loading');
         submitButton.innerHTML = '<span class="submit-spinner" aria-hidden="true"></span><span>Menyimpan...</span>';

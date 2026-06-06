@@ -52,7 +52,6 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     return host == 'example.com' ||
         host.endsWith('.example.com') ||
         lowerUrl.contains('finish') ||
-        lowerUrl.contains('success') ||
         lowerUrl.contains('status_code=200') ||
         lowerUrl.contains('transaction_status=settlement') ||
         lowerUrl.contains('transaction_status=capture');
