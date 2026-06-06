@@ -26,16 +26,120 @@ class _PembayaranScreenState extends State<PembayaranScreen>
   String _lastRedirectUrl = '';
   String _paymentStateLabel = 'Belum Dibayar';
   List<PembayaranModel> _allTagihan = [];
+  PembayaranModel? _selectedTagihan;
 
   late AnimationController _doneController;
   late Animation<double> _doneScale;
 
   PembayaranModel? get _activeTagihan {
     if (widget.tagihan != null) return widget.tagihan;
-    for (final t in _allTagihan) {
-      if (t.isBelum) return t;
+    if (_selectedTagihan != null) {
+      final selectedId = _selectedTagihan!.idTagihan;
+      for (final t in _allTagihan) {
+        if (t.idTagihan == selectedId) return t;
+      }
     }
-    return _allTagihan.isNotEmpty ? _allTagihan.first : null;
+    final unpaid = _sortedTagihan(_allTagihan.where((t) => t.isBelum));
+    if (unpaid.isNotEmpty) return unpaid.first;
+    final all = _sortedTagihan(_allTagihan, newestFirst: true);
+    return all.isNotEmpty ? all.first : null;
+  }
+
+  List<PembayaranModel> get _unpaidTagihan {
+    return _sortedTagihan(_allTagihan.where((t) => t.isBelum));
+  }
+
+  List<PembayaranModel> _sortedTagihan(
+    Iterable<PembayaranModel> source, {
+    bool newestFirst = false,
+  }) {
+    final list = source.toList();
+    list.sort((a, b) {
+      final aKey = _periodeSortKey(a);
+      final bKey = _periodeSortKey(b);
+      if (aKey != bKey) {
+        return newestFirst ? bKey.compareTo(aKey) : aKey.compareTo(bKey);
+      }
+      return newestFirst
+          ? b.createdAt.compareTo(a.createdAt)
+          : a.createdAt.compareTo(b.createdAt);
+    });
+    return list;
+  }
+
+  int _periodeSortKey(PembayaranModel tagihan) {
+    final text = tagihan.periodeBersih.toLowerCase();
+    final monthMap = {
+      'januari': 1,
+      'jan': 1,
+      'februari': 2,
+      'feb': 2,
+      'maret': 3,
+      'mar': 3,
+      'april': 4,
+      'apr': 4,
+      'mei': 5,
+      'may': 5,
+      'juni': 6,
+      'jun': 6,
+      'juli': 7,
+      'jul': 7,
+      'agustus': 8,
+      'agu': 8,
+      'aug': 8,
+      'september': 9,
+      'sep': 9,
+      'oktober': 10,
+      'okt': 10,
+      'oct': 10,
+      'november': 11,
+      'nov': 11,
+      'desember': 12,
+      'des': 12,
+      'dec': 12,
+    };
+
+    var month = 0;
+    for (final entry in monthMap.entries) {
+      if (text.contains(entry.key)) {
+        month = entry.value;
+        break;
+      }
+    }
+
+    final yearMatch = RegExp(r'(20\d{2})').firstMatch(text);
+    final year = int.tryParse(yearMatch?.group(1) ?? '') ?? 0;
+
+    if (year > 0 && month > 0) return year * 100 + month;
+
+    final created = DateTime.tryParse(tagihan.createdAt);
+    if (created != null) return created.year * 100 + created.month;
+
+    return 0;
+  }
+
+  void _syncSelectedTagihan(List<PembayaranModel> data) {
+    if (widget.tagihan != null) return;
+
+    final unpaid = _sortedTagihan(data.where((t) => t.isBelum));
+    if (unpaid.isEmpty) {
+      _selectedTagihan = null;
+      return;
+    }
+
+    final selectedId = _selectedTagihan?.idTagihan;
+    final stillAvailable = unpaid.any((t) => t.idTagihan == selectedId);
+    if (!stillAvailable) {
+      _selectedTagihan = unpaid.first;
+    }
+  }
+
+  String _monthBadge(PembayaranModel tagihan) {
+    final bulan = tagihan.bulan.trim();
+    if (bulan.isEmpty) return 'SPP';
+    return bulan.length <= 3
+        ? bulan.toUpperCase()
+        : bulan.substring(0, 3).toUpperCase();
   }
 
   @override
@@ -72,6 +176,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
       if (!mounted) return;
       setState(() {
         _allTagihan = data;
+        _syncSelectedTagihan(data);
         _isLoading = false;
       });
     } catch (e) {
@@ -121,23 +226,32 @@ class _PembayaranScreenState extends State<PembayaranScreen>
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Transaksi dibuat, silahkan lanjutkan pembayaran.'),
-        ),
-      );
-
       setState(() {
         _paymentStateLabel = 'Menunggu Pembayaran';
       });
 
       if (_lastRedirectUrl.isNotEmpty) {
-        await Navigator.push(
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        final webViewResult = await Navigator.push<String?>(
           context,
           MaterialPageRoute(
             builder: (_) => PaymentWebViewScreen(initialUrl: _lastRedirectUrl),
           ),
         );
+
+        if (!mounted) return;
+
+        final didFinishPaymentPage = webViewResult != null;
+        if (!didFinishPaymentPage) {
+          setState(() {
+            _isProcessing = false;
+            _paymentStateLabel = 'Belum Dibayar';
+            _lastTagihanId = '-';
+            _lastOrderId = '-';
+            _lastRedirectUrl = '';
+          });
+          return;
+        }
       }
 
       await _pollStatusInBackground();
@@ -157,9 +271,9 @@ class _PembayaranScreenState extends State<PembayaranScreen>
   }
 
   Future<void> _pollStatusInBackground() async {
-    // Poll for a short period to capture immediate settlement in sandbox.
-    for (int i = 0; i < 20; i++) {
-      await Future.delayed(const Duration(seconds: 3));
+    // Cek singkat setelah halaman pembayaran selesai, lalu bebaskan UI.
+    for (int i = 0; i < 3; i++) {
+      await Future.delayed(const Duration(seconds: 2));
       if (!mounted) return;
       if (_lastTagihanId == '-' || _lastTagihanId.isEmpty) return;
 
@@ -307,6 +421,10 @@ class _PembayaranScreenState extends State<PembayaranScreen>
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
+                  if (widget.tagihan == null && _unpaidTagihan.isNotEmpty) ...[
+                    _buildTagihanSelector(),
+                    const SizedBox(height: 16),
+                  ],
                   _buildTagihanCard(tagihan),
                   const SizedBox(height: 24),
                   if (tagihan.isLunas)
@@ -357,6 +475,171 @@ class _PembayaranScreenState extends State<PembayaranScreen>
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTagihanSelector() {
+    final unpaid = _unpaidTagihan;
+    final selectedId = _activeTagihan?.idTagihan;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: AppTheme.cardShadowList,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.calendar_month_rounded,
+                  color: AppTheme.primary,
+                  size: 19,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pilih Bulan Tagihan',
+                      style: TextStyle(
+                        color: AppTheme.textDark,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Pilih SPP bulan mana yang ingin dibayar.',
+                      style: TextStyle(
+                        color: AppTheme.textMedium,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Column(
+            children: unpaid.map((tagihan) {
+              final isSelected = tagihan.idTagihan == selectedId;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: _isProcessing
+                      ? null
+                      : () => setState(() {
+                          _selectedTagihan = tagihan;
+                          _lastTagihanId = '-';
+                          _lastOrderId = '-';
+                          _lastRedirectUrl = '';
+                          _paymentStateLabel = 'Belum Dibayar';
+                        }),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? const Color(0xFFFFF4ED)
+                          : const Color(0xFFF9FAFB),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppTheme.primary
+                            : const Color(0xFFE5E7EB),
+                        width: isSelected ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: AppTheme.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppTheme.primary.withValues(alpha: 0.35)
+                                  : const Color(0xFFE5E7EB),
+                            ),
+                          ),
+                          child: Text(
+                            _monthBadge(tagihan),
+                            style: TextStyle(
+                              color: isSelected
+                                  ? AppTheme.primary
+                                  : AppTheme.textMedium,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                tagihan.periodeLabel,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: AppTheme.textDark,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                tagihan.nominalFormatted,
+                                style: const TextStyle(
+                                  color: AppTheme.textMedium,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          isSelected
+                              ? Icons.radio_button_checked_rounded
+                              : Icons.radio_button_unchecked_rounded,
+                          color: isSelected
+                              ? AppTheme.primary
+                              : AppTheme.textLight,
+                          size: 22,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
           ),
         ],
       ),
@@ -416,6 +699,13 @@ class _PembayaranScreenState extends State<PembayaranScreen>
           ),
           _tagihanRow('Kelas', tagihan.kelas.isEmpty ? '-' : tagihan.kelas),
           _tagihanRow('Periode', tagihan.periodeLabel),
+          _tagihanRow('SPP Pokok', tagihan.jumlahTagihanFormatted),
+          if (tagihan.dendaKeterlambatan > 0)
+            _tagihanRow(
+              'Denda Keterlambatan',
+              tagihan.dendaFormatted,
+              valueColor: AppTheme.danger,
+            ),
           const Divider(color: Color(0xFFE5E7EB), height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -438,12 +728,46 @@ class _PembayaranScreenState extends State<PembayaranScreen>
               ),
             ],
           ),
+          if (tagihan.dendaKeterlambatan > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF1F2),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFFECACA)),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    color: AppTheme.danger,
+                    size: 18,
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Denda keterlambatan Rp 20.000 berlaku karena pembayaran melewati tanggal 10.',
+                      style: TextStyle(
+                        color: AppTheme.danger,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _tagihanRow(String label, String value) {
+  Widget _tagihanRow(String label, String value, {Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -455,8 +779,8 @@ class _PembayaranScreenState extends State<PembayaranScreen>
           ),
           Text(
             value,
-            style: const TextStyle(
-              color: AppTheme.textDark,
+            style: TextStyle(
+              color: valueColor ?? AppTheme.textDark,
               fontSize: 13,
               fontWeight: FontWeight.w700,
             ),
@@ -481,7 +805,7 @@ class _PembayaranScreenState extends State<PembayaranScreen>
                 : _processBayar,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
-              disabledBackgroundColor: AppTheme.primary.withOpacity(0.6),
+              disabledBackgroundColor: AppTheme.primary.withValues(alpha: 0.6),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -507,7 +831,8 @@ class _PembayaranScreenState extends State<PembayaranScreen>
                   ),
           ),
         ),
-        if (_lastTagihanId != '-') ...[
+        if (_lastTagihanId != '-' &&
+            _paymentStateLabel.toLowerCase() == 'menunggu pembayaran') ...[
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
@@ -542,7 +867,9 @@ class _PembayaranScreenState extends State<PembayaranScreen>
       decoration: BoxDecoration(
         color: const Color(0xFFE8F8EE),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF16A34A).withOpacity(0.35)),
+        border: Border.all(
+          color: const Color(0xFF16A34A).withValues(alpha: 0.35),
+        ),
       ),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -571,7 +898,9 @@ class _PembayaranScreenState extends State<PembayaranScreen>
       decoration: BoxDecoration(
         color: const Color(0xFFFFF8E7),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)),
+        border: Border.all(
+          color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+        ),
       ),
       child: Row(
         children: [

@@ -3,7 +3,9 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+	"time"
 	"tk_mutiara_backend/models"
+	"tk_mutiara_backend/utils"
 )
 
 // GetTagihanForPaymentByIDAndSiswa mengambil detail tagihan milik siswa untuk payment flow.
@@ -145,10 +147,13 @@ func SyncTagihanStatusByOrderID(db *sql.DB, orderID string) error {
 	}
 
 	var jumlahTagihan float64
-	err = db.QueryRow("SELECT jumlah_tagihan FROM tagihan WHERE id_tagihan = ?", idTagihan).Scan(&jumlahTagihan)
+	var periode string
+	var status string
+	err = db.QueryRow("SELECT jumlah_tagihan, periode, status FROM tagihan WHERE id_tagihan = ?", idTagihan).Scan(&jumlahTagihan, &periode, &status)
 	if err != nil {
 		return fmt.Errorf("gagal mengambil jumlah tagihan: %w", err)
 	}
+	totalWajibBayar := utils.TotalWithLateFee(jumlahTagihan, periode, status, time.Now())
 
 	var totalDiterima float64
 	err = db.QueryRow(`
@@ -161,7 +166,7 @@ func SyncTagihanStatusByOrderID(db *sql.DB, orderID string) error {
 	}
 
 	newStatus := "belum_bayar"
-	if totalDiterima >= jumlahTagihan {
+	if totalDiterima >= totalWajibBayar {
 		newStatus = "lunas"
 	}
 
@@ -193,11 +198,13 @@ func SyncTagihanStatusByOrderID(db *sql.DB, orderID string) error {
 // GetPaymentStatusByTagihanAndSiswa untuk endpoint polling app parent.
 func GetPaymentStatusByTagihanAndSiswa(db *sql.DB, idTagihan int, nomorIndukSiswa string) (*models.PaymentStatusResponse, error) {
 	var item models.PaymentStatusResponse
+	var periode string
 
 	err := db.QueryRow(`
 		SELECT
 			t.id_tagihan,
 			t.status,
+			t.periode,
 			COALESCE(p.id_pembayaran, 0) AS id_pembayaran,
 			COALESCE(p.midtrans_order_id, '') AS midtrans_order_id,
 			COALESCE(p.status_bayar, 'menunggu') AS status_bayar,
@@ -215,6 +222,7 @@ func GetPaymentStatusByTagihanAndSiswa(db *sql.DB, idTagihan int, nomorIndukSisw
 	`, idTagihan, nomorIndukSiswa).Scan(
 		&item.IDTagihan,
 		&item.StatusTagihan,
+		&periode,
 		&item.IDPembayaran,
 		&item.OrderID,
 		&item.StatusBayar,
@@ -227,6 +235,8 @@ func GetPaymentStatusByTagihanAndSiswa(db *sql.DB, idTagihan int, nomorIndukSisw
 		}
 		return nil, fmt.Errorf("gagal mengambil status pembayaran: %w", err)
 	}
+	item.DendaKeterlambatan = utils.LateFeeForPeriod(periode, item.StatusTagihan, time.Now())
+	item.TotalPembayaran = item.JumlahTagihan + item.DendaKeterlambatan
 
 	return &item, nil
 }

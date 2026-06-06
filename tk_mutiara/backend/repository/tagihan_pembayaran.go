@@ -3,7 +3,9 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+	"time"
 	"tk_mutiara_backend/models"
+	"tk_mutiara_backend/utils"
 )
 
 // ==============================
@@ -57,6 +59,7 @@ func GetAllTagihan(db *sql.DB) ([]models.TagihanDetail, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error scan tagihan: %v", err)
 		}
+		applyLateFee(&t)
 		tagihan = append(tagihan, t)
 	}
 
@@ -102,6 +105,7 @@ func GetTagihanByID(db *sql.DB, idTagihan int) (*models.TagihanDetail, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error query tagihan: %v", err)
 	}
+	applyLateFee(&t)
 
 	return &t, nil
 }
@@ -154,6 +158,7 @@ func GetTagihanBySiswa(db *sql.DB, nomorIndukSiswa string) ([]models.TagihanDeta
 		if err != nil {
 			return nil, fmt.Errorf("error scan tagihan: %v", err)
 		}
+		applyLateFee(&t)
 		tagihan = append(tagihan, t)
 	}
 
@@ -185,6 +190,22 @@ func DeleteTagihan(db *sql.DB, idTagihan int) error {
 	}
 
 	return nil
+}
+
+func applyLateFee(t *models.TagihanDetail) {
+	paidLateFee := t.TotalBayar - t.JumlahTagihan
+	if paidLateFee < 0 {
+		paidLateFee = 0
+	}
+
+	t.DendaKeterlambatan = paidLateFee
+	if t.DendaKeterlambatan == 0 {
+		t.DendaKeterlambatan = utils.LateFeeForPeriod(t.Periode, t.Status, time.Now())
+	}
+	t.TotalPembayaran = t.JumlahTagihan + t.DendaKeterlambatan
+	if t.SisaBayar > 0 {
+		t.SisaBayar += t.DendaKeterlambatan
+	}
 }
 
 // ==============================
@@ -338,10 +359,13 @@ func UpdatePembayaranStatus(db *sql.DB, idPembayaran int, statusBayar string) er
 	// Check apakah semua pembayaran sudah diterima
 	var totalTagihan float64
 	var totalBayar float64
-	err = db.QueryRow("SELECT jumlah_tagihan FROM tagihan WHERE id_tagihan = ?", idTagihan).Scan(&totalTagihan)
+	var periode string
+	var status string
+	err = db.QueryRow("SELECT jumlah_tagihan, periode, status FROM tagihan WHERE id_tagihan = ?", idTagihan).Scan(&totalTagihan, &periode, &status)
 	if err != nil {
 		return fmt.Errorf("error get total tagihan: %v", err)
 	}
+	totalWajibBayar := utils.TotalWithLateFee(totalTagihan, periode, status, time.Now())
 
 	err = db.QueryRow(
 		"SELECT COALESCE(SUM(jumlah_bayar), 0) FROM pembayaran WHERE id_tagihan = ? AND status_bayar = 'diterima'",
@@ -352,7 +376,7 @@ func UpdatePembayaranStatus(db *sql.DB, idPembayaran int, statusBayar string) er
 	}
 
 	// Update status tagihan
-	if totalBayar >= totalTagihan {
+	if totalBayar >= totalWajibBayar {
 		_, err = db.Exec(
 			"UPDATE tagihan SET status = 'lunas', payment_status = 'lunas', payment_date = COALESCE(payment_date, NOW()), updated_at = NOW() WHERE id_tagihan = ?",
 			idTagihan,

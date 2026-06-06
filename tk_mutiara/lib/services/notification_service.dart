@@ -3,7 +3,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../screens/notification_screen.dart';
-import '../screens/pengumuman_screen.dart';
 import 'api_services.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -49,9 +48,6 @@ AndroidNotificationDetails _androidDetailsForType(
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   print('[BACKGROUND] Message received: ${message.messageId}');
-  // Saat app di background/terminated, Android sudah menampilkan payload
-  // notification dari FCM. Jangan tampilkan local notification lagi agar
-  // tidak muncul dobel.
 }
 
 class NotificationService {
@@ -191,17 +187,17 @@ class NotificationService {
 
   static void _openByType(String type) {
     if (_isAnnouncementType(type)) {
-      _openPengumumanScreen();
+      _openNotificationScreen(initialType: 'pengumuman');
       return;
     }
 
     if (type.toLowerCase().contains('payment')) {
       ApiService.notifyPaymentUpdated();
-      _openNotificationScreen();
+      _openNotificationScreen(initialType: 'pembayaran');
     }
   }
 
-  static void _openNotificationScreen() {
+  static void _openNotificationScreen({String initialType = 'pengumuman'}) {
     final navigator = navigatorKey.currentState;
     if (navigator == null) {
       print('Navigator belum siap, halaman notifikasi belum bisa dibuka');
@@ -209,17 +205,9 @@ class NotificationService {
     }
 
     navigator.push(
-      MaterialPageRoute(builder: (_) => const NotificationScreen()),
+      MaterialPageRoute(
+        builder: (_) => NotificationScreen(initialType: initialType),
+      ),
     );
-  }
-
-  static void _openPengumumanScreen() {
-    final navigator = navigatorKey.currentState;
-    if (navigator == null) {
-      print('Navigator belum siap, halaman pengumuman belum bisa dibuka');
-      return;
-    }
-
-    navigator.push(MaterialPageRoute(builder: (_) => const PengumumanScreen()));
   }
 }

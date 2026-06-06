@@ -19,6 +19,7 @@ import (
 	"tk_mutiara_backend/config"
 	"tk_mutiara_backend/models"
 	"tk_mutiara_backend/repository"
+	"tk_mutiara_backend/utils"
 )
 
 type midtransSnapRequest struct {
@@ -68,12 +69,15 @@ func CreateMidtransTransaction(db *sql.DB, nomorIndukSiswa string, idTagihan int
 		return nil, fmt.Errorf("tagihan sudah lunas")
 	}
 
+	tagihan.DendaKeterlambatan = utils.LateFeeForPeriod(tagihan.Periode, tagihan.StatusTagihan, time.Now())
+	tagihan.TotalPembayaran = tagihan.JumlahTagihan + tagihan.DendaKeterlambatan
+
 	orderID := fmt.Sprintf("TAGIHAN-%d-%d", tagihan.IDTagihan, time.Now().Unix())
 
 	payload := midtransSnapRequest{
 		TransactionDetails: midtransTransactionDetails{
 			OrderID:     orderID,
-			GrossAmount: tagihan.JumlahTagihan,
+			GrossAmount: tagihan.TotalPembayaran,
 		},
 		CustomerDetails: midtransCustomerDetails{
 			FirstName: strings.TrimSpace(tagihan.NamaOrangtua),
@@ -81,7 +85,7 @@ func CreateMidtransTransaction(db *sql.DB, nomorIndukSiswa string, idTagihan int
 		ItemDetails: []midtransItemDetail{
 			{
 				ID:       fmt.Sprintf("tagihan-%d", tagihan.IDTagihan),
-				Price:    tagihan.JumlahTagihan,
+				Price:    tagihan.TotalPembayaran,
 				Quantity: 1,
 				Name:     fmt.Sprintf("SPP %s - %s", tagihan.Periode, tagihan.NamaSiswa),
 			},
@@ -97,7 +101,7 @@ func CreateMidtransTransaction(db *sql.DB, nomorIndukSiswa string, idTagihan int
 		return nil, err
 	}
 
-	idPembayaran, err := repository.CreatePembayaranPending(db, tagihan.IDTagihan, tagihan.JumlahTagihan, orderID)
+	idPembayaran, err := repository.CreatePembayaranPending(db, tagihan.IDTagihan, tagihan.TotalPembayaran, orderID)
 	if err != nil {
 		return nil, err
 	}
@@ -107,15 +111,17 @@ func CreateMidtransTransaction(db *sql.DB, nomorIndukSiswa string, idTagihan int
 	}
 
 	return &models.CreateMidtransTransactionResponse{
-		IDTagihan:     tagihan.IDTagihan,
-		IDPembayaran:  idPembayaran,
-		OrderID:       orderID,
-		SnapToken:     snapResp.Token,
-		RedirectURL:   snapResp.RedirectURL,
-		Amount:        tagihan.JumlahTagihan,
-		StatusTagihan: tagihan.StatusTagihan,
-		StatusBayar:   "menunggu",
-		ClientKey:     config.AppConfig.MidtransClientKey,
+		IDTagihan:          tagihan.IDTagihan,
+		IDPembayaran:       idPembayaran,
+		OrderID:            orderID,
+		SnapToken:          snapResp.Token,
+		RedirectURL:        snapResp.RedirectURL,
+		Amount:             tagihan.TotalPembayaran,
+		DendaKeterlambatan: tagihan.DendaKeterlambatan,
+		TotalPembayaran:    tagihan.TotalPembayaran,
+		StatusTagihan:      tagihan.StatusTagihan,
+		StatusBayar:        "menunggu",
+		ClientKey:          config.AppConfig.MidtransClientKey,
 	}, nil
 }
 
@@ -206,7 +212,7 @@ func getPaymentNotificationDetail(db *sql.DB, orderID string) (*paymentNotificat
 		SELECT
 			COALESCE(s.nama_siswa, 'Siswa') AS nama_siswa,
 			COALESCE(t.periode, '') AS periode,
-			COALESCE(t.jumlah_tagihan, p.jumlah_bayar, 0) AS nominal
+			COALESCE(p.jumlah_bayar, t.jumlah_tagihan, 0) AS nominal
 		FROM pembayaran p
 		JOIN tagihan t ON p.id_tagihan = t.id_tagihan
 		LEFT JOIN siswa s ON t.nomor_induk_siswa = s.nomor_induk_siswa

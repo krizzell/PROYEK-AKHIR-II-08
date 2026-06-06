@@ -40,10 +40,35 @@
 
         <div class="row mb-3">
             <div class="col-md-3">
-                <strong>Jumlah Tagihan:</strong>
+                <strong>SPP Pokok:</strong>
             </div>
             <div class="col-md-9">
                 Rp {{ number_format($tagihan->jumlah_tagihan, 0, ',', '.') }}
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <strong>Denda Keterlambatan:</strong>
+            </div>
+            <div class="col-md-9">
+                @if ($dendaKeterlambatan > 0)
+                    <span class="text-danger fw-semibold">
+                        Rp {{ number_format($dendaKeterlambatan, 0, ',', '.') }}
+                    </span>
+                    <small class="text-muted d-block">Berlaku jika pembayaran melewati tanggal 10.</small>
+                @else
+                    <span class="text-muted">Rp 0</span>
+                @endif
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <strong>Total Pembayaran:</strong>
+            </div>
+            <div class="col-md-9">
+                <strong>Rp {{ number_format($totalPembayaran, 0, ',', '.') }}</strong>
             </div>
         </div>
 

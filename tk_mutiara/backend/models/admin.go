@@ -131,18 +131,20 @@ type KelasDetail struct {
 
 // TagihanDetail model untuk tagihan detail dashboard
 type TagihanDetail struct {
-	IDTagihan       int     `json:"id_tagihan" db:"id_tagihan"`
-	NomorIndukSiswa string  `json:"nomor_induk_siswa" db:"nomor_induk_siswa"`
-	NamaAnak        string  `json:"nama_anak" db:"nama_anak"`
-	JumlahTagihan   float64 `json:"jumlah_tagihan" db:"jumlah_tagihan"`
-	Periode         string  `json:"periode" db:"periode"`
-	Status          string  `json:"status" db:"status"`
-	PaymentStatus   string  `json:"payment_status" db:"payment_status"`
-	PaymentDate     string  `json:"payment_date" db:"payment_date"`
-	TotalBayar      float64 `json:"total_bayar"`
-	SisaBayar       float64 `json:"sisa_bayar"`
-	CreatedAt       string  `json:"created_at" db:"created_at"`
-	UpdatedAt       string  `json:"updated_at" db:"updated_at"`
+	IDTagihan          int     `json:"id_tagihan" db:"id_tagihan"`
+	NomorIndukSiswa    string  `json:"nomor_induk_siswa" db:"nomor_induk_siswa"`
+	NamaAnak           string  `json:"nama_anak" db:"nama_anak"`
+	JumlahTagihan      float64 `json:"jumlah_tagihan" db:"jumlah_tagihan"`
+	DendaKeterlambatan float64 `json:"denda_keterlambatan"`
+	TotalPembayaran    float64 `json:"total_pembayaran"`
+	Periode            string  `json:"periode" db:"periode"`
+	Status             string  `json:"status" db:"status"`
+	PaymentStatus      string  `json:"payment_status" db:"payment_status"`
+	PaymentDate        string  `json:"payment_date" db:"payment_date"`
+	TotalBayar         float64 `json:"total_bayar"`
+	SisaBayar          float64 `json:"sisa_bayar"`
+	CreatedAt          string  `json:"created_at" db:"created_at"`
+	UpdatedAt          string  `json:"updated_at" db:"updated_at"`
 }
 
 // PembayaranDetail model untuk pembayaran detail
@@ -210,27 +212,31 @@ type CreateMidtransTransactionRequest struct {
 
 // CreateMidtransTransactionResponse response untuk transaksi Midtrans
 type CreateMidtransTransactionResponse struct {
-	IDTagihan     int     `json:"id_tagihan"`
-	IDPembayaran  int64   `json:"id_pembayaran"`
-	OrderID       string  `json:"order_id"`
-	SnapToken     string  `json:"snap_token"`
-	RedirectURL   string  `json:"redirect_url"`
-	Amount        float64 `json:"amount"`
-	StatusTagihan string  `json:"status_tagihan"`
-	StatusBayar   string  `json:"status_bayar"`
-	ClientKey     string  `json:"client_key"`
-	ExpiredAt     string  `json:"expired_at,omitempty"`
+	IDTagihan          int     `json:"id_tagihan"`
+	IDPembayaran       int64   `json:"id_pembayaran"`
+	OrderID            string  `json:"order_id"`
+	SnapToken          string  `json:"snap_token"`
+	RedirectURL        string  `json:"redirect_url"`
+	Amount             float64 `json:"amount"`
+	DendaKeterlambatan float64 `json:"denda_keterlambatan"`
+	TotalPembayaran    float64 `json:"total_pembayaran"`
+	StatusTagihan      string  `json:"status_tagihan"`
+	StatusBayar        string  `json:"status_bayar"`
+	ClientKey          string  `json:"client_key"`
+	ExpiredAt          string  `json:"expired_at,omitempty"`
 }
 
 // PaymentStatusResponse response polling status pembayaran
 type PaymentStatusResponse struct {
-	IDTagihan     int     `json:"id_tagihan"`
-	IDPembayaran  int64   `json:"id_pembayaran,omitempty"`
-	OrderID       string  `json:"order_id,omitempty"`
-	StatusTagihan string  `json:"status_tagihan"`
-	StatusBayar   string  `json:"status_bayar,omitempty"`
-	JumlahTagihan float64 `json:"jumlah_tagihan,omitempty"`
-	JumlahBayar   float64 `json:"jumlah_bayar,omitempty"`
+	IDTagihan          int     `json:"id_tagihan"`
+	IDPembayaran       int64   `json:"id_pembayaran,omitempty"`
+	OrderID            string  `json:"order_id,omitempty"`
+	StatusTagihan      string  `json:"status_tagihan"`
+	StatusBayar        string  `json:"status_bayar,omitempty"`
+	JumlahTagihan      float64 `json:"jumlah_tagihan,omitempty"`
+	DendaKeterlambatan float64 `json:"denda_keterlambatan,omitempty"`
+	TotalPembayaran    float64 `json:"total_pembayaran,omitempty"`
+	JumlahBayar        float64 `json:"jumlah_bayar,omitempty"`
 }
 
 // MidtransNotification payload notifikasi Midtrans
@@ -251,11 +257,13 @@ type MidtransNotification struct {
 
 // TagihanForPayment data tagihan untuk proses pembayaran
 type TagihanForPayment struct {
-	IDTagihan       int     `json:"id_tagihan"`
-	NomorIndukSiswa string  `json:"nomor_induk_siswa"`
-	NamaSiswa       string  `json:"nama_siswa"`
-	NamaOrangtua    string  `json:"nama_orgtua"`
-	Periode         string  `json:"periode"`
-	JumlahTagihan   float64 `json:"jumlah_tagihan"`
-	StatusTagihan   string  `json:"status_tagihan"`
+	IDTagihan          int     `json:"id_tagihan"`
+	NomorIndukSiswa    string  `json:"nomor_induk_siswa"`
+	NamaSiswa          string  `json:"nama_siswa"`
+	NamaOrangtua       string  `json:"nama_orgtua"`
+	Periode            string  `json:"periode"`
+	JumlahTagihan      float64 `json:"jumlah_tagihan"`
+	DendaKeterlambatan float64 `json:"denda_keterlambatan"`
+	TotalPembayaran    float64 `json:"total_pembayaran"`
+	StatusTagihan      string  `json:"status_tagihan"`
 }

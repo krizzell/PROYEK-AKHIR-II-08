@@ -36,6 +36,19 @@ class TagihanApiController extends Controller
         }
     }
 
+    private function resolveDendaKeterlambatan(Tagihan $tagihan): int
+    {
+        $totalDiterima = (int) $tagihan->pembayaran
+            ->where('status_bayar', 'diterima')
+            ->sum('jumlah_bayar');
+
+        $paidLateFee = max(0, $totalDiterima - (int) $tagihan->jumlah_tagihan);
+
+        return $paidLateFee > 0
+            ? $paidLateFee
+            : $tagihan->denda_keterlambatan;
+    }
+
     /**
      * Get list of tagihan for authenticated user (orangtua)
      * Mobile app akan send nomor_induk_siswa via token
@@ -60,6 +73,7 @@ class TagihanApiController extends Controller
                 ->map(function ($item) {
                     $normalizedStatus = $item->payment_status ?: ($item->status ?: 'belum_bayar');
                     $paymentDateFormatted = $this->formatPaymentDate($this->resolvePaymentDate($item));
+                    $dendaKeterlambatan = $this->resolveDendaKeterlambatan($item);
 
                     return [
                         'id_tagihan' => $item->id_tagihan,
@@ -67,6 +81,8 @@ class TagihanApiController extends Controller
                         'nama_siswa' => $item->siswa?->nama_siswa ?? '-',
                         'kelas' => $item->siswa?->kelas?->nama_kelas ?? '-',
                         'jumlah_tagihan' => $item->jumlah_tagihan,
+                        'denda_keterlambatan' => $dendaKeterlambatan,
+                        'total_pembayaran' => (int) $item->jumlah_tagihan + $dendaKeterlambatan,
                         'periode' => $item->periode,
                         'status' => $normalizedStatus,
                         'payment_status' => $normalizedStatus,
@@ -98,6 +114,7 @@ class TagihanApiController extends Controller
         try {
             $tagihan = Tagihan::with('siswa', 'siswa.kelas', 'pembayaran')->findOrFail($id);
             $paymentDate = $this->resolvePaymentDate($tagihan);
+            $dendaKeterlambatan = $this->resolveDendaKeterlambatan($tagihan);
 
             return response()->json([
                 'status' => 'success',
@@ -107,6 +124,8 @@ class TagihanApiController extends Controller
                     'nama_siswa' => $tagihan->siswa?->nama_siswa ?? '-',
                     'kelas' => $tagihan->siswa?->kelas?->nama_kelas ?? '-',
                     'jumlah_tagihan' => $tagihan->jumlah_tagihan,
+                    'denda_keterlambatan' => $dendaKeterlambatan,
+                    'total_pembayaran' => (int) $tagihan->jumlah_tagihan + $dendaKeterlambatan,
                     'periode' => $tagihan->periode,
                     'payment_status' => $tagihan->payment_status ?: ($tagihan->status ?: 'belum_bayar'),
                     'transaction_id' => $tagihan->transaction_id,

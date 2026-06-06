@@ -164,7 +164,21 @@ class TagihanController extends Controller
             ? Carbon::parse($tanggalPembayaran)->format('d-m-Y H:i')
             : null;
 
-        return view('tagihan.show', compact('tagihan', 'tanggalPembayaranFormatted'));
+        $totalDiterima = (int) $tagihan->pembayaran
+            ->where('status_bayar', 'diterima')
+            ->sum('jumlah_bayar');
+        $dendaKeterlambatan = max(0, $totalDiterima - (int) $tagihan->jumlah_tagihan);
+        if ($dendaKeterlambatan === 0) {
+            $dendaKeterlambatan = $tagihan->denda_keterlambatan;
+        }
+        $totalPembayaran = (int) $tagihan->jumlah_tagihan + $dendaKeterlambatan;
+
+        return view('tagihan.show', compact(
+            'tagihan',
+            'tanggalPembayaranFormatted',
+            'dendaKeterlambatan',
+            'totalPembayaran'
+        ));
     }
 
     public function edit(Tagihan $tagihan)

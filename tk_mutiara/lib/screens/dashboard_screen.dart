@@ -1453,25 +1453,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             return Padding(
               padding: const EdgeInsets.only(bottom: 5),
-              child: RichText(
-                text: TextSpan(
-                  style: GoogleFonts.montserrat(
-                    color: AppTheme.textMedium,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    height: 1.25,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: code,
-                      style: TextStyle(
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 28,
+                    child: Text(
+                      code,
+                      style: GoogleFonts.montserrat(
                         color: color,
+                        fontSize: 10,
                         fontWeight: FontWeight.w900,
+                        height: 1.25,
                       ),
                     ),
-                    TextSpan(text: ' = $label'),
-                  ],
-                ),
+                  ),
+                  SizedBox(
+                    width: 10,
+                    child: Text(
+                      '=',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.montserrat(
+                        color: AppTheme.textMedium,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        height: 1.25,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.montserrat(
+                        color: AppTheme.textMedium,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        height: 1.25,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             );
           }),
@@ -1625,10 +1648,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   axisSide: meta.axisSide,
                   child: Text(
                     label,
-                    style: TextStyle(
+                    style: GoogleFonts.montserrat(
                       fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textLight.withOpacity(0.8),
+                      fontWeight: FontWeight.w800,
+                      color: _getStatusColor(label),
                     ),
                   ),
                 );
