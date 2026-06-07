@@ -33,10 +33,10 @@
         .sidebar {
             width: 260px;
             background-color: #FAFBFC;
-            padding: 30px 0 150px 0;
+            padding: 30px 0 18px 0;
             position: fixed;
             height: 100vh;
-            overflow-y: auto;
+            overflow: hidden;
             box-shadow: -2px 0 8px rgba(0, 0, 0, 0.03);
             border-right: 1px solid #E5E7EB;
             z-index: 100;
@@ -48,6 +48,7 @@
             padding: 0 25px 15px;
             text-align: center;
             margin-bottom: 15px;
+            flex-shrink: 0;
         }
 
         .sidebar-header .logo-title {
@@ -68,7 +69,26 @@
             flex-direction: column;
             gap: 10px;
             padding: 0 15px;
-            margin-bottom: 30px;
+            margin-bottom: 0;
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: #CBD5E1 transparent;
+        }
+
+        .nav-menu::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .nav-menu::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 999px;
+        }
+
+        .nav-menu::-webkit-scrollbar-track {
+            background: transparent;
         }
 
         .nav-menu .nav-item {
@@ -138,11 +158,12 @@
         }
 
         .sidebar-footer {
-            position: absolute;
-            bottom: 20px;
-            left: 0;
-            right: 0;
-            padding: 0 15px;
+            position: static;
+            flex-shrink: 0;
+            padding: 14px 15px 0;
+            margin-top: 14px;
+            background-color: #FAFBFC;
+            border-top: 1px solid #E5E7EB;
         }
 
         .sidebar-footer::before {
@@ -196,9 +217,10 @@
             cursor: pointer;
             transition: all 0.2s ease;
             font-size: 13.5px;
-            line-height: 1;
+            line-height: 1.2;
             text-decoration: none;
             background-color: transparent;
+            white-space: normal;
         }
 
         .sidebar-footer-btn i {

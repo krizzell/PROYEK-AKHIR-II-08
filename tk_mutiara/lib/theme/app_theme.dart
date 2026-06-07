@@ -116,7 +116,6 @@ class AppTheme {
     );
   }
 
-  // GRADIENT HELPERS 
   static LinearGradient get primaryGradient => const LinearGradient(
         colors: [primary, primaryLight],
         begin: Alignment.topLeft,

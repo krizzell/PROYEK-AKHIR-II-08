@@ -797,7 +797,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               // 2. Logout Option
               _buildOptionItem(
-                title: "Keluar Aplikasi",
+                title: "Logout",
                 subtitle: "Akhiri sesi dan keluar",
                 icon: Icons.logout_rounded,
                 color: AppTheme.danger,

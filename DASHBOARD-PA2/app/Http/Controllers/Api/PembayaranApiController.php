@@ -24,7 +24,6 @@ class PembayaranApiController extends Controller
     }
 
     /**
-     * Create payment transaction & get Snap token
      * POST /api/pembayaran/create
      */
     public function create(Request $request)

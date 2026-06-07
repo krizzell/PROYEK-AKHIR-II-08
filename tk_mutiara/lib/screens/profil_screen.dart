@@ -96,7 +96,7 @@ class _ProfilScreenState extends State<ProfilScreen>
       updateData = {
         'nama_ortu': _namaController.text.trim(),
         'no_hp': _hpController.text.trim(),
-        'alamat': _emailController.text.trim(), // Untuk orangtua, email controller digunakan untuk alamat
+        'alamat': _emailController.text.trim(), 
       };
     } else if (userInfo?['role'] == 'guru') {
       updateData = {
@@ -106,7 +106,6 @@ class _ProfilScreenState extends State<ProfilScreen>
       };
     }
 
-    // Call API untuk update profile
     final result = await ApiService.updateProfile(updateData);
 
     if (result['success']) {
@@ -115,7 +114,6 @@ class _ProfilScreenState extends State<ProfilScreen>
         _isEditingProfil = false;
       });
       
-      // Update callback
       widget.onProfilUpdated?.call(
         _namaController.text.trim(),
         _emailController.text.trim(),
@@ -159,7 +157,6 @@ class _ProfilScreenState extends State<ProfilScreen>
     setState(() => _isLoadingPassword = true);
     HapticFeedback.mediumImpact();
 
-    // Call API untuk update password
     final result = await ApiService.updatePassword(
       _passwordLamaController.text,
       _passwordBaruController.text,

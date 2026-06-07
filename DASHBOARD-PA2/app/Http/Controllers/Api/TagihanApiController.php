@@ -49,14 +49,9 @@ class TagihanApiController extends Controller
             : $tagihan->denda_keterlambatan;
     }
 
-    /**
-     * Get list of tagihan for authenticated user (orangtua)
-     * Mobile app akan send nomor_induk_siswa via token
-     */
     public function index(Request $request)
     {
         try {
-            // Support both query parameter dan request body
             $nomor_induk_siswa = $request->query('nomor_induk_siswa') ?? $request->input('nomor_induk_siswa');
             
             if (!$nomor_induk_siswa) {
@@ -106,9 +101,6 @@ class TagihanApiController extends Controller
         }
     }
 
-    /**
-     * Get single tagihan detail
-     */
     public function show($id)
     {
         try {
@@ -142,10 +134,6 @@ class TagihanApiController extends Controller
         }
     }
 
-    /**
-     * Check apakah sudah ada tagihan untuk siswa + periode tertentu
-     * Digunakan untuk live validation di form create tagihan
-     */
     public function checkDuplikat(Request $request)
     {
         try {

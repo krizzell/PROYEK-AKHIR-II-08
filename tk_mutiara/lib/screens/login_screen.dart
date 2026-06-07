@@ -139,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen>
 
                   // Title section
                   const Text(
-                    'Masuk',
+                    'Login',
                     style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.w900,
@@ -291,7 +291,7 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                             )
                           : const Text(
-                              'Masuk',
+                              'Login',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,

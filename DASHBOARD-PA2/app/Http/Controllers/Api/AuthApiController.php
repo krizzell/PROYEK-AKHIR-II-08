@@ -17,8 +17,6 @@ class AuthApiController extends Controller
                 'password' => 'required|string',
             ]);
 
-            // Try to find by email first (assuming email is username in your system)
-            // If not found, try username field
             $akun = Akun::where('username', $validated['email'])
                 ->orWhere('id_akun', $validated['email'])
                 ->first();
@@ -30,10 +28,8 @@ class AuthApiController extends Controller
                 ], 401);
             }
 
-            // Generate a simple token (can be replaced with Sanctum if needed)
             $token = bin2hex(random_bytes(32));
 
-            // Get nama from siswa or guru
             $nama = 'User';
             if ($akun->nomor_induk_siswa && $akun->siswa) {
                 $nama = $akun->siswa->nama_siswa ?? 'User';
@@ -41,7 +37,6 @@ class AuthApiController extends Controller
                 $nama = $akun->guru->nama_guru ?? 'User';
             }
 
-            // Return user data
             return response()->json([
                 'success' => true,
                 'message' => 'Login berhasil',
