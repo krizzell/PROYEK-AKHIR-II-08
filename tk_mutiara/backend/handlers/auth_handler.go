@@ -31,8 +31,8 @@ func LoginHandler(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, models.ApiResponse{
 			Success: false,
-			Message: "Email dan password harus diisi",
-			Errors:  gin.H{"email": "required", "password": "required"},
+			Message: "Username dan password harus diisi",
+			Errors:  gin.H{"username": "required", "password": "required"},
 		})
 		return
 	}
@@ -54,7 +54,7 @@ func LoginHandler(c *gin.Context) {
 	err := config.DB.QueryRow(query, req.Email).Scan(&userID, &userName, &userRole, &password, &nomorIndukSiswa, &idGuru)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			writeAuthError(c, http.StatusUnauthorized, "Email atau password salah", nil)
+			writeAuthError(c, http.StatusUnauthorized, "Username atau password salah", nil)
 			return
 		}
 		writeAuthError(c, http.StatusInternalServerError, "Terjadi kesalahan server", err)
@@ -64,7 +64,7 @@ func LoginHandler(c *gin.Context) {
 	// Verify password menggunakan bcrypt
 	err = bcrypt.CompareHashAndPassword([]byte(password), []byte(req.Password))
 	if err != nil {
-		writeAuthError(c, http.StatusUnauthorized, "Email atau password salah", nil)
+		writeAuthError(c, http.StatusUnauthorized, "Username atau password salah", nil)
 		return
 	}
 
@@ -150,7 +150,7 @@ func LoginHandler(c *gin.Context) {
 // ChangePasswordHandler handles password updates
 func ChangePasswordHandler(c *gin.Context) {
 	var req struct {
-		Username                 string `json:"username" binding:"required"`
+		Username                string `json:"username" binding:"required"`
 		OldPassword             string `json:"old_password" binding:"required"`
 		NewPassword             string `json:"new_password" binding:"required"`
 		NewPasswordConfirmation string `json:"new_password_confirmation" binding:"required"`
@@ -168,6 +168,14 @@ func ChangePasswordHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, models.ApiResponse{
 			Success: false,
 			Message: "Konfirmasi password tidak cocok",
+		})
+		return
+	}
+
+	if len(req.NewPassword) < 8 {
+		c.JSON(http.StatusBadRequest, models.ApiResponse{
+			Success: false,
+			Message: "Password baru minimal 8 karakter",
 		})
 		return
 	}

@@ -14,34 +14,75 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final _oldPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
   bool _isLoading = false;
   bool _obscureOld = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
   String? _errorMsg;
+  bool _showNewPasswordLengthError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _newPasswordController.addListener(_validateNewPasswordLength);
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _oldPasswordController.dispose();
+    _newPasswordController.removeListener(_validateNewPasswordLength);
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  void _validateNewPasswordLength() {
+    final text = _newPasswordController.text;
+    final shouldShow = text.isNotEmpty && text.length < 8;
+    if (shouldShow != _showNewPasswordLengthError) {
+      setState(() => _showNewPasswordLengthError = shouldShow);
+    }
+  }
 
   void _handleSubmit() async {
-    if (_usernameController.text.isEmpty || 
-        _oldPasswordController.text.isEmpty || 
-        _newPasswordController.text.isEmpty || 
-        _confirmPasswordController.text.isEmpty) {
+    final username = _usernameController.text.trim();
+    final oldPassword = _oldPasswordController.text;
+    final newPassword = _newPasswordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    if (username.isEmpty ||
+        oldPassword.isEmpty ||
+        newPassword.isEmpty ||
+        confirmPassword.isEmpty) {
       setState(() => _errorMsg = 'Semua field harus diisi');
       return;
     }
 
-    if (_newPasswordController.text != _confirmPasswordController.text) {
+    if (newPassword.length < 8) {
+      setState(() {
+        _errorMsg = 'Password baru minimal 8 karakter';
+        _showNewPasswordLengthError = true;
+      });
+      return;
+    }
+
+    if (newPassword != confirmPassword) {
       setState(() => _errorMsg = 'Konfirmasi password tidak cocok');
       return;
     }
 
-    setState(() { _isLoading = true; _errorMsg = null; });
+    setState(() {
+      _isLoading = true;
+      _errorMsg = null;
+    });
 
     final result = await ApiService.changePassword(
-      username: _usernameController.text.trim(),
-      oldPassword: _oldPasswordController.text.trim(),
-      newPassword: _newPasswordController.text.trim(),
-      confirmPassword: _confirmPasswordController.text.trim(),
+      username: username,
+      oldPassword: oldPassword,
+      newPassword: newPassword,
+      confirmPassword: confirmPassword,
     );
 
     if (!mounted) return;
@@ -72,7 +113,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textDark),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Ubah Password', style: TextStyle(color: AppTheme.textDark, fontWeight: FontWeight.w800, fontSize: 18)),
+        title: const Text(
+          'Ubah Password',
+          style: TextStyle(
+            color: AppTheme.textDark,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -82,7 +130,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             const SizedBox(height: 20),
             const Text(
               'Perbarui keamanan akun Anda dengan mengganti password secara berkala.',
-              style: TextStyle(fontSize: 14, color: AppTheme.textMedium, height: 1.5),
+              style: TextStyle(
+                fontSize: 14,
+                color: AppTheme.textMedium,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 32),
 
@@ -94,11 +146,26 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: const Color(0xFFFECACA)),
                 ),
-                child: Row(children: [
-                  const Icon(Icons.error_outline_rounded, size: 18, color: AppTheme.danger),
-                  const SizedBox(width: 10),
-                  Expanded(child: Text(_errorMsg!, style: const TextStyle(color: AppTheme.danger, fontSize: 12, fontWeight: FontWeight.w600))),
-                ]),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.error_outline_rounded,
+                      size: 18,
+                      color: AppTheme.danger,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _errorMsg!,
+                        style: const TextStyle(
+                          color: AppTheme.danger,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
             ],
@@ -125,11 +192,27 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             _buildLabel('Password Baru'),
             _buildField(
               controller: _newPasswordController,
-              hint: 'Masukkan password baru',
+              hint: 'Minimal 8 karakter',
               icon: Icons.vpn_key_outlined,
               isPassword: true,
               obscure: _obscureNew,
+              hasError: _showNewPasswordLengthError,
               onToggle: () => setState(() => _obscureNew = !_obscureNew),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _showNewPasswordLengthError
+                  ? 'Password baru minimal 8 karakter.'
+                  : 'Gunakan minimal 8 karakter untuk keamanan akun.',
+              style: TextStyle(
+                fontSize: 12,
+                color: _showNewPasswordLengthError
+                    ? AppTheme.danger
+                    : AppTheme.textMedium,
+                fontWeight: _showNewPasswordLengthError
+                    ? FontWeight.w700
+                    : FontWeight.w500,
+              ),
             ),
             const SizedBox(height: 20),
 
@@ -140,7 +223,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               icon: Icons.check_circle_outline_rounded,
               isPassword: true,
               obscure: _obscureConfirm,
-              onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
+              onToggle: () =>
+                  setState(() => _obscureConfirm = !_obscureConfirm),
             ),
             const SizedBox(height: 40),
 
@@ -151,14 +235,31 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 onPressed: _isLoading ? null : _handleSubmit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
-                  disabledBackgroundColor: AppTheme.primary.withOpacity(0.6),
+                  disabledBackgroundColor: AppTheme.primary.withValues(
+                    alpha: 0.6,
+                  ),
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 child: _isLoading
-                    ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                    : const Text('Simpan Perubahan', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Simpan Perubahan',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
               ),
             ),
             const SizedBox(height: 40),
@@ -171,7 +272,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   Widget _buildLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: AppTheme.textDark,
+        ),
+      ),
     );
   }
 
@@ -181,30 +289,54 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     required IconData icon,
     bool isPassword = false,
     bool obscure = false,
+    bool hasError = false,
     VoidCallback? onToggle,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF4F5F9),
+        color: hasError ? const Color(0xFFFFF1F2) : const Color(0xFFF4F5F9),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(
+          color: hasError ? AppTheme.danger : const Color(0xFFE5E7EB),
+        ),
       ),
       child: TextField(
         controller: controller,
         obscureText: obscure,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textDark),
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: AppTheme.textDark,
+        ),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Color(0xFFBFC3CE)),
+          hintStyle: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+            color: Color(0xFFBFC3CE),
+          ),
           border: InputBorder.none,
-          prefixIcon: Icon(icon, color: const Color(0xFFBFC3CE), size: 20),
+          prefixIcon: Icon(
+            icon,
+            color: hasError ? AppTheme.danger : const Color(0xFFBFC3CE),
+            size: 20,
+          ),
           suffixIcon: isPassword
               ? IconButton(
-                  icon: Icon(obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20, color: const Color(0xFFBFC3CE)),
+                  icon: Icon(
+                    obscure
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    size: 20,
+                    color: const Color(0xFFBFC3CE),
+                  ),
                   onPressed: onToggle,
                 )
               : null,
-          contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: 16,
+          ),
         ),
       ),
     );

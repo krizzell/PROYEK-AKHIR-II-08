@@ -50,6 +50,7 @@ func main() {
 
 	r.POST("/login", handlers.LoginHandler)
 	r.POST("/change-password", handlers.ChangePasswordHandler)
+	r.POST("/api/change-password", handlers.ChangePasswordHandler)
 	r.POST("/api/payment/webhook/midtrans", handlers.MidtransWebhookHandler)
 	r.POST("/api/webhook/midtrans", handlers.MidtransWebhookHandler)
 	r.POST("/api/payment-notification", handlers.MidtransWebhookHandler)
@@ -78,7 +79,7 @@ func main() {
 		protected.PUT("/profile", handlers.UpdateProfileHandler)
 		protected.PUT("/profile/password", handlers.UpdatePasswordHandler)
 
-		// FCM Token route 
+		// FCM Token route
 		protected.POST("/user/fcm-token", handlers.SaveFcmTokenHandler)
 	}
 
