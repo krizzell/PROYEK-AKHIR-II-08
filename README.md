@@ -75,18 +75,6 @@ Berfungsi sebagai layanan REST API yang menghubungkan aplikasi mobile dengan dat
 Digunakan oleh guru dan kepala sekolah untuk mengelola seluruh data operasional sekolah.
 
 
-## Struktur Repository
-
-PROYEK-AKHIR-II-08/
-│
-├── DASHBOARD-PA2/          # Dashboard Administrasi Laravel
-│
-├── tk_mutiara/
-│   ├── backend/            # Backend API Golang
-│   └── mobile/             # Aplikasi Mobile Flutter
-│
-├── tmp/
-
 ## Deployment Dashboard Admin
 https://admin.tkmutiara.my.id
 
