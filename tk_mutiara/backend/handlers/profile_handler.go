@@ -182,8 +182,8 @@ func UpdatePasswordHandler(c *gin.Context) {
 		return
 	}
 
-	if len(req.NewPassword) < 6 {
-		writeProfileError(c, http.StatusBadRequest, "Password baru minimal 6 karakter", nil)
+	if len(req.NewPassword) < 8 {
+		writeProfileError(c, http.StatusBadRequest, "Password baru minimal 8 karakter", nil)
 		return
 	}
 
@@ -317,77 +317,77 @@ func UpdateProfileHandler(c *gin.Context) {
 
 // SaveFcmTokenHandler handles POST /api/user/fcm-token
 func SaveFcmTokenHandler(c *gin.Context) {
-    fmt.Printf("\n=== SAVE FCM TOKEN REQUEST ===\n")
-    
-    userID, exists := c.Get("user_id")
-    if !exists {
-        fmt.Printf("❌ User tidak ditemukan di context\n")
-        c.JSON(http.StatusUnauthorized, models.ApiResponse{
-            Success: false,
-            Message: "User tidak ditemukan",
-        })
-        return
-    }
+	fmt.Printf("\n=== SAVE FCM TOKEN REQUEST ===\n")
 
-    userIDInt, err := toInt(userID)
-    if err != nil || userIDInt <= 0 {
-        fmt.Printf("❌ Invalid user ID: %v (type: %T)\n", userID, userID)
-        c.JSON(http.StatusUnauthorized, models.ApiResponse{
-            Success: false,
-            Message: "User tidak valid",
-        })
-        return
-    }
+	userID, exists := c.Get("user_id")
+	if !exists {
+		fmt.Printf("❌ User tidak ditemukan di context\n")
+		c.JSON(http.StatusUnauthorized, models.ApiResponse{
+			Success: false,
+			Message: "User tidak ditemukan",
+		})
+		return
+	}
 
-    var req struct {
-        FcmToken string `json:"fcm_token" binding:"required"`
-    }
+	userIDInt, err := toInt(userID)
+	if err != nil || userIDInt <= 0 {
+		fmt.Printf("❌ Invalid user ID: %v (type: %T)\n", userID, userID)
+		c.JSON(http.StatusUnauthorized, models.ApiResponse{
+			Success: false,
+			Message: "User tidak valid",
+		})
+		return
+	}
 
-    if err := c.ShouldBindJSON(&req); err != nil {
-        fmt.Printf("❌ Binding error: %v\n", err)
-        c.JSON(http.StatusBadRequest, models.ApiResponse{
-            Success: false,
-            Message: "fcm_token harus diisi: " + err.Error(),
-        })
-        return
-    }
+	var req struct {
+		FcmToken string `json:"fcm_token" binding:"required"`
+	}
 
-    fmt.Printf("✓ User ID: %d\n", userIDInt)
-    fmt.Printf("✓ FCM Token: %s...\n", req.FcmToken[:min(20, len(req.FcmToken))])
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Printf("❌ Binding error: %v\n", err)
+		c.JSON(http.StatusBadRequest, models.ApiResponse{
+			Success: false,
+			Message: "fcm_token harus diisi: " + err.Error(),
+		})
+		return
+	}
 
-    // Update dengan error handling yang lebih baik
-    result, err := config.DB.Exec(
-        `UPDATE akun SET fcm_token = ? WHERE id_akun = ?`,
-        req.FcmToken, userIDInt,
-    )
-    if err != nil {
-        fmt.Printf("❌ Database error: %v\n", err)
-        c.JSON(http.StatusInternalServerError, models.ApiResponse{
-            Success: false,
-            Message: "Gagal menyimpan FCM token: " + err.Error(),
-        })
-        return
-    }
+	fmt.Printf("✓ User ID: %d\n", userIDInt)
+	fmt.Printf("✓ FCM Token: %s...\n", req.FcmToken[:min(20, len(req.FcmToken))])
 
-    // Check if update actually affected any rows
-    rowsAffected, err := result.RowsAffected()
-    if err != nil {
-        fmt.Printf("⚠ Tidak bisa cek rows affected: %v\n", err)
-    } else if rowsAffected == 0 {
-        fmt.Printf("⚠ No rows updated - user ID %d tidak ditemukan di database\n", userIDInt)
-    } else {
-        fmt.Printf("✓ Update successful - %d row(s) affected\n", rowsAffected)
-    }
+	// Update dengan error handling yang lebih baik
+	result, err := config.DB.Exec(
+		`UPDATE akun SET fcm_token = ? WHERE id_akun = ?`,
+		req.FcmToken, userIDInt,
+	)
+	if err != nil {
+		fmt.Printf("❌ Database error: %v\n", err)
+		c.JSON(http.StatusInternalServerError, models.ApiResponse{
+			Success: false,
+			Message: "Gagal menyimpan FCM token: " + err.Error(),
+		})
+		return
+	}
 
-    c.JSON(http.StatusOK, models.ApiResponse{
-        Success: true,
-        Message: "FCM token berhasil disimpan",
-    })
+	// Check if update actually affected any rows
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		fmt.Printf("⚠ Tidak bisa cek rows affected: %v\n", err)
+	} else if rowsAffected == 0 {
+		fmt.Printf("⚠ No rows updated - user ID %d tidak ditemukan di database\n", userIDInt)
+	} else {
+		fmt.Printf("✓ Update successful - %d row(s) affected\n", rowsAffected)
+	}
+
+	c.JSON(http.StatusOK, models.ApiResponse{
+		Success: true,
+		Message: "FCM token berhasil disimpan",
+	})
 }
 
 func min(a, b int) int {
-    if a < b {
-        return a
-    }
-    return b
+	if a < b {
+		return a
+	}
+	return b
 }

@@ -27,6 +27,7 @@ type Pengumuman struct {
 	Judul        string `json:"judul" db:"judul"`
 	Media        string `json:"media" db:"media"`
 	WaktuUnggah  string `json:"waktu_unggah" db:"waktu_unggah"`
+	TampilSampai string `json:"tampil_sampai" db:"tampil_sampai"`
 	Deskripsi    string `json:"deskripsi" db:"deskripsi"`
 	CreatedAt    string `json:"created_at" db:"created_at"`
 	UpdatedAt    string `json:"updated_at" db:"updated_at"`

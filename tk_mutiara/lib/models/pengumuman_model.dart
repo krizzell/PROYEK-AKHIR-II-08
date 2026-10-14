@@ -10,6 +10,7 @@ class PengumumanModel {
   final String media;
   final List<String> mediaPaths;
   final String waktuUnggah;
+  final String tampilSampai;
   final String deskripsi;
   final String createdAt;
   final String updatedAt;
@@ -22,6 +23,7 @@ class PengumumanModel {
     required this.media,
     this.mediaPaths = const [],
     required this.waktuUnggah,
+    this.tampilSampai = '',
     required this.deskripsi,
     required this.createdAt,
     required this.updatedAt,
@@ -90,10 +92,21 @@ class PengumumanModel {
       media: mediaValue,
       mediaPaths: allPaths,
       waktuUnggah: json['waktu_unggah'] ?? '',
+      tampilSampai: json['tampil_sampai'] ?? '',
       deskripsi: json['deskripsi'] ?? '',
       createdAt: json['created_at'] ?? '',
       updatedAt: json['updated_at'] ?? '',
     );
+  }
+
+  bool get isVisibleOnMobile {
+    if (tampilSampai.trim().isEmpty) return true;
+
+    final normalized = tampilSampai.trim().replaceFirst(' ', 'T');
+    final parsed = DateTime.tryParse(normalized);
+    if (parsed == null) return true;
+
+    return !parsed.isBefore(DateTime.now());
   }
 
   PengumumanModel copyWith({
@@ -104,6 +117,7 @@ class PengumumanModel {
     String? media,
     List<String>? mediaPaths,
     String? waktuUnggah,
+    String? tampilSampai,
     String? deskripsi,
     String? createdAt,
     String? updatedAt,
@@ -116,6 +130,7 @@ class PengumumanModel {
       media: media ?? this.media,
       mediaPaths: mediaPaths ?? this.mediaPaths,
       waktuUnggah: waktuUnggah ?? this.waktuUnggah,
+      tampilSampai: tampilSampai ?? this.tampilSampai,
       deskripsi: deskripsi ?? this.deskripsi,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -132,6 +147,7 @@ class PengumumanModel {
         judul: 'Pengumuman Libur Sekolah',
         media: '',
         waktuUnggah: '2026-04-15 10:30:00',
+        tampilSampai: '2026-04-22 10:30:00',
         deskripsi: 'Libur sekolah akan diadakan dari tanggal 20-25 April 2026',
         createdAt: '2026-04-15 10:30:00',
         updatedAt: '2026-04-15 10:30:00',

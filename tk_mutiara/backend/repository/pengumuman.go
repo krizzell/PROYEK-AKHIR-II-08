@@ -15,11 +15,13 @@ func GetAllPengumuman(db *sql.DB) ([]models.Pengumuman, error) {
 			p.judul,
 			COALESCE(p.media, '') as media,
 			DATE_FORMAT(p.waktu_unggah, '%Y-%m-%d %H:%i:%s') as waktu_unggah,
+			COALESCE(DATE_FORMAT(p.tampil_sampai, '%Y-%m-%d %H:%i:%s'), '') as tampil_sampai,
 			p.deskripsi,
 			DATE_FORMAT(p.created_at, '%Y-%m-%d %H:%i:%s') as created_at,
 			DATE_FORMAT(p.updated_at, '%Y-%m-%d %H:%i:%s') as updated_at
 		FROM pengumuman p
 		LEFT JOIN guru g ON p.id_guru = g.id_guru
+		WHERE p.tampil_sampai IS NULL OR p.tampil_sampai >= NOW()
 		ORDER BY p.waktu_unggah DESC
 	`
 
@@ -40,6 +42,7 @@ func GetAllPengumuman(db *sql.DB) ([]models.Pengumuman, error) {
 			&p.Judul,
 			&p.Media,
 			&p.WaktuUnggah,
+			&p.TampilSampai,
 			&p.Deskripsi,
 			&p.CreatedAt,
 			&p.UpdatedAt,
@@ -67,12 +70,14 @@ func GetPengumumanByID(db *sql.DB, id int64) (models.Pengumuman, error) {
 			p.judul,
 			COALESCE(p.media, '') as media,
 			DATE_FORMAT(p.waktu_unggah, '%Y-%m-%d %H:%i:%s') as waktu_unggah,
+			COALESCE(DATE_FORMAT(p.tampil_sampai, '%Y-%m-%d %H:%i:%s'), '') as tampil_sampai,
 			p.deskripsi,
 			DATE_FORMAT(p.created_at, '%Y-%m-%d %H:%i:%s') as created_at,
 			DATE_FORMAT(p.updated_at, '%Y-%m-%d %H:%i:%s') as updated_at
 		FROM pengumuman p
 		LEFT JOIN guru g ON p.id_guru = g.id_guru
 		WHERE p.id_pengumuman = ?
+			AND (p.tampil_sampai IS NULL OR p.tampil_sampai >= NOW())
 	`
 
 	var p models.Pengumuman
@@ -83,6 +88,7 @@ func GetPengumumanByID(db *sql.DB, id int64) (models.Pengumuman, error) {
 		&p.Judul,
 		&p.Media,
 		&p.WaktuUnggah,
+		&p.TampilSampai,
 		&p.Deskripsi,
 		&p.CreatedAt,
 		&p.UpdatedAt,

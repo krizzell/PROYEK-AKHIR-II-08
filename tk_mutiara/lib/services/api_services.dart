@@ -33,8 +33,9 @@ class ApiService {
     // 'http://10.0.2.2:8081',
   ];
 
-  static String _activeBaseUrl =
-      _configuredBaseUrl.isNotEmpty ? _configuredBaseUrl : _backendCandidates[0];
+  static String _activeBaseUrl = _configuredBaseUrl.isNotEmpty
+      ? _configuredBaseUrl
+      : _backendCandidates[0];
 
   static String get baseUrl => _activeBaseUrl;
   static String get imageBaseUrl {
@@ -195,7 +196,8 @@ class ApiService {
             )
             .timeout(
               const Duration(seconds: 6),
-              onTimeout: () => throw Exception('Request timeout - Backend tidak merespons'),
+              onTimeout: () =>
+                  throw Exception('Request timeout - Backend tidak merespons'),
             );
 
         _activeBaseUrl = url;
@@ -268,7 +270,10 @@ class ApiService {
           'message': _extractMessage(data, fallback: 'Login berhasil'),
         };
       } else {
-        final errorMsg = _extractMessage(data, fallback: 'Login gagal');
+        var errorMsg = _extractMessage(data, fallback: 'Login gagal');
+        if (errorMsg.toLowerCase().contains('email atau password salah')) {
+          errorMsg = 'Username atau password salah';
+        }
         print('✗ Login Error: $errorMsg');
         return {'success': false, 'message': errorMsg};
       }
@@ -287,31 +292,46 @@ class ApiService {
   }) async {
     try {
       print('=== CHANGE PASSWORD REQUEST ===');
-      print('URL: $imageBaseUrl/api/change-password');
+      print('URL: $baseUrl/change-password');
       print('Username: $username');
 
-      final res = await http.post(
-        Uri.parse('$imageBaseUrl/api/change-password'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'username': username,
-          'old_password': oldPassword,
-          'new_password': newPassword,
-          'new_password_confirmation': confirmPassword,
-        }),
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () => throw Exception('Request timeout'),
-      );
+      final res = await http
+          .post(
+            Uri.parse('$baseUrl/change-password'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'username': username,
+              'old_password': oldPassword,
+              'new_password': newPassword,
+              'new_password_confirmation': confirmPassword,
+            }),
+          )
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => throw Exception('Request timeout'),
+          );
 
       print('Status: ${res.statusCode}');
       print('Body: ${res.body}');
 
-      final data = jsonDecode(res.body);
+      final dynamic data;
+      try {
+        data = jsonDecode(res.body);
+      } catch (_) {
+        return {
+          'success': false,
+          'message':
+              'Endpoint ubah password tidak merespons JSON. Pastikan backend API sudah diperbarui.',
+        };
+      }
+
       if (res.statusCode == 200 && _isSuccess(data)) {
         return {
           'success': true,
-          'message': _extractMessage(data, fallback: 'Password berhasil diubah'),
+          'message': _extractMessage(
+            data,
+            fallback: 'Password berhasil diubah',
+          ),
         };
       } else {
         return {
@@ -337,7 +357,10 @@ class ApiService {
     await prefs.remove(_nomorIndukSiswaKey);
   }
 
-  static Future<void> saveFcmToken(String fcmToken, {int retryCount = 0}) async {
+  static Future<void> saveFcmToken(
+    String fcmToken, {
+    int retryCount = 0,
+  }) async {
     try {
       print('=== SAVE FCM TOKEN (Attempt ${retryCount + 1}/3) ===');
       print('URL: $baseUrl/api/user/fcm-token');
@@ -446,6 +469,7 @@ class ApiService {
               (e) =>
                   PengumumanModel.fromJson(Map<String, dynamic>.from(e as Map)),
             )
+            .where((item) => item.isVisibleOnMobile)
             .toList();
         print('✓ Loaded ${result.length} pengumuman records');
         return result;
@@ -458,7 +482,7 @@ class ApiService {
       }
     } catch (e) {
       print('✗ Exception: $e');
-      return PengumumanModel.dummyData();
+      return [];
     }
   }
 
